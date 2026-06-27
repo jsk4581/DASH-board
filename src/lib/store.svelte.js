@@ -1,16 +1,17 @@
 // ============================================================
-// Board state — the single source of truth.
+// Board state — multiple named boards in one document.
 // Deep-reactive via Svelte 5 $state; autosaved to localStorage.
+// `board` is the ACTIVE board; the drawer switches `library.activeId`.
+// activeId is a local view choice — it is not part of sync/undo content.
 // ============================================================
 
 import { toISODate } from './date.js'
 import { t } from './i18n.svelte.js'
 
 const STORAGE_KEY = 'dash-board-v1'
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 
 // Accent palette assigned to project cards (cycled on creation).
-// Palest Multica-style pastels — constant high lightness / low chroma, hue varied.
 export const PALETTE = [
   'oklch(0.84 0.06 255)', // pale blue
   'oklch(0.85 0.06 162)', // pale green
@@ -27,42 +28,82 @@ export function uid() {
   return 'id-' + Math.abs(Date.now() ^ (performance.now() * 1000)).toString(36)
 }
 
-function seed() {
+function seedProjects() {
   const d = (offset) => toISODate(new Date(Date.now() + offset * 86_400_000))
+  return [
+    {
+      id: uid(),
+      title: '논문 프로젝트',
+      color: PALETTE[0],
+      items: [
+        { id: uid(), text: '관련 연구 서베이 정리', status: 'done', start: null, due: d(-1) },
+        { id: uid(), text: '실험 파이프라인 구현', status: 'highlight', start: d(0), due: d(4) },
+        { id: uid(), text: '초안 작성', status: 'default', start: null, due: d(9) },
+      ],
+    },
+    {
+      id: uid(),
+      title: '집안일',
+      color: PALETTE[2],
+      items: [
+        { id: uid(), text: '장보기', status: 'default', start: null, due: d(0) },
+        { id: uid(), text: '세탁기 필터 청소', status: 'default', start: null, due: d(2) },
+      ],
+    },
+    {
+      id: uid(),
+      title: '사이드 프로젝트',
+      color: PALETTE[5],
+      items: [
+        { id: uid(), text: '랜딩 페이지 디자인', status: 'highlight', start: d(1), due: d(3) },
+        { id: uid(), text: '도메인 구매', status: 'default', start: null, due: null },
+        { id: uid(), text: '베타 모집 글 작성', status: 'default', start: null, due: d(7) },
+      ],
+    },
+  ]
+}
+
+function seed() {
+  const boards = [{ id: uid(), name: t('defaultBoardName'), projects: seedProjects() }]
+  return { activeId: boards[0].id, boards }
+}
+
+// ---- normalization -----------------------------------------------------
+function normalizeItem(it) {
   return {
-    meta: { version: SCHEMA_VERSION, title: 'DASH' },
-    projects: [
-      {
-        id: uid(),
-        title: '논문 프로젝트',
-        color: PALETTE[0],
-        items: [
-          { id: uid(), text: '관련 연구 서베이 정리', status: 'done', start: null, due: d(-1) },
-          { id: uid(), text: '실험 파이프라인 구현', status: 'highlight', start: d(0), due: d(4) },
-          { id: uid(), text: '초안 작성', status: 'default', start: null, due: d(9) },
-        ],
-      },
-      {
-        id: uid(),
-        title: '집안일',
-        color: PALETTE[2],
-        items: [
-          { id: uid(), text: '장보기', status: 'default', start: null, due: d(0) },
-          { id: uid(), text: '세탁기 필터 청소', status: 'default', start: null, due: d(2) },
-        ],
-      },
-      {
-        id: uid(),
-        title: '사이드 프로젝트',
-        color: PALETTE[5],
-        items: [
-          { id: uid(), text: '랜딩 페이지 디자인', status: 'highlight', start: d(1), due: d(3) },
-          { id: uid(), text: '도메인 구매', status: 'default', start: null, due: null },
-          { id: uid(), text: '베타 모집 글 작성', status: 'default', start: null, due: d(7) },
-        ],
-      },
-    ],
+    id: it.id ?? uid(),
+    text: it.text ?? '',
+    status: ['default', 'done', 'highlight'].includes(it.status) ? it.status : 'default',
+    start: it.start ?? null,
+    due: it.due ?? null,
   }
+}
+function normalizeProject(p, i) {
+  return {
+    id: p.id ?? uid(),
+    title: p.title ?? t('untitled'),
+    color: p.color ?? PALETTE[i % PALETTE.length],
+    items: (p.items ?? []).map(normalizeItem),
+  }
+}
+function normalizeBoard(b) {
+  return {
+    id: b.id ?? uid(),
+    name: b.name ?? b.meta?.title ?? t('untitled'),
+    projects: (b.projects ?? []).map(normalizeProject),
+  }
+}
+
+/** Accept the new `{boards}` shape, a bare array, or a legacy single `{projects}` board. */
+export function normalizeBoards(raw) {
+  let arr
+  if (Array.isArray(raw)) arr = raw
+  else if (Array.isArray(raw?.boards)) arr = raw.boards
+  else if (Array.isArray(raw?.projects))
+    arr = [{ id: uid(), name: raw.meta?.title ?? t('defaultBoardName'), projects: raw.projects }]
+  else arr = []
+  const boards = arr.map(normalizeBoard)
+  return boards.length ? boards : [{ id: uid(), name: t('defaultBoardName'), projects: [] }]
 }
 
 function load() {
@@ -70,7 +111,9 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed && Array.isArray(parsed.projects)) return normalize(parsed)
+      const boards = normalizeBoards(parsed)
+      const activeId = boards.some((b) => b.id === parsed?.activeId) ? parsed.activeId : boards[0].id
+      return { activeId, boards }
     }
   } catch (e) {
     console.warn('[DASH] failed to load saved board:', e)
@@ -78,32 +121,33 @@ function load() {
   return seed()
 }
 
-/** Coerce an arbitrary parsed object into a valid board (used for load & import). */
-export function normalize(raw) {
-  return {
-    meta: { version: SCHEMA_VERSION, title: raw?.meta?.title ?? 'DASH' },
-    projects: (raw.projects ?? []).map((p, i) => ({
-      id: p.id ?? uid(),
-      title: p.title ?? t('untitled'),
-      color: p.color ?? PALETTE[i % PALETTE.length],
-      items: (p.items ?? []).map((it) => ({
-        id: it.id ?? uid(),
-        text: it.text ?? '',
-        status: ['default', 'done', 'highlight'].includes(it.status) ? it.status : 'default',
-        start: it.start ?? null,
-        due: it.due ?? null,
-      })),
-    })),
-  }
-}
+// The reactive library; mutate its properties, never reassign the binding.
+export const library = $state(load())
 
-// The reactive board. Mutate its properties; never reassign the binding.
-export const board = $state(load())
+// The active board. A getter object (not exported $derived, which modules
+// disallow) so every existing `board.projects` read/write stays reactive.
+function active() {
+  return library.boards.find((b) => b.id === library.activeId) ?? library.boards[0]
+}
+export const board = {
+  get id() {
+    return active().id
+  },
+  get name() {
+    return active().name
+  },
+  get projects() {
+    return active().projects
+  },
+  set projects(v) {
+    active().projects = v
+  },
+}
 
 // ---- autosave ----------------------------------------------------------
 $effect.root(() => {
   $effect(() => {
-    const snapshot = JSON.stringify($state.snapshot(board))
+    const snapshot = JSON.stringify($state.snapshot(library))
     try {
       localStorage.setItem(STORAGE_KEY, snapshot)
     } catch (e) {
@@ -111,6 +155,39 @@ $effect.root(() => {
     }
   })
 })
+
+// ---- board (library) mutations ----------------------------------------
+export function addBoard(name = t('newBoard')) {
+  const b = { id: uid(), name: name || t('newBoard'), projects: [] }
+  library.boards.push(b)
+  library.activeId = b.id
+  return b
+}
+
+export function renameBoard(id, name) {
+  const b = library.boards.find((x) => x.id === id)
+  if (b) b.name = name
+}
+
+export function removeBoard(id) {
+  const i = library.boards.findIndex((b) => b.id === id)
+  if (i === -1) return
+  library.boards.splice(i, 1)
+  if (library.boards.length === 0) {
+    library.boards.push({ id: uid(), name: t('defaultBoardName'), projects: [] })
+  }
+  if (!library.boards.some((b) => b.id === library.activeId)) {
+    library.activeId = library.boards[0].id
+  }
+}
+
+export function switchBoard(id) {
+  if (library.boards.some((b) => b.id === id)) library.activeId = id
+}
+
+export function setBoards(boards) {
+  library.boards = boards
+}
 
 // ---- lookups -----------------------------------------------------------
 export function findProject(pid) {
@@ -130,7 +207,7 @@ export function removeProject(pid) {
   if (i !== -1) board.projects.splice(i, 1)
 }
 
-// Reorder helpers for drag-and-drop (mutating through the store keeps `board`
+// Reorder helpers for drag-and-drop (mutating through the store keeps the board
 // the owner of the data, avoiding Svelte's prop-ownership warnings).
 export function setProjects(projects) {
   board.projects = projects
@@ -190,13 +267,22 @@ export function clearItemDates(pid, iid) {
   setItemDates(pid, iid, { start: null, due: null })
 }
 
-// ---- export / import ---------------------------------------------------
-export function toJSON() {
-  return JSON.stringify($state.snapshot(board), null, 2)
+// ---- serialize / replace (used by sync, undo-redo, export/import) ------
+/** All boards as a versioned JSON document (the unit of sync, undo, export). */
+export function serializeBoards() {
+  return JSON.stringify({ version: SCHEMA_VERSION, boards: $state.snapshot(library.boards) }, null, 2)
 }
 
+/** Replace all boards from a parsed object; keep the active selection if still valid. */
+export function replaceBoards(raw) {
+  const boards = normalizeBoards(raw)
+  library.boards = boards
+  if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id
+}
+
+// ---- export / import ---------------------------------------------------
 export function exportFile() {
-  const blob = new Blob([toJSON()], { type: 'application/json' })
+  const blob = new Blob([serializeBoards()], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -207,18 +293,11 @@ export function exportFile() {
   URL.revokeObjectURL(url)
 }
 
-/** Replace the whole board from a parsed object (mutates in place to keep reactivity). */
-export function replaceBoard(raw) {
-  const next = normalize(raw)
-  board.meta = next.meta
-  board.projects = next.projects
-}
-
 export async function importFile(file) {
   const text = await file.text()
   const parsed = JSON.parse(text)
-  if (!parsed || !Array.isArray(parsed.projects)) {
-    throw new Error(t('invalidFile'))
-  }
-  replaceBoard(parsed)
+  const ok =
+    Array.isArray(parsed) || Array.isArray(parsed?.boards) || Array.isArray(parsed?.projects)
+  if (!ok) throw new Error(t('invalidFile'))
+  replaceBoards(parsed)
 }

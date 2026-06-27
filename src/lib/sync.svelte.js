@@ -5,12 +5,13 @@
 // Single-user, last-write-wins, with a guard for offline edits.
 // ============================================================
 
-import { toJSON, replaceBoard } from './store.svelte.js'
+import { serializeBoards, replaceBoards } from './store.svelte.js'
 
 const CFG_KEY = 'dash-sync-v1'
 const FILENAME = 'dash-board.json'
 const API = 'https://api.github.com'
 const PUSH_DEBOUNCE = 1600
+const POLL_MS = 45000 // background auto-pull cadence
 
 // reactive status for the UI
 export const sync = $state({
@@ -107,7 +108,7 @@ function remoteContent(gist) {
 
 function applyContent(content) {
   hydrating = true
-  replaceBoard(JSON.parse(content))
+  replaceBoards(JSON.parse(content))
   queueMicrotask(() => {
     hydrating = false
   })
@@ -134,7 +135,7 @@ export async function connect({ token: tk, gistId: gid }) {
       sync.gistId = gistId
       markSynced(content)
     } else {
-      const content = toJSON()
+      const content = serializeBoards()
       const gist = await gh('/gists', {
         method: 'POST',
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export async function pull() {
 /** Push local to the remote (discard remote differences). Also resolves a conflict toward this device. */
 export async function pushNow() {
   if (!sync.connected) return
-  const content = toJSON()
+  const content = serializeBoards()
   if (content === lastPushed && sync.status !== 'conflict') {
     setStatus('synced')
     return
@@ -212,7 +213,7 @@ $effect.root(() => {
   if (cfg.token && cfg.gistId) {
     token = cfg.token
     gistId = cfg.gistId
-    lastPushed = toJSON()
+    lastPushed = serializeBoards()
     sync.connected = true
     sync.gistId = gistId
     startupSync(cfg.syncedFp)
@@ -220,7 +221,7 @@ $effect.root(() => {
 
   // debounced push whenever the board changes
   $effect(() => {
-    const content = toJSON() // deep-tracks the whole board
+    const content = serializeBoards() // deep-tracks the whole board
     if (!sync.connected || hydrating) return
     if (sync.status === 'conflict') return // wait for explicit resolution
     if (content === lastPushed) return
@@ -228,11 +229,42 @@ $effect.root(() => {
     setStatus('syncing')
     timer = setTimeout(pushNow, PUSH_DEBOUNCE)
   })
+
+  // periodic + on-refocus auto-pull of changes made on other devices
+  if (typeof window !== 'undefined') {
+    setInterval(autoPull, POLL_MS)
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') autoPull()
+    })
+    window.addEventListener('online', autoPull)
+  }
 })
+
+/**
+ * Background auto-pull: quietly fetch the gist and apply remote changes made on
+ * another device. Only runs when this device has nothing pending locally, so it
+ * never clobbers in-progress edits; failures stay silent (no noisy error flips).
+ */
+async function autoPull() {
+  if (!sync.connected) return
+  if (sync.status === 'syncing' || sync.status === 'conflict') return
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return
+  if (serializeBoards() !== lastPushed) return // local has unsynced edits → push handles it
+  try {
+    const gist = await gh(`/gists/${gistId}`)
+    const remote = remoteContent(gist)
+    if (remote == null || remote === lastPushed) return // nothing new
+    if (serializeBoards() !== lastPushed) return // a local edit landed mid-fetch
+    applyContent(remote)
+    markSynced(remote)
+  } catch {
+    /* background poll — stay quiet on transient failures */
+  }
+}
 
 async function startupSync(syncedFp) {
   setStatus('syncing')
-  const local = toJSON()
+  const local = serializeBoards()
   const localUnsynced = syncedFp != null && fp(local) !== syncedFp
   try {
     const gist = await gh(`/gists/${gistId}`)

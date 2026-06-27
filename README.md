@@ -1,5 +1,5 @@
 # DASH — Daily Agenda & Schedule Hub
-<img width="2850" height="1362" alt="image" src="https://github.com/user-attachments/assets/a19532ea-e172-42b3-a7ee-6b801e39514e" />
+<img alt="DASH — Daily Agenda & Schedule Hub" src="docs/screenshot.png" />
 
 **A **lightweight, simple** personal schedule dashboard**
 
@@ -15,13 +15,14 @@ exported to / imported from a JSON file.
 - **Three item states** — default · done (strikethrough) · highlight (bold + a hand‑drawn red "grading" circle)
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
-- **Timeline** — switch between a 4‑week calendar and a 2‑week Gantt chart; due dates and ranges show up automatically
+- **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
+- **Timeline** — a 4‑week calendar or 2‑week Gantt chart; page back/forward with the arrows below it
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span
 - **Undo / redo** — `Ctrl/⌘ + Z` and `Ctrl/⌘ + Y` (rapid edits are coalesced into one step)
 - **Edit mode / View mode** — flip to a clean, read‑only view
 - **Bilingual UI** — Korean ↔ English, remembered across visits
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
-- **Optional cross‑device sync** — connect a private GitHub Gist to keep the same board on every device (no backend)
+- **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
 
 ## Tech stack
@@ -48,25 +49,19 @@ npm run preview  # preview the built output
 
 DASH is a fully static single‑page app, so any static host works. Pick one:
 
-### GitHub Pages (recommended, zero‑config)
+### GitHub Pages (recommended)
 
 A workflow is included at [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-One‑time setup:
-
-1. In the repo, go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Push to `main`. The workflow builds with the correct base path and publishes automatically.
-
-Your site goes live at `https://<user>.github.io/DASH-board/`.
-
-The base path matters because Pages serves the project under `/DASH-board/`. The
-build script sets it for you:
+Enable Pages once, then every push to `main` builds and deploys:
 
 ```bash
-npm run build:pages   # = GITHUB_PAGES=1 vite build
+npm run setup:pages    # one-time — enables Pages via the GitHub CLI (gh)
+git push origin main   # deploys → https://<user>.github.io/<repo>/
 ```
 
-> Forking under a different repo name? Update the path in
-> [`vite.config.js`](vite.config.js) (`base`) to match `/<your-repo-name>/`.
+Prefer the UI? **Settings → Pages → Source: GitHub Actions** does the same thing.
+The build's base path is derived from the repo name automatically, so **forks
+work with no config changes**.
 
 ### Other static hosts (Netlify · Vercel · Cloudflare Pages)
 
@@ -106,19 +101,25 @@ The JSON used by export / import:
 
 ```jsonc
 {
-  "meta": { "version": 1, "title": "DASH" },
-  "projects": [
+  "version": 2,
+  "boards": [
     {
       "id": "…",
-      "title": "Project name",
-      "color": "oklch(0.84 0.06 255)",   // any CSS color string
-      "items": [
+      "name": "My board",
+      "projects": [
         {
           "id": "…",
-          "text": "A task",
-          "status": "default",            // "default" | "done" | "highlight"
-          "start": "2026-06-21",          // range start, or null
-          "due": "2026-06-25"             // due date, or null
+          "title": "Project name",
+          "color": "oklch(0.84 0.06 255)",   // any CSS color string
+          "items": [
+            {
+              "id": "…",
+              "text": "A task",
+              "status": "default",            // "default" | "done" | "highlight"
+              "start": "2026-06-21",          // range start, or null
+              "due": "2026-06-25"             // due date, or null
+            }
+          ]
         }
       ]
     }
@@ -126,13 +127,16 @@ The JSON used by export / import:
 }
 ```
 
-UI preferences (mode, theme, timeline view, language) are stored separately and are
-**not** included in exports.
+A legacy single‑board file (`{ "projects": [...] }`) is still imported — it becomes
+one board. UI preferences (mode, theme, timeline view, language) and which board is
+active are stored separately and are **not** included in exports.
 
 ## Keyboard & interaction
 
+- **Boards** — the drawer button (top‑left) lists your boards; add / rename / switch / delete
 - **Add item** — the box's `+` or "Add item"; press `Enter` after typing to keep adding
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range)
+- **Timeline** — the arrows below the calendar/Gantt page the dates; click the range to jump back to today
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

@@ -104,6 +104,22 @@ const dict = {
     errForbidden: '권한이 없거나 요청 한도를 초과했습니다.',
     errGeneric: '동기화에 실패했습니다.',
 
+    // boards drawer
+    boardsTooltip: '보드 목록',
+    boards: '보드',
+    newBoard: '새 보드',
+    defaultBoardName: '내 보드',
+    deleteBoard: '보드 삭제',
+    boardNamePlaceholder: '보드 이름',
+    confirmDeleteBoard: "'{name}' 보드를 삭제할까요?",
+    close: '닫기',
+    rename: '이름 변경',
+
+    // timeline navigation
+    prevPeriod: '이전',
+    nextPeriod: '다음',
+    backToToday: '오늘로',
+
     // store
     untitled: '제목 없음',
     invalidFile: '유효한 DASH 파일이 아닙니다 (projects 배열 없음).',
@@ -198,6 +214,22 @@ const dict = {
     errNoGist: 'Gist not found — check the ID.',
     errForbidden: 'Forbidden or rate‑limited.',
     errGeneric: 'Sync failed.',
+
+    // boards drawer
+    boardsTooltip: 'Boards',
+    boards: 'Boards',
+    newBoard: 'New board',
+    defaultBoardName: 'My board',
+    deleteBoard: 'Delete board',
+    boardNamePlaceholder: 'Board name',
+    confirmDeleteBoard: 'Delete the board “{name}”?',
+    close: 'Close',
+    rename: 'Rename',
+
+    // timeline navigation
+    prevPeriod: 'Previous',
+    nextPeriod: 'Next',
+    backToToday: 'Today',
 
     untitled: 'Untitled',
     invalidFile: 'Not a valid DASH file (no projects array).',

@@ -3,16 +3,16 @@
   import { t } from '../i18n.svelte.js'
 
   // projects: full project list (each with items)
-  let { projects } = $props()
+  let { projects, from = undefined } = $props()
 
-  const days = horizon(14)
-  const today = startOfDay(new Date())
+  const days = $derived(horizon(14, from))
+  const base = $derived(startOfDay(from ?? new Date()))
 
   function rowFor(it) {
     if (!it.due) return null
-    const dueIdx = dayDiff(today, it.due)
+    const dueIdx = dayDiff(base, it.due)
     if (dueIdx < 0 || dueIdx > 13) return null
-    let startIdx = it.start ? dayDiff(today, it.start) : dueIdx
+    let startIdx = it.start ? dayDiff(base, it.start) : dueIdx
     const clipLeft = startIdx < 0
     startIdx = Math.max(0, Math.min(startIdx, dueIdx))
     return { startIdx, dueIdx, clipLeft }

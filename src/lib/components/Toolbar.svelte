@@ -1,8 +1,9 @@
 <script>
   import Icon from './Icon.svelte'
   import SyncPopover from './SyncPopover.svelte'
+  import Drawer from './Drawer.svelte'
   import { ui, toggleMode, toggleTheme, toggleLang } from '../ui.svelte.js'
-  import { exportFile, importFile } from '../store.svelte.js'
+  import { exportFile, importFile, board } from '../store.svelte.js'
   import { undo, redo, history } from '../history.svelte.js'
   import { sync } from '../sync.svelte.js'
   import { t } from '../i18n.svelte.js'
@@ -11,6 +12,7 @@
   let toast = $state('')
   let syncBtn = $state(null)
   let showSync = $state(false)
+  let showDrawer = $state(false)
 
   function flash(msg) {
     toast = msg
@@ -46,9 +48,19 @@
 <svelte:window onkeydown={onKeydown} />
 
 <header class="bar">
+  <button
+    class="tool icon-only drawer-btn"
+    onclick={() => (showDrawer = true)}
+    title={t('boardsTooltip')}
+    aria-label={t('boardsTooltip')}
+  >
+    <Icon name="sidebar" size={18} />
+  </button>
   <div class="brand">
     <span class="logo">DASH</span>
-    <span class="tagline">Daily Agenda &amp; Schedule Hub</span>
+    <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
+      {board.name}
+    </button>
   </div>
 
   <div class="tools">
@@ -121,6 +133,10 @@
   </div>
 </header>
 
+{#if showDrawer}
+  <Drawer onclose={() => (showDrawer = false)} />
+{/if}
+
 {#if showSync}
   <SyncPopover anchor={syncBtn} onclose={() => (showSync = false)} />
 {/if}
@@ -145,10 +161,14 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .drawer-btn {
+    flex: none;
+    margin-right: 2px;
+  }
   .brand {
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: 9px;
     min-width: 0;
   }
   .logo {
@@ -156,13 +176,24 @@
     font-weight: 800;
     letter-spacing: 0.06em;
     color: var(--text);
+    flex: none;
   }
-  .tagline {
-    font-size: 13px;
-    color: var(--text-faint);
+  .cur-board {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+    max-width: 40vw;
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .cur-board:hover {
+    background: var(--surface-hover);
+    color: var(--text);
   }
 
   .tools {
@@ -275,9 +306,6 @@
   }
 
   @media (max-width: 640px) {
-    .tagline {
-      display: none;
-    }
     .tool .lbl {
       display: none;
     }

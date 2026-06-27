@@ -75,7 +75,7 @@ export function horizon(days = HORIZON_DAYS, from = new Date()) {
       month: date.getMonth() + 1,
       weekday: WEEKDAYS_KO[date.getDay()],
       dow: date.getDay(),
-      isToday: i === 0,
+      isToday: toISODate(date) === todayISO(),
       isWeekend: date.getDay() === 0 || date.getDay() === 6,
       isFirstOfMonth: date.getDate() === 1,
     }

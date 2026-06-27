@@ -5,6 +5,7 @@
   import { board } from '../store.svelte.js'
   import { ui, setTimelineView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
+  import { addDays, toISODate, formatShort } from '../date.js'
 
   // flattened dated items (for the calendar)
   const dated = $derived(
@@ -22,6 +23,18 @@
         }))
     )
   )
+
+  // date navigation: page the timeline window back/forward by a week
+  const STEP = 7
+  let offsetDays = $state(0)
+  const spanDays = $derived(ui.timelineView === 'calendar' ? 28 : 14)
+  const from = $derived(addDays(new Date(), offsetDays))
+  const rangeLabel = $derived(
+    `${formatShort(toISODate(from))} – ${formatShort(toISODate(addDays(from, spanDays - 1)))}`
+  )
+  const subtitle = $derived(
+    offsetDays === 0 ? (ui.timelineView === 'calendar' ? t('next4w') : t('next2w')) : rangeLabel
+  )
 </script>
 
 <section class="timeline">
@@ -29,7 +42,7 @@
     <div class="tl-title">
       <Icon name="calendar" size={16} />
       <h2>{t('schedule')}</h2>
-      <span class="tl-sub">{ui.timelineView === 'calendar' ? t('next4w') : t('next2w')}</span>
+      <span class="tl-sub">{subtitle}</span>
     </div>
 
     <div class="view-toggle" role="group" aria-label={t('timelineSwitch')}>
@@ -47,11 +60,28 @@
 
   <div class="tl-body">
     {#if ui.timelineView === 'calendar'}
-      <CalendarView items={dated} />
+      <CalendarView items={dated} {from} />
     {:else}
-      <GanttView projects={board.projects} />
+      <GanttView projects={board.projects} {from} />
     {/if}
   </div>
+
+  <nav class="tl-nav" aria-label={t('schedule')}>
+    <button class="nav-arrow" onclick={() => (offsetDays -= STEP)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
+      <Icon name="chevronLeft" size={18} />
+    </button>
+    <button
+      class="nav-range"
+      class:dim={offsetDays === 0}
+      onclick={() => (offsetDays = 0)}
+      title={t('backToToday')}
+    >
+      {rangeLabel}
+    </button>
+    <button class="nav-arrow" onclick={() => (offsetDays += STEP)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
+      <Icon name="chevron" size={18} />
+    </button>
+  </nav>
 </section>
 
 <style>
@@ -116,5 +146,45 @@
 
   .tl-body {
     padding: 12px 16px 8px;
+  }
+
+  .tl-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 16px 12px;
+  }
+  .nav-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .nav-arrow:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .nav-range {
+    min-width: 116px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .nav-range:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .nav-range.dim {
+    color: var(--text-faint);
   }
 </style>

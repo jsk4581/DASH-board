@@ -3,9 +3,9 @@
   import { t } from '../i18n.svelte.js'
 
   // items: flattened, each with { id, text, status, due, projectColor, projectTitle }
-  let { items } = $props()
+  let { items, from = undefined } = $props()
 
-  const days = horizon(28)
+  const days = $derived(horizon(28, from))
 
   const byDay = $derived.by(() => {
     const map = {}

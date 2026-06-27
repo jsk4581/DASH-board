@@ -4,14 +4,14 @@
 // step via a short debounce, so one Ctrl+Z reverts one action.
 // ============================================================
 
-import { board, replaceBoard } from './store.svelte.js'
+import { serializeBoards, replaceBoards } from './store.svelte.js'
 
 const MAX = 100
 const COALESCE_MS = 350
 
 let past = []
 let future = []
-let lastSerialized = JSON.stringify($state.snapshot(board))
+let lastSerialized = serializeBoards()
 let restoring = false
 let timer = null
 
@@ -23,7 +23,7 @@ function refresh() {
   history.canRedo = future.length > 0
 }
 
-const serialize = () => JSON.stringify($state.snapshot(board))
+const serialize = () => serializeBoards()
 
 /** Fold any pending (debounced) change into the undo stack right now. */
 function commitPending() {
@@ -53,7 +53,7 @@ $effect.root(() => {
 
 function restore(snapshotJSON) {
   restoring = true
-  replaceBoard(JSON.parse(snapshotJSON))
+  replaceBoards(JSON.parse(snapshotJSON))
   lastSerialized = snapshotJSON
   refresh()
   // board mutation re-runs the watcher; clear the flag once it has settled

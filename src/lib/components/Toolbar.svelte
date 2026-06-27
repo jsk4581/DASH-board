@@ -18,6 +18,14 @@
     flash(t('savedToast'))
   }
 
+  // intercept Ctrl/⌘+S so it saves the board instead of Chrome's "save page"
+  function onKeydown(e) {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
+      e.preventDefault()
+      onSave()
+    }
+  }
+
   async function onPick(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -30,6 +38,8 @@
     e.target.value = ''
   }
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <header class="bar">
   <div class="brand">

@@ -115,6 +115,7 @@ UI preferences (mode, theme, timeline view, language) are stored separately and 
 - **Add item** — the box's `+` or "Add item"; press `Enter` after typing to keep adding
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range)
 - **Drag** — grab the handle on a box header or the left of an item to move it
+- **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)
 - **Language** — the 🌐 button toggles Korean ↔ English
 

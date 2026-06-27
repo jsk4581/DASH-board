@@ -1,5 +1,6 @@
 # DASH — Daily Agenda & Schedule Hub
 <img width="2850" height="1362" alt="image" src="https://github.com/user-attachments/assets/a19532ea-e172-42b3-a7ee-6b801e39514e" />
+
 Group your tasks into project boxes, then read all their deadlines at a glance on
 the timeline below — as a **4‑week calendar** or a **2‑week Gantt chart**. It runs
 entirely in the browser with no backend; data is saved automatically and can be

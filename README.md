@@ -21,6 +21,7 @@ exported to / imported from a JSON file.
 - **Edit mode / View mode** — flip to a clean, read‑only view
 - **Bilingual UI** — Korean ↔ English, remembered across visits
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
+- **Optional cross‑device sync** — connect a private GitHub Gist to keep the same board on every device (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
 
 ## Tech stack
@@ -80,6 +81,24 @@ Add an SPA fallback if your host needs one (rewrite all paths to `/index.html`).
 
 Don't want it public? Just `npm run build && npm run preview`, or serve `dist/`
 with any static file server. Everything (including your data) stays on your machine.
+
+## Sync across devices (optional)
+
+By default your board lives in the browser's `localStorage`, so it's per‑browser
+and per‑device. To see the same board everywhere, connect a **private GitHub
+Gist** as the store — still no backend of your own.
+
+1. Create a token with **only the `gist` scope**:
+   [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=gist&description=DASH%20sync).
+2. Open the **☁️ Sync** button in the toolbar, paste the token, and **Connect**.
+   The first device creates a private gist automatically.
+3. On another device, open Sync, paste the **same token and the Gist ID** (shown
+   on the first device), and Connect — your board loads and stays in sync.
+
+It pulls on launch and pushes changes automatically (debounced). The token is
+stored only in that browser's `localStorage`, so **don't connect on a shared
+computer**. It's single‑user / last‑write‑wins; if a device edited while offline
+and the cloud also changed, you'll be asked which copy to keep.
 
 ## Data format
 

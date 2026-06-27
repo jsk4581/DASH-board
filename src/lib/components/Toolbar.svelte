@@ -1,12 +1,16 @@
 <script>
   import Icon from './Icon.svelte'
+  import SyncPopover from './SyncPopover.svelte'
   import { ui, toggleMode, toggleTheme, toggleLang } from '../ui.svelte.js'
   import { exportFile, importFile } from '../store.svelte.js'
   import { undo, redo, history } from '../history.svelte.js'
+  import { sync } from '../sync.svelte.js'
   import { t } from '../i18n.svelte.js'
 
   let fileInput = $state(null)
   let toast = $state('')
+  let syncBtn = $state(null)
+  let showSync = $state(false)
 
   function flash(msg) {
     toast = msg
@@ -94,6 +98,19 @@
       hidden
     />
 
+    <button
+      class="tool icon-only sync-btn"
+      bind:this={syncBtn}
+      onclick={() => (showSync = !showSync)}
+      title={t('syncTooltip')}
+      aria-label={t('syncTooltip')}
+    >
+      <Icon name="cloud" size={17} />
+      {#if sync.connected || sync.status !== 'idle'}
+        <span class="sync-pip {sync.status}"></span>
+      {/if}
+    </button>
+
     <button class="tool" onclick={toggleLang} title={t('langSwitch')} aria-label={t('langSwitch')}>
       <Icon name="globe" size={16} /> <span class="lbl">{t('langName')}</span>
     </button>
@@ -103,6 +120,10 @@
     </button>
   </div>
 </header>
+
+{#if showSync}
+  <SyncPopover anchor={syncBtn} onclose={() => (showSync = false)} />
+{/if}
 
 {#if toast}
   <div class="toast">{toast}</div>
@@ -205,6 +226,30 @@
   }
   .tool.icon-only {
     padding: 7px;
+  }
+
+  .sync-btn {
+    position: relative;
+  }
+  .sync-pip {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+    background: var(--text-faint);
+  }
+  .sync-pip.synced {
+    background: #37b24d;
+  }
+  .sync-pip.syncing {
+    background: var(--accent);
+  }
+  .sync-pip.error,
+  .sync-pip.conflict {
+    background: #d92d2d;
   }
 
   .toast {

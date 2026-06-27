@@ -22,7 +22,7 @@ export const ui = $state({
   mode: saved.mode === 'view' ? 'view' : 'edit', // 'edit' | 'view'
   theme: saved.theme ?? (prefersDark() ? 'dark' : 'light'), // 'light' | 'dark'
   timelineView: saved.timelineView === 'gantt' ? 'gantt' : 'calendar', // 'calendar' | 'gantt'
-  lang: saved.lang === 'en' ? 'en' : 'ko', // 'ko' | 'en'
+  lang: saved.lang === 'ko' ? 'ko' : 'en', // 'ko' | 'en' (defaults to English)
 })
 
 $effect.root(() => {

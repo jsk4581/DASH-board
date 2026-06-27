@@ -1,0 +1,175 @@
+/* ============================================================
+   DASH — design tokens
+   White/black base + restrained point colors (Linear-inspired)
+   ============================================================ */
+
+:root {
+  /* surfaces — Multica neutral (zinc) */
+  --bg: oklch(0.97 0.001 286.375);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.985 0.001 286.375);
+  --surface-hover: oklch(0.955 0.002 286.375);
+
+  /* lines */
+  --border: oklch(0.92 0.004 286.32);
+  --border-strong: oklch(0.872 0.005 286.32);
+
+  /* text — max 3 levels */
+  --text: oklch(0.21 0.006 285.885);
+  --text-muted: oklch(0.552 0.016 285.938);
+  --text-faint: oklch(0.705 0.015 286.067);
+
+  /* point colors — only the palest Multica tints (except the red grading circle) */
+  --accent: oklch(0.76 0.085 255);         /* pale blue */
+  --accent-hover: oklch(0.69 0.1 255);
+  --accent-soft: oklch(0.96 0.025 255);
+  --accent-ink: oklch(0.4 0.12 255);       /* legible ink on a pale-accent fill */
+  --highlight: oklch(0.82 0.08 80);        /* pale amber — today / timeline */
+  --highlight-soft: oklch(0.95 0.045 80);
+  --pencil: oklch(0.577 0.245 27.325);     /* 강조: red grading circle — stays vivid */
+  --pencil-soft: oklch(0.95 0.05 27.325);
+  --done: oklch(0.72 0.014 286.067);
+
+  /* shape */
+  --radius-lg: 16px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+
+  /* elevation */
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.05);
+  --shadow-md: 0 4px 14px rgba(24, 24, 27, 0.08);
+  --shadow-pop: 0 8px 28px rgba(24, 24, 27, 0.14);
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --fast: 120ms;
+  --med: 200ms;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: oklch(0.18 0.005 285.823);
+  --surface: oklch(0.21 0.006 285.885);
+  --surface-2: oklch(0.235 0.006 286.033);
+  --surface-hover: oklch(0.274 0.006 286.033);
+
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 16%);
+
+  --text: oklch(0.985 0 0);
+  --text-muted: oklch(0.705 0.015 286.067);
+  --text-faint: oklch(0.552 0.016 285.938);
+
+  --accent: oklch(0.62 0.11 255);
+  --accent-hover: oklch(0.7 0.12 255);
+  --accent-soft: oklch(0.3 0.055 255);
+  --accent-ink: oklch(0.95 0.03 255);
+  --highlight: oklch(0.78 0.09 80);
+  --highlight-soft: oklch(0.3 0.05 80);
+  --pencil: oklch(0.704 0.191 22.216);
+  --pencil-soft: oklch(0.3 0.08 22.216);
+  --done: oklch(0.552 0.016 285.938);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background var(--med) var(--ease), color var(--med) var(--ease);
+}
+
+#app {
+  min-height: 100%;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* shared icon-button used across hover popups */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.icon-btn:active {
+  transform: scale(0.92);
+}
+.icon-btn.danger:hover {
+  background: #fde8e8;
+  color: #d92d2d;
+}
+:root[data-theme='dark'] .icon-btn.danger:hover {
+  background: #3a1a1a;
+  color: #ff6b6b;
+}
+
+/* a soft scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -229,4 +229,17 @@
   .nav-range.dim {
     color: var(--text-faint);
   }
+
+  /* phones: reclaim horizontal space so the 7-day calendar has room to fit */
+  @media (max-width: 560px) {
+    .timeline {
+      margin: 12px 8px 24px;
+    }
+    .tl-head {
+      padding: 10px 10px;
+    }
+    .tl-body {
+      padding: 10px 8px 8px;
+    }
+  }
 </style>

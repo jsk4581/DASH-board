@@ -44,6 +44,16 @@ $effect.root(() => {
   })
 })
 
+// Touch (no-hover) only: which item's hover action pill is currently revealed.
+// On a touch device there is no hover, so tapping an item reveals its tools (the
+// touch analog of hover) and tapping anywhere else clears it. A single window
+// pointerdown listener in App.svelte drives this; CSS only reads it under
+// `@media (hover: none)`, so pointer-capable devices are unaffected.
+export const touchItem = $state({ id: null })
+export function setTouchItem(id) {
+  if (touchItem.id !== id) touchItem.id = id
+}
+
 export function toggleMode() {
   ui.mode = ui.mode === 'edit' ? 'view' : 'edit'
 }

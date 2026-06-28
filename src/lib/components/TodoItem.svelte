@@ -3,6 +3,7 @@
   import Icon from './Icon.svelte'
   import DatePopover from './DatePopover.svelte'
   import { updateItemText, toggleStatus, removeItem } from '../store.svelte.js'
+  import { touchItem } from '../ui.svelte.js'
   import { relativeTag, formatLabel, formatShort } from '../date.js'
   import { t } from '../i18n.svelte.js'
 
@@ -60,6 +61,8 @@
   class="item"
   class:done={item.status === 'done'}
   class:highlight={item.status === 'highlight'}
+  class:revealed={touchItem.id === item.id}
+  data-item-id={item.id}
 >
   {#if editing}
     <span class="grip" use:dragHandle title={t('dragMove')} aria-label={t('itemGrip')}>
@@ -392,10 +395,12 @@
     color: var(--accent);
   }
 
+  /* touch: don't force the action pill on permanently (it covered the date
+     stamp and floated over the text). Reveal only the tapped item's pill. */
   @media (hover: none) {
-    .actions {
+    .item.revealed .actions {
       opacity: 1;
-      transform: none;
+      transform: translateY(-50%);
       pointer-events: auto;
     }
   }

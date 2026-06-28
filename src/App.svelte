@@ -2,7 +2,7 @@
   import Toolbar from './lib/components/Toolbar.svelte'
   import Board from './lib/components/Board.svelte'
   import Timeline from './lib/components/Timeline.svelte'
-  import { ui } from './lib/ui.svelte.js'
+  import { ui, setTouchItem } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
 
   const editing = $derived(ui.mode === 'edit')
@@ -19,9 +19,18 @@
       redo()
     }
   }
+
+  // Touch tap-to-reveal: on a no-hover device, tapping inside an item reveals its
+  // action pill; tapping anywhere else clears it. No-op on pointer-capable
+  // devices (hover already handles reveal, and CSS ignores the state there).
+  function onPointerDown(e) {
+    if (!matchMedia('(hover: none)').matches) return
+    const el = e.target?.closest?.('.item[data-item-id]')
+    setTouchItem(el ? el.dataset.itemId : null)
+  }
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onpointerdown={onPointerDown} />
 
 <Toolbar />
 

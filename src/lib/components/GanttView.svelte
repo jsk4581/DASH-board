@@ -41,8 +41,8 @@
       {#key fromKey}
         <div
           class="track head-track"
-          in:hslide={{ dir, mode: 'in', nav: paging }}
-          out:hslide={{ dir, mode: 'out', nav: paging }}
+          in:hslide|global={{ dir, mode: 'in', nav: paging }}
+          out:hslide|global={{ dir, mode: 'out', nav: paging }}
         >
           {#each days as d (d.iso)}
             <div class="hcell" class:today={d.isToday} class:weekend={d.isWeekend}>
@@ -70,8 +70,8 @@
           {#key fromKey}
             <div
               class="track"
-              in:hslide={{ dir, mode: 'in', nav: paging }}
-              out:hslide={{ dir, mode: 'out', nav: paging }}
+              in:hslide|global={{ dir, mode: 'in', nav: paging }}
+              out:hslide|global={{ dir, mode: 'out', nav: paging }}
             >
               {#each days as d}
                 <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>

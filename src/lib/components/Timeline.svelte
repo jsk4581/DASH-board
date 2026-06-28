@@ -27,7 +27,8 @@
   )
 
   // date navigation: page the timeline window back/forward by a week
-  const STEP = 7
+  // page by 2 weeks on the calendar (4-week window), 1 week on the gantt (2-week window)
+  const STEP = $derived(ui.timelineView === 'calendar' ? 14 : 7)
   let offsetDays = $state(0)
   let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
   // true ONLY during the render caused by a date step → animate then. Stays false

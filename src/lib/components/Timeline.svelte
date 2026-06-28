@@ -87,8 +87,8 @@
         {#key offsetDays}
           <div
             class="tl-vslide"
-            in:vslide={{ dir, mode: 'in', nav: paging }}
-            out:vslide={{ dir, mode: 'out', nav: paging }}
+            in:vslide={{ dir, mode: 'in', nav: paging, weeks: STEP / 7 }}
+            out:vslide={{ dir, mode: 'out', nav: paging, weeks: STEP / 7 }}
           >
             <CalendarView items={dated} {from} />
           </div>

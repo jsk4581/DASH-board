@@ -73,9 +73,12 @@ export function liftOut(node, { disabled = false, duration = 180 } = {}) {
 // a cross-fade — next scrolls the weeks up, prev scrolls them down. The fade
 // masks the 3-of-4 week overlap between adjacent windows so it reads as a small
 // "advance by a week", not a full sweep.
-export function vslide(node, { dir = 1, mode = 'in', duration = 280, nav = true } = {}) {
+export function vslide(node, { dir = 1, mode = 'in', duration = 300, nav = true, weeks = 1 } = {}) {
   if (!nav) return { duration: 0 }
-  const dist = Math.max(40, Math.min(120, node.offsetHeight / 4)) // ~ one week row
+  // travel ~ one row PER WEEK stepped, so the motion matches how far the dates
+  // actually jump (e.g. a 2-week step slides two rows, not one)
+  const row = node.offsetHeight / 4
+  const dist = Math.max(40, Math.min(row * weeks, 220))
   return {
     duration,
     easing: cubicInOut,

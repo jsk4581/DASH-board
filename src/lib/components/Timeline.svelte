@@ -1,5 +1,5 @@
 <script>
-  import { fly } from 'svelte/transition'
+  import { hslide } from '../pop.js'
   import Icon from './Icon.svelte'
   import CalendarView from './CalendarView.svelte'
   import GanttView from './GanttView.svelte'
@@ -74,18 +74,21 @@
   </header>
 
   <div class="tl-body">
-    {#key offsetDays}
-      <div
-        class="tl-slide"
-        in:fly={{ x: navigated ? dir * 44 : 0, duration: navigated ? 240 : 0 }}
-      >
-        {#if ui.timelineView === 'calendar'}
-          <CalendarView items={dated} {from} />
-        {:else}
-          <GanttView projects={board.projects} {from} />
-        {/if}
-      </div>
-    {/key}
+    <div class="tl-viewport">
+      {#key offsetDays}
+        <div
+          class="tl-slide"
+          in:hslide={{ dir, mode: 'in', nav: navigated }}
+          out:hslide={{ dir, mode: 'out', nav: navigated }}
+        >
+          {#if ui.timelineView === 'calendar'}
+            <CalendarView items={dated} {from} />
+          {:else}
+            <GanttView projects={board.projects} {from} />
+          {/if}
+        </div>
+      {/key}
+    </div>
   </div>
 
   <nav class="tl-nav" aria-label={t('schedule')}>
@@ -169,6 +172,13 @@
   .tl-body {
     padding: 12px 16px 8px;
     overflow: hidden;
+  }
+  .tl-viewport {
+    position: relative; /* containing block for the pinned outgoing slide */
+    overflow: hidden; /* clips both halves off-screen during the slide */
+  }
+  .tl-slide {
+    width: 100%;
   }
 
   .tl-nav {

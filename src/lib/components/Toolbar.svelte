@@ -152,7 +152,7 @@
     z-index: 50;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
     padding: 11px clamp(14px, 3vw, 32px);
     background: color-mix(in srgb, var(--surface) 82%, transparent);
@@ -201,6 +201,7 @@
     align-items: center;
     gap: 6px;
     flex: none;
+    margin-left: auto;
   }
 
   .mode-toggle {

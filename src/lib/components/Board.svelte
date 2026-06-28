@@ -3,8 +3,8 @@
   import { flip } from 'svelte/animate'
   import ProjectCard from './ProjectCard.svelte'
   import Icon from './Icon.svelte'
-  import { board, addProject, setProjects } from '../store.svelte.js'
-  import { pop } from '../pop.js'
+  import { board, addProject, setProjects, swapping } from '../store.svelte.js'
+  import { pop, liftOut } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
   let { editing = true } = $props()
@@ -40,8 +40,8 @@
       <div
         class="cell"
         animate:flip={{ duration: FLIP }}
-        in:pop={{ disabled: dragging }}
-        out:pop={{ disabled: dragging }}
+        in:pop={{ disabled: dragging || swapping.on }}
+        out:liftOut={{ disabled: dragging || swapping.on }}
       >
         <ProjectCard {project} {editing} />
       </div>
@@ -69,6 +69,7 @@
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 14px;
     align-items: start;
+    position: relative; /* offsetParent for a leaving card pinned by liftOut */
   }
   .cell {
     min-width: 0;

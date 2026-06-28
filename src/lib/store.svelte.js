@@ -5,6 +5,7 @@
 // activeId is a local view choice — it is not part of sync/undo content.
 // ============================================================
 
+import { tick } from 'svelte'
 import { toISODate } from './date.js'
 import { t } from './i18n.svelte.js'
 
@@ -156,8 +157,22 @@ $effect.root(() => {
   })
 })
 
+// When the WHOLE visible board is swapped (board switch, import, sync pull,
+// undo/redo) the grid's cells are all removed/created at once. Setting this true
+// for that render suppresses the per-card create/delete pop & lift-out, so a
+// swap is an instant change — only genuine single add/delete animates.
+export const swapping = $state({ on: false })
+function lockSwap() {
+  swapping.on = true
+  // release after the swap's DOM update has flushed (transitions read it at create time)
+  tick().then(() => {
+    swapping.on = false
+  })
+}
+
 // ---- board (library) mutations ----------------------------------------
 export function addBoard(name = t('newBoard')) {
+  lockSwap()
   const b = { id: uid(), name: name || t('newBoard'), projects: [] }
   library.boards.push(b)
   library.activeId = b.id
@@ -172,6 +187,7 @@ export function renameBoard(id, name) {
 export function removeBoard(id) {
   const i = library.boards.findIndex((b) => b.id === id)
   if (i === -1) return
+  lockSwap()
   library.boards.splice(i, 1)
   if (library.boards.length === 0) {
     library.boards.push({ id: uid(), name: t('defaultBoardName'), projects: [] })
@@ -182,10 +198,14 @@ export function removeBoard(id) {
 }
 
 export function switchBoard(id) {
-  if (library.boards.some((b) => b.id === id)) library.activeId = id
+  if (library.boards.some((b) => b.id === id) && id !== library.activeId) {
+    lockSwap()
+    library.activeId = id
+  }
 }
 
 export function setBoards(boards) {
+  lockSwap()
   library.boards = boards
 }
 
@@ -275,6 +295,7 @@ export function serializeBoards() {
 
 /** Replace all boards from a parsed object; keep the active selection if still valid. */
 export function replaceBoards(raw) {
+  lockSwap()
   const boards = normalizeBoards(raw)
   library.boards = boards
   if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id

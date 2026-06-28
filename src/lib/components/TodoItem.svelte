@@ -19,10 +19,16 @@
   // multi-line text instead of cutting through it (an ellipse around a tall box
   // needs to be much wider/taller than the box to contain its corners)
   const ONE_LINE_H = 11 // ~ half the 15px·1.4 line box
+  const OY_MAX = 13 // cap vertical bleed into the rows above/below
   function grade(w, h) {
+    // A wrapped item keeps the SAME horizontal padding as a single line, so the
+    // loop is never wider than the one-line case and can't cover the checkbox
+    // (left) or the due-date stamp (right). Only the height grows to wrap the
+    // extra lines; the extreme corners may poke out a touch, which reads as a
+    // hand-drawn circle.
     const extra = Math.max(0, h / 2 - ONE_LINE_H)
-    const ox = 13 + extra * 2.0
-    const oy = 7 + extra * 0.55
+    const ox = 11
+    const oy = Math.min(OY_MAX, 7 + extra * 0.45)
     return { ox, oy, w: w + ox * 2, h: h + oy * 2 }
   }
 
@@ -94,7 +100,7 @@
         <span class="text">{item.text || ' '}</span>
       {/if}
 
-      {#if item.status === 'highlight' && textW > 0}
+      {#if item.status === 'highlight' && item.text.trim() && textW > 0}
         {@const g = grade(textW, textH)}
         <svg
           class="grade"
@@ -320,7 +326,9 @@
     /* line up with the centre of the item name's first line */
     top: 16px;
     transform: translateY(-50%);
-    z-index: 1;
+    /* above the grading circle (z-index:2) so the opaque pill clips any arc that
+       bleeds into the date corner on a wrapped highlighted item */
+    z-index: 3;
     display: inline-flex;
     align-items: center;
     gap: 2px;

@@ -11,8 +11,9 @@
     setProjectColor,
     setItems,
     PALETTE,
+    swapping,
   } from '../store.svelte.js'
-  import { pop } from '../pop.js'
+  import { pop, collapse } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
   let { project, editing = true } = $props()
@@ -39,6 +40,27 @@
     const it = addItem(project.id)
     autofocusId = it.id
   }
+
+  // Stamp the card's grid-relative box onto the .cell wrapper BEFORE removal, so
+  // the liftOut out-transition can pin the leaving card where it actually sat
+  // (Svelte detaches it before the outro, where offset* would read 0 → top-left flash).
+  function delProject(e) {
+    const cell = e.currentTarget.closest('.cell')
+    const grid = cell?.parentElement
+    if (cell && grid) {
+      const r = cell.getBoundingClientRect()
+      const g = grid.getBoundingClientRect()
+      cell.dataset.gx = r.left - g.left
+      cell.dataset.gy = r.top - g.top
+      cell.dataset.gw = r.width
+      cell.dataset.gh = r.height
+      // hold the grid's height while the (possibly last) card lifts out so the
+      // "New project" button below doesn't jump up; release after the outro.
+      grid.style.minHeight = g.height + 'px'
+      setTimeout(() => (grid.style.minHeight = ''), 220)
+    }
+    removeProject(project.id)
+  }
 </script>
 
 <article class="card" style="--card-accent: {project.color};">
@@ -48,6 +70,14 @@
         <Icon name="grip" size={16} />
       </span>
     {/if}
+    <button
+      class="color-dot"
+      bind:this={colorBtn}
+      onclick={() => editing && (showColor = !showColor)}
+      disabled={!editing}
+      title={t('changeColor')}
+      aria-label={t('projectColor')}
+    ></button>
 
     {#if editing}
       <input
@@ -61,15 +91,6 @@
       <h2 class="title">{project.title}</h2>
     {/if}
 
-    <button
-      class="color-dot"
-      bind:this={colorBtn}
-      onclick={() => editing && (showColor = !showColor)}
-      disabled={!editing}
-      title={t('changeColor')}
-      aria-label={t('projectColor')}
-    ></button>
-
     <span class="count" title={t('doneTotal')}>{done}/{project.items.length}</span>
 
     {#if editing}
@@ -81,7 +102,7 @@
           class="icon-btn danger"
           title={t('deleteProject')}
           aria-label={t('deleteProject')}
-          onclick={() => removeProject(project.id)}
+          onclick={delProject}
         >
           <Icon name="trash" size={15} />
         </button>
@@ -106,8 +127,8 @@
       <div
         class="item-wrap"
         animate:flip={{ duration: FLIP }}
-        in:pop={{ disabled: dragging }}
-        out:pop={{ disabled: dragging }}
+        in:pop={{ disabled: dragging || swapping.on }}
+        out:collapse={{ disabled: dragging || swapping.on }}
       >
         <TodoItem
           pid={project.id}
@@ -170,8 +191,8 @@
   .card-head {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 11px 10px 9px 12px;
+    gap: 7px;
+    padding: 11px 10px 9px 13px;
     border-bottom: 1px solid var(--border);
     position: relative;
   }
@@ -189,7 +210,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 -4px 0 -5px;
+    margin: 0 -3px 0 -6px;
     color: var(--text-faint);
     cursor: grab;
     touch-action: none;

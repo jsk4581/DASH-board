@@ -25,6 +25,12 @@ exported to / imported from a JSON file.
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
 
+## Tech stack
+
+[Svelte 5](https://svelte.dev) + [Vite](https://vitejs.dev), with drag‑and‑drop by
+[svelte-dnd-action](https://github.com/isaacHagoel/svelte-dnd-action). Runtime
+dependencies are kept to a minimum, so the bundle stays small (~40 KB gzipped).
+
 ## Getting started
 
 ```bash
@@ -38,12 +44,6 @@ Production build:
 npm run build    # outputs to dist/
 npm run preview  # preview the built output
 ```
-
-## Tech stack
-
-[Svelte 5](https://svelte.dev) + [Vite](https://vitejs.dev), with drag‑and‑drop by
-[svelte-dnd-action](https://github.com/isaacHagoel/svelte-dnd-action). Runtime
-dependencies are kept to a minimum, so the bundle stays small (~40 KB gzipped).
 
 ## Deployment
 

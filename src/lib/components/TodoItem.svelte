@@ -15,8 +15,16 @@
   // measured text box → drives the 강조 circle size so it wraps (not covers) the words
   let textW = $state(0)
   let textH = $state(0)
-  const PAD_X = 12
-  const PAD_Y = 6
+  // base padding for a single line; grows with extra lines so the loop encloses
+  // multi-line text instead of cutting through it (an ellipse around a tall box
+  // needs to be much wider/taller than the box to contain its corners)
+  const ONE_LINE_H = 11 // ~ half the 15px·1.4 line box
+  function grade(w, h) {
+    const extra = Math.max(0, h / 2 - ONE_LINE_H)
+    const ox = 13 + extra * 2.0
+    const oy = 7 + extra * 0.55
+    return { ox, oy, w: w + ox * 2, h: h + oy * 2 }
+  }
 
   $effect(() => {
     if (autofocus && inputEl) {
@@ -87,19 +95,18 @@
       {/if}
 
       {#if item.status === 'highlight' && textW > 0}
-        {@const w = textW + PAD_X * 2}
-        {@const h = textH + PAD_Y * 2}
+        {@const g = grade(textW, textH)}
         <svg
           class="grade"
-          style="left:{-PAD_X}px; top:{-PAD_Y}px; width:{w}px; height:{h}px;"
-          viewBox="0 0 {w} {h}"
+          style="left:{-g.ox}px; top:{-g.oy}px; width:{g.w}px; height:{g.h}px;"
+          viewBox="0 0 {g.w} {g.h}"
           aria-hidden="true"
         >
           <ellipse
-            cx={w / 2}
-            cy={h / 2}
-            rx={w / 2 - 2}
-            ry={h / 2 - 2}
+            cx={g.w / 2}
+            cy={g.h / 2}
+            rx={g.w / 2 - 2}
+            ry={g.h / 2 - 2}
             filter="url(#pencil-rough)"
           />
         </svg>

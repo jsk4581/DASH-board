@@ -1,4 +1,5 @@
 <script>
+  import { fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
   import CalendarView from './CalendarView.svelte'
   import GanttView from './GanttView.svelte'
@@ -27,7 +28,21 @@
   // date navigation: page the timeline window back/forward by a week
   const STEP = 7
   let offsetDays = $state(0)
+  let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
+  let navigated = $state(false) // skip the slide on first render
   const spanDays = $derived(ui.timelineView === 'calendar' ? 28 : 14)
+
+  function step(by) {
+    dir = by > 0 ? 1 : -1
+    navigated = true
+    offsetDays += by
+  }
+  function reset() {
+    if (offsetDays === 0) return
+    dir = offsetDays > 0 ? -1 : 1
+    navigated = true
+    offsetDays = 0
+  }
   const from = $derived(addDays(new Date(), offsetDays))
   const rangeLabel = $derived(
     `${formatShort(toISODate(from))} – ${formatShort(toISODate(addDays(from, spanDays - 1)))}`
@@ -59,26 +74,33 @@
   </header>
 
   <div class="tl-body">
-    {#if ui.timelineView === 'calendar'}
-      <CalendarView items={dated} {from} />
-    {:else}
-      <GanttView projects={board.projects} {from} />
-    {/if}
+    {#key offsetDays}
+      <div
+        class="tl-slide"
+        in:fly={{ x: navigated ? dir * 44 : 0, duration: navigated ? 240 : 0 }}
+      >
+        {#if ui.timelineView === 'calendar'}
+          <CalendarView items={dated} {from} />
+        {:else}
+          <GanttView projects={board.projects} {from} />
+        {/if}
+      </div>
+    {/key}
   </div>
 
   <nav class="tl-nav" aria-label={t('schedule')}>
-    <button class="nav-arrow" onclick={() => (offsetDays -= STEP)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
+    <button class="nav-arrow" onclick={() => step(-STEP)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
       <Icon name="chevronLeft" size={18} />
     </button>
     <button
       class="nav-range"
       class:dim={offsetDays === 0}
-      onclick={() => (offsetDays = 0)}
+      onclick={reset}
       title={t('backToToday')}
     >
       {rangeLabel}
     </button>
-    <button class="nav-arrow" onclick={() => (offsetDays += STEP)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
+    <button class="nav-arrow" onclick={() => step(STEP)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
       <Icon name="chevron" size={18} />
     </button>
   </nav>
@@ -146,6 +168,7 @@
 
   .tl-body {
     padding: 12px 16px 8px;
+    overflow: hidden;
   }
 
   .tl-nav {

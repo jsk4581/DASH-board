@@ -12,6 +12,7 @@
     setItems,
     PALETTE,
   } from '../store.svelte.js'
+  import { pop } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
   let { project, editing = true } = $props()
@@ -20,14 +21,18 @@
   let autofocusId = $state(null)
   let colorBtn = $state(null)
   let showColor = $state(false)
+  // suppress the pop while dragging (reorder adds/removes nodes too)
+  let dragging = $state(false)
 
   const done = $derived(project.items.filter((i) => i.status === 'done').length)
 
   function handleConsider(e) {
+    dragging = true
     setItems(project.id, e.detail.items)
   }
   function handleFinalize(e) {
     setItems(project.id, e.detail.items)
+    dragging = false
   }
 
   function add() {
@@ -43,14 +48,6 @@
         <Icon name="grip" size={16} />
       </span>
     {/if}
-    <button
-      class="color-dot"
-      bind:this={colorBtn}
-      onclick={() => editing && (showColor = !showColor)}
-      disabled={!editing}
-      title={t('changeColor')}
-      aria-label={t('projectColor')}
-    ></button>
 
     {#if editing}
       <input
@@ -63,6 +60,15 @@
     {:else}
       <h2 class="title">{project.title}</h2>
     {/if}
+
+    <button
+      class="color-dot"
+      bind:this={colorBtn}
+      onclick={() => editing && (showColor = !showColor)}
+      disabled={!editing}
+      title={t('changeColor')}
+      aria-label={t('projectColor')}
+    ></button>
 
     <span class="count" title={t('doneTotal')}>{done}/{project.items.length}</span>
 
@@ -97,7 +103,12 @@
     onfinalize={handleFinalize}
   >
     {#each project.items as item (item.id)}
-      <div class="item-wrap" animate:flip={{ duration: FLIP }}>
+      <div
+        class="item-wrap"
+        animate:flip={{ duration: FLIP }}
+        in:pop={{ disabled: dragging }}
+        out:pop={{ disabled: dragging }}
+      >
         <TodoItem
           pid={project.id}
           {item}
@@ -159,8 +170,8 @@
   .card-head {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 11px 10px 9px 13px;
+    gap: 6px;
+    padding: 11px 10px 9px 12px;
     border-bottom: 1px solid var(--border);
     position: relative;
   }
@@ -178,7 +189,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 -3px 0 -6px;
+    margin: 0 -4px 0 -5px;
     color: var(--text-faint);
     cursor: grab;
     touch-action: none;

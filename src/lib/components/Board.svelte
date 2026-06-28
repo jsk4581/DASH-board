@@ -4,17 +4,22 @@
   import ProjectCard from './ProjectCard.svelte'
   import Icon from './Icon.svelte'
   import { board, addProject, setProjects } from '../store.svelte.js'
+  import { pop } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
   let { editing = true } = $props()
 
   const FLIP = 200
+  // suppress the pop while dragging (reorder adds/removes nodes too)
+  let dragging = $state(false)
 
   function handleConsider(e) {
+    dragging = true
     setProjects(e.detail.items)
   }
   function handleFinalize(e) {
     setProjects(e.detail.items)
+    dragging = false
   }
 </script>
 
@@ -32,7 +37,12 @@
     onfinalize={handleFinalize}
   >
     {#each board.projects as project (project.id)}
-      <div class="cell" animate:flip={{ duration: FLIP }}>
+      <div
+        class="cell"
+        animate:flip={{ duration: FLIP }}
+        in:pop={{ disabled: dragging }}
+        out:pop={{ disabled: dragging }}
+      >
         <ProjectCard {project} {editing} />
       </div>
     {/each}

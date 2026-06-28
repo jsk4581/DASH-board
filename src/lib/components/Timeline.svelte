@@ -1,5 +1,6 @@
 <script>
-  import { hslide } from '../pop.js'
+  import { tick } from 'svelte'
+  import { vslide } from '../pop.js'
   import Icon from './Icon.svelte'
   import CalendarView from './CalendarView.svelte'
   import GanttView from './GanttView.svelte'
@@ -29,19 +30,24 @@
   const STEP = 7
   let offsetDays = $state(0)
   let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
-  let navigated = $state(false) // skip the slide on first render
+  // true ONLY during the render caused by a date step → animate then. Stays false
+  // on first paint and on a view toggle (calendar↔gantt), so neither slides.
+  let paging = $state(false)
   const spanDays = $derived(ui.timelineView === 'calendar' ? 28 : 14)
 
+  function page(by) {
+    paging = true
+    offsetDays += by
+    tick().then(() => (paging = false))
+  }
   function step(by) {
     dir = by > 0 ? 1 : -1
-    navigated = true
-    offsetDays += by
+    page(by)
   }
   function reset() {
     if (offsetDays === 0) return
     dir = offsetDays > 0 ? -1 : 1
-    navigated = true
-    offsetDays = 0
+    page(-offsetDays)
   }
   const from = $derived(addDays(new Date(), offsetDays))
   const rangeLabel = $derived(
@@ -74,21 +80,23 @@
   </header>
 
   <div class="tl-body">
-    <div class="tl-viewport">
-      {#key offsetDays}
-        <div
-          class="tl-slide"
-          in:hslide={{ dir, mode: 'in', nav: navigated }}
-          out:hslide={{ dir, mode: 'out', nav: navigated }}
-        >
-          {#if ui.timelineView === 'calendar'}
+    {#if ui.timelineView === 'calendar'}
+      <!-- calendar pages vertically (whole 4-week grid) -->
+      <div class="tl-viewport">
+        {#key offsetDays}
+          <div
+            class="tl-vslide"
+            in:vslide={{ dir, mode: 'in', nav: paging }}
+            out:vslide={{ dir, mode: 'out', nav: paging }}
+          >
             <CalendarView items={dated} {from} />
-          {:else}
-            <GanttView projects={board.projects} {from} />
-          {/if}
-        </div>
-      {/key}
-    </div>
+          </div>
+        {/key}
+      </div>
+    {:else}
+      <!-- gantt keeps its left label column and slides only the date tracks (internally) -->
+      <GanttView projects={board.projects} {from} {dir} {paging} />
+    {/if}
   </div>
 
   <nav class="tl-nav" aria-label={t('schedule')}>
@@ -175,9 +183,9 @@
   }
   .tl-viewport {
     position: relative; /* containing block for the pinned outgoing slide */
-    overflow: hidden; /* clips both halves off-screen during the slide */
+    overflow: hidden; /* clips the weeks scrolling in/out vertically */
   }
-  .tl-slide {
+  .tl-vslide {
     width: 100%;
   }
 

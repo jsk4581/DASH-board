@@ -1,12 +1,16 @@
 <script>
-  import { horizon, dayDiff, startOfDay, relativeTag, weekdayLabel } from '../date.js'
+  import { horizon, dayDiff, startOfDay, relativeTag, weekdayLabel, toISODate } from '../date.js'
+  import { hslide } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
-  // projects: full project list (each with items)
-  let { projects, from = undefined } = $props()
+  // projects: full project list (each with items).
+  // dir/paging come from the timeline nav; paging is true only during a date step.
+  let { projects, from = undefined, dir = 1, paging = false } = $props()
 
   const days = $derived(horizon(14, from))
   const base = $derived(startOfDay(from ?? new Date()))
+  // keying the date tracks on this slides ONLY the tracks (labels stay) when paging
+  const fromKey = $derived(toISODate(from ?? new Date()))
 
   function rowFor(it) {
     if (!it.due) return null
@@ -33,13 +37,21 @@
   <!-- header -->
   <div class="grow head">
     <div class="label"></div>
-    <div class="track head-track">
-      {#each days as d (d.iso)}
-        <div class="hcell" class:today={d.isToday} class:weekend={d.isWeekend}>
-          <span class="hwd" class:sun={d.dow === 0} class:sat={d.dow === 6}>{weekdayLabel(d.dow)}</span>
-          <span class="hnum">{d.day}</span>
+    <div class="track-cell">
+      {#key fromKey}
+        <div
+          class="track head-track"
+          in:hslide={{ dir, mode: 'in', nav: paging }}
+          out:hslide={{ dir, mode: 'out', nav: paging }}
+        >
+          {#each days as d (d.iso)}
+            <div class="hcell" class:today={d.isToday} class:weekend={d.isWeekend}>
+              <span class="hwd" class:sun={d.dow === 0} class:sat={d.dow === 6}>{weekdayLabel(d.dow)}</span>
+              <span class="hnum">{d.day}</span>
+            </div>
+          {/each}
         </div>
-      {/each}
+      {/key}
     </div>
   </div>
 
@@ -54,19 +66,27 @@
     {#each g.rows as r (r.item.id)}
       <div class="grow">
         <div class="label" title={r.item.text}>{r.item.text}</div>
-        <div class="track">
-          {#each days as d}
-            <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>
-          {/each}
-          <div
-            class="bar"
-            class:done={r.item.status === 'done'}
-            class:highlight={r.item.status === 'highlight'}
-            class:clip-left={r.geom.clipLeft}
-            style="--c: {g.project.color}; grid-column: {r.geom.startIdx + 1} / {r.geom.dueIdx + 2};"
-          >
-            <span class="bar-tag">{relativeTag(r.item.due)}</span>
-          </div>
+        <div class="track-cell">
+          {#key fromKey}
+            <div
+              class="track"
+              in:hslide={{ dir, mode: 'in', nav: paging }}
+              out:hslide={{ dir, mode: 'out', nav: paging }}
+            >
+              {#each days as d}
+                <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>
+              {/each}
+              <div
+                class="bar"
+                class:done={r.item.status === 'done'}
+                class:highlight={r.item.status === 'highlight'}
+                class:clip-left={r.geom.clipLeft}
+                style="--c: {g.project.color}; grid-column: {r.geom.startIdx + 1} / {r.geom.dueIdx + 2};"
+              >
+                <span class="bar-tag">{relativeTag(r.item.due)}</span>
+              </div>
+            </div>
+          {/key}
         </div>
       </div>
     {/each}
@@ -83,6 +103,13 @@
     display: grid;
     grid-template-columns: var(--label-w) minmax(420px, 1fr);
     align-items: stretch;
+    min-width: 0;
+  }
+  /* holds the keyed date track; clips the horizontal slide so the left label
+     column stays put while only the dates page in/out */
+  .track-cell {
+    position: relative;
+    overflow: hidden;
     min-width: 0;
   }
   .label {

@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import Popover from './Popover.svelte'
   import Icon from './Icon.svelte'
-  import { horizon, formatLabel, weekdayNames } from '../date.js'
+  import { horizon, formatLabel, weekdayLabel } from '../date.js'
   import { setItemDates, clearItemDates } from '../store.svelte.js'
   import { t } from '../i18n.svelte.js'
 
@@ -79,9 +79,12 @@
       </button>
     </div>
 
+    <!-- the grid is a rolling 14-day window starting today, so the weekday
+         header must follow the actual days (column j = days[j].dow, which also
+         matches days[j+7] on the second row) — not a fixed Sunday-first row. -->
     <div class="dp-weekdays">
-      {#each weekdayNames() as w}
-        <span class="dp-wd">{w}</span>
+      {#each days.slice(0, 7) as d}
+        <span class="dp-wd" class:sun={d.dow === 0} class:sat={d.dow === 6}>{weekdayLabel(d.dow)}</span>
       {/each}
     </div>
 
@@ -134,6 +137,12 @@
     font-size: 11.5px;
     color: var(--text-faint);
     padding-bottom: 2px;
+  }
+  .dp-wd.sun {
+    color: oklch(0.6 0.17 27);
+  }
+  .dp-wd.sat {
+    color: oklch(0.58 0.13 255);
   }
   .dp-day {
     aspect-ratio: 1;

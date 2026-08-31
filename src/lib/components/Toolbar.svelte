@@ -2,7 +2,7 @@
   import Icon from './Icon.svelte'
   import SyncPopover from './SyncPopover.svelte'
   import Drawer from './Drawer.svelte'
-  import { ui, toggleMode, toggleTheme, toggleLang } from '../ui.svelte.js'
+  import { ui, toggleMode, toggleTheme, toggleLang, setView } from '../ui.svelte.js'
   import { exportFile, importFile, board } from '../store.svelte.js'
   import { undo, redo, history } from '../history.svelte.js'
   import { sync } from '../sync.svelte.js'
@@ -13,6 +13,14 @@
   let syncBtn = $state(null)
   let showSync = $state(false)
   let showDrawer = $state(false)
+  let barH = $state(0)
+
+  const onBoard = $derived(ui.view === 'board')
+
+  // the memo view sizes itself to the space under this bar
+  $effect(() => {
+    document.documentElement.style.setProperty('--bar-h', `${barH}px`)
+  })
 
   function flash(msg) {
     toast = msg
@@ -26,6 +34,7 @@
 
   // intercept Ctrl/⌘+S so it saves the board instead of Chrome's "save page"
   function onKeydown(e) {
+    if (!onBoard) return
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
       e.preventDefault()
       onSave()
@@ -47,68 +56,83 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<header class="bar">
-  <button
-    class="tool icon-only drawer-btn"
-    onclick={() => (showDrawer = true)}
-    title={t('boardsTooltip')}
-    aria-label={t('boardsTooltip')}
-  >
-    <Icon name="sidebar" size={18} />
-  </button>
+<header class="bar" bind:offsetHeight={barH}>
+  {#if onBoard}
+    <button
+      class="tool icon-only drawer-btn"
+      onclick={() => (showDrawer = true)}
+      title={t('boardsTooltip')}
+      aria-label={t('boardsTooltip')}
+    >
+      <Icon name="sidebar" size={18} />
+    </button>
+  {/if}
   <div class="brand">
     <span class="logo">DASH</span>
-    <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-      {board.name}
+    {#if onBoard}
+      <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
+        {board.name}
+      </button>
+    {/if}
+  </div>
+
+  <div class="mode-toggle view-switch" role="group" aria-label={t('viewSwitch')}>
+    <button class:active={onBoard} onclick={() => setView('board')} title={t('boardView')}>
+      <Icon name="grid" size={15} /> <span class="lbl">{t('boardView')}</span>
+    </button>
+    <button class:active={!onBoard} onclick={() => setView('memo')} title={t('memoView')}>
+      <Icon name="chat" size={15} /> <span class="lbl">{t('memoView')}</span>
     </button>
   </div>
 
   <div class="tools">
-    <button
-      class="tool icon-only"
-      onclick={undo}
-      disabled={!history.canUndo}
-      title={t('undoTitle')}
-      aria-label={t('undo')}
-    >
-      <Icon name="undo" size={17} />
-    </button>
-    <button
-      class="tool icon-only"
-      onclick={redo}
-      disabled={!history.canRedo}
-      title={t('redoTitle')}
-      aria-label={t('redo')}
-    >
-      <Icon name="redo" size={17} />
-    </button>
-
-    <div class="sep"></div>
-
-    <div class="mode-toggle" role="group" aria-label={t('modeSwitch')}>
-      <button class:active={ui.mode === 'edit'} onclick={() => ui.mode !== 'edit' && toggleMode()}>
-        <Icon name="pencil" size={15} /> {t('edit')}
+    {#if onBoard}
+      <button
+        class="tool icon-only"
+        onclick={undo}
+        disabled={!history.canUndo}
+        title={t('undoTitle')}
+        aria-label={t('undo')}
+      >
+        <Icon name="undo" size={17} />
       </button>
-      <button class:active={ui.mode === 'view'} onclick={() => ui.mode !== 'view' && toggleMode()}>
-        <Icon name="eye" size={15} /> {t('view')}
+      <button
+        class="tool icon-only"
+        onclick={redo}
+        disabled={!history.canRedo}
+        title={t('redoTitle')}
+        aria-label={t('redo')}
+      >
+        <Icon name="redo" size={17} />
       </button>
-    </div>
 
-    <div class="sep"></div>
+      <div class="sep"></div>
 
-    <button class="tool" onclick={onSave} title={t('saveTitle')}>
-      <Icon name="download" size={16} /> <span class="lbl">{t('save')}</span>
-    </button>
-    <button class="tool" onclick={() => fileInput.click()} title={t('loadTitle')}>
-      <Icon name="upload" size={16} /> <span class="lbl">{t('load')}</span>
-    </button>
-    <input
-      type="file"
-      accept="application/json,.json"
-      bind:this={fileInput}
-      onchange={onPick}
-      hidden
-    />
+      <div class="mode-toggle" role="group" aria-label={t('modeSwitch')}>
+        <button class:active={ui.mode === 'edit'} onclick={() => ui.mode !== 'edit' && toggleMode()}>
+          <Icon name="pencil" size={15} /> {t('edit')}
+        </button>
+        <button class:active={ui.mode === 'view'} onclick={() => ui.mode !== 'view' && toggleMode()}>
+          <Icon name="eye" size={15} /> {t('view')}
+        </button>
+      </div>
+
+      <div class="sep"></div>
+
+      <button class="tool" onclick={onSave} title={t('saveTitle')}>
+        <Icon name="download" size={16} /> <span class="lbl">{t('save')}</span>
+      </button>
+      <button class="tool" onclick={() => fileInput.click()} title={t('loadTitle')}>
+        <Icon name="upload" size={16} /> <span class="lbl">{t('load')}</span>
+      </button>
+      <input
+        type="file"
+        accept="application/json,.json"
+        bind:this={fileInput}
+        onchange={onPick}
+        hidden
+      />
+    {/if}
 
     <button
       class="tool icon-only sync-btn"
@@ -229,6 +253,13 @@
     box-shadow: var(--shadow-sm);
   }
 
+  .view-switch {
+    flex: none;
+  }
+  .view-switch button {
+    padding: 5px 9px;
+  }
+
   .sep {
     width: 1px;
     height: 22px;
@@ -309,6 +340,22 @@
   @media (max-width: 640px) {
     .tool .lbl {
       display: none;
+    }
+    .bar {
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 9px;
+      padding-bottom: 9px;
+    }
+    /* the view switch takes its own full-width row under the tools */
+    .view-switch {
+      order: 10;
+      flex-basis: 100%;
+      display: flex;
+    }
+    .view-switch button {
+      flex: 1;
+      justify-content: center;
     }
     .tool {
       padding: 7px;

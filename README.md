@@ -24,6 +24,7 @@ exported to / imported from a JSON file.
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
+- **Memos**: a chat-style notebook beside the board. One thread per topic, notes to yourself with edit/delete, day dividers and clickable links; stored in IndexedDB, with JSON export/import
 
 ## Tech stack
 

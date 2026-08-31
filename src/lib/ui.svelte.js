@@ -23,6 +23,7 @@ export const ui = $state({
   theme: saved.theme ?? (prefersDark() ? 'dark' : 'light'), // 'light' | 'dark'
   timelineView: saved.timelineView === 'gantt' ? 'gantt' : 'calendar', // 'calendar' | 'gantt'
   lang: saved.lang === 'ko' ? 'ko' : 'en', // 'ko' | 'en' (defaults to English)
+  view: saved.view === 'memo' ? 'memo' : 'board', // 'board' | 'memo'
 })
 
 $effect.root(() => {
@@ -64,6 +65,10 @@ export function toggleTheme() {
 
 export function setTimelineView(v) {
   ui.timelineView = v
+}
+
+export function setView(v) {
+  ui.view = v
 }
 
 export function toggleLang() {

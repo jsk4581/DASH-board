@@ -2,12 +2,14 @@
   import Toolbar from './lib/components/Toolbar.svelte'
   import Board from './lib/components/Board.svelte'
   import Timeline from './lib/components/Timeline.svelte'
+  import MemoView from './lib/components/MemoView.svelte'
   import { ui, setTouchItem } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
 
   const editing = $derived(ui.mode === 'edit')
 
   function onKeydown(e) {
+    if (ui.view === 'memo') return // memo composer keeps the browser's own text undo
     const mod = e.ctrlKey || e.metaKey
     if (!mod) return
     const k = e.key.toLowerCase()
@@ -34,10 +36,16 @@
 
 <Toolbar />
 
-<main class:editing>
-  <Board {editing} />
-  <Timeline {editing} />
-</main>
+{#if ui.view === 'memo'}
+  <main class="memo-main">
+    <MemoView />
+  </main>
+{:else}
+  <main class:editing>
+    <Board {editing} />
+    <Timeline {editing} />
+  </main>
+{/if}
 
 <!-- shared "colored-pencil" roughening filter for the 강조 grading circle -->
 <svg class="defs" aria-hidden="true" width="0" height="0">
@@ -52,6 +60,11 @@
     max-width: 1480px;
     margin: 0 auto;
     padding-bottom: 24px;
+  }
+  /* the chat view owns the rest of the viewport under the sticky toolbar */
+  main.memo-main {
+    height: calc(100dvh - var(--bar-h, 56px));
+    padding-bottom: 0;
   }
   .defs {
     position: absolute;

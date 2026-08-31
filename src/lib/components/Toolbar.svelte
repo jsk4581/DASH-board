@@ -7,6 +7,7 @@
   import { undo, redo, history } from '../history.svelte.js'
   import { sync } from '../sync.svelte.js'
   import { t } from '../i18n.svelte.js'
+  import { isNative } from '../platform.js'
 
   let fileInput = $state(null)
   let toast = $state('')
@@ -134,18 +135,20 @@
       />
     {/if}
 
-    <button
-      class="tool icon-only sync-btn"
-      bind:this={syncBtn}
-      onclick={() => (showSync = !showSync)}
-      title={t('syncTooltip')}
-      aria-label={t('syncTooltip')}
-    >
-      <Icon name="cloud" size={17} />
-      {#if sync.connected || sync.status !== 'idle'}
-        <span class="sync-pip {sync.status}"></span>
-      {/if}
-    </button>
+    {#if !isNative}
+      <button
+        class="tool icon-only sync-btn"
+        bind:this={syncBtn}
+        onclick={() => (showSync = !showSync)}
+        title={t('syncTooltip')}
+        aria-label={t('syncTooltip')}
+      >
+        <Icon name="cloud" size={17} />
+        {#if sync.connected || sync.status !== 'idle'}
+          <span class="sync-pip {sync.status}"></span>
+        {/if}
+      </button>
+    {/if}
 
     <button class="tool" onclick={toggleLang} title={t('langSwitch')} aria-label={t('langSwitch')}>
       <Icon name="globe" size={16} /> <span class="lbl">{t('langName')}</span>

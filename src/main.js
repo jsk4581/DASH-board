@@ -1,7 +1,9 @@
 import { mount } from 'svelte'
 import './app.css'
-import App from './App.svelte'
+import { hydrate } from './lib/platform.js'
 
-const app = mount(App, { target: document.getElementById('app') })
-
-export default app
+// In the store app the board lives in a file; pull it into localStorage before
+// the store module (which reads localStorage synchronously) is first imported.
+hydrate()
+  .then(() => import('./App.svelte'))
+  .then(({ default: App }) => mount(App, { target: document.getElementById('app') }))

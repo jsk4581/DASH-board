@@ -9,14 +9,25 @@
     "build": "vite build",
     "build:pages": "GITHUB_PAGES=1 vite build",
     "preview": "vite preview",
-    "setup:pages": "bash scripts/setup-pages.sh"
+    "setup:pages": "bash scripts/setup-pages.sh",
+    "app:assets": "python3 scripts/make-app-assets.py && capacitor-assets generate --android",
+    "app:sync": "vite build && cap sync android",
+    "app:debug": "npm run app:sync && cd android && ./gradlew assembleDebug",
+    "app:release": "npm run app:sync && cd android && ./gradlew bundleRelease"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "svelte": "^5.19.0",
     "vite": "^6.0.7"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/filesystem": "^8.1.3",
+    "@capacitor/share": "^8.0.1",
     "svelte-dnd-action": "^0.9.55"
   }
 }

@@ -8,6 +8,7 @@
   import { t } from '../i18n.svelte.js'
   import { ui } from '../ui.svelte.js'
   import { toISODate } from '../date.js'
+  import { saveTextFile, onBackButton } from '../platform.js'
 
   let narrow = $state(false)
   let showList = $state(true) // narrow only: list or chat
@@ -39,7 +40,18 @@
     sync()
     mq.addEventListener('change', sync)
     if (narrow && memo.activeId) showList = false
-    return () => mq.removeEventListener('change', sync)
+    // hardware back (store app): chat -> thread list, before leaving the app
+    const offBack = onBackButton(() => {
+      if (narrow && !showList) {
+        showList = true
+        return true
+      }
+      return false
+    })
+    return () => {
+      mq.removeEventListener('change', sync)
+      offBack()
+    }
   })
 
   function flash(msg) {
@@ -83,16 +95,8 @@
     return d.toLocaleDateString(ui.lang, { month: 'short', day: 'numeric' })
   }
 
-  function onExport() {
-    const blob = new Blob([serializeMemos()], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `dash-memos-${toISODate(new Date())}.json`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+  async function onExport() {
+    await saveTextFile(`dash-memos-${toISODate(new Date())}.json`, serializeMemos(), 'DASH memos')
     flash(t('memoExported'))
   }
   async function onPick(e) {

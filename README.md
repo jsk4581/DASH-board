@@ -26,6 +26,23 @@ exported to / imported from a JSON file.
 - **Responsive · mobile · dark mode** — works on any screen
 - **Memos**: a chat-style notebook beside the board. One thread per topic, notes to yourself with edit/delete, day dividers and clickable links; stored in IndexedDB, with JSON export/import
 
+## Android app
+
+The same code ships as a native Android app through
+[Capacitor](https://capacitorjs.com). The app is local-only: the board lives in
+a file in the app's private storage, memos in IndexedDB, and "save" opens the
+share sheet with a JSON export. Gist sync is a web-only feature.
+
+    npm run app:assets     # regenerate launcher icons + splash from scripts/make-app-assets.py
+    npm run app:debug      # build dist/, sync into android/, produce a debug APK
+    npm run app:release    # same, but a signed release bundle (.aab) for Play
+
+Requirements: Node 22+ (Capacitor CLI), JDK 21, Android SDK with platform 36.
+Release signing reads `~/.config/dash-board/keystore.properties` (`storeFile`,
+`storePassword`, `keyAlias`, `keyPassword`); keep that keystore out of the repo
+and backed up, since Play ties the app to it. The privacy policy for the store
+listing is served at `/privacy.html`.
+
 ## Tech stack
 
 [Svelte 5](https://svelte.dev) + [Vite](https://vitejs.dev), with drag‑and‑drop by

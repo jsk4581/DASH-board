@@ -8,8 +8,8 @@
 import { tick } from 'svelte'
 import { toISODate } from './date.js'
 import { t } from './i18n.svelte.js'
+import { BOARD_KEY as STORAGE_KEY, persistBoard, saveTextFile } from './platform.js'
 
-const STORAGE_KEY = 'dash-board-v1'
 const SCHEMA_VERSION = 2
 
 // Accent palette assigned to project cards (cycled on creation).
@@ -154,6 +154,7 @@ $effect.root(() => {
     } catch (e) {
       console.warn('[DASH] autosave failed:', e)
     }
+    persistBoard(snapshot) // durable file copy in the store app; no-op on the web
   })
 })
 
@@ -303,15 +304,7 @@ export function replaceBoards(raw) {
 
 // ---- export / import ---------------------------------------------------
 export function exportFile() {
-  const blob = new Blob([serializeBoards()], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `dash-${toISODate(new Date())}.json`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+  return saveTextFile(`dash-${toISODate(new Date())}.json`, serializeBoards(), 'DASH board')
 }
 
 export async function importFile(file) {

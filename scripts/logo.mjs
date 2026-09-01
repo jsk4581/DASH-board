@@ -35,6 +35,10 @@ export const PAPER = '#ffffff'
 export const NIGHT = oklch(0.18, 0.005, 285.8) // --bg (dark theme)
 
 /** The mark's inner markup with theme colours fixed (librsvg has no colour-scheme). */
+export function viewBox() {
+  return readFileSync(LOGO, 'utf8').match(/viewBox="([^"]+)"/)[1]
+}
+
 export function markInner({ body = INK, wing = ACCENT } = {}) {
   const svg = readFileSync(LOGO, 'utf8')
   const inner = svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'))
@@ -47,7 +51,7 @@ export function composeSvg({ size, scale = 1, bg = null, radius = 0, colours } =
   const s = Math.round(size * scale)
   const o = Math.round((size - s) / 2)
   const plate = bg ? `<rect width="${size}" height="${size}" rx="${Math.round(size * radius)}" fill="${bg}"/>` : ''
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">${plate}<svg x="${o}" y="${o}" width="${s}" height="${s}" viewBox="12 96 1090 1090">${inner}</svg></svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">${plate}<svg x="${o}" y="${o}" width="${s}" height="${s}" viewBox="${viewBox()}">${inner}</svg></svg>`
 }
 
 export function render(opts) {
@@ -63,12 +67,14 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
 
 const DENSITIES = { ldpi: 0.75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
 
-function vectorDrawable({ body, wing, dp = 108, box = 56 }) {
+// box: the logo's viewBox (its enclosing circle) mapped onto the 66dp adaptive safe zone
+function vectorDrawable({ body, wing, dp = 108, box = 66 }) {
   const svg = readFileSync(LOGO, 'utf8')
   const d = svg.match(/<path class="body" d="([^"]+)"/)[1]
   const lines = [...svg.matchAll(/<line x1="(\d+)" y1="(\d+)" x2="(\d+)" y2="(\d+)"/g)]
-  const k = box / 1090 // logo viewBox is 1090 units starting at (12, 96)
-  const tx = (dp - box) / 2 - 12 * k, ty = (dp - box) / 2 - 96 * k
+  const [vx, vy, vw] = viewBox().split(' ').map(Number)
+  const k = box / vw
+  const tx = (dp - box) / 2 - vx * k, ty = (dp - box) / 2 - vy * k
   const bars = lines.map(([, x1, y1, x2, y2]) =>
     `    <path android:pathData="M${x1},${y1} L${x2},${y2}" android:strokeColor="${wing}" android:strokeWidth="62" android:strokeLineCap="round"/>`).join('\n')
   return `<?xml version="1.0" encoding="utf-8"?>
@@ -104,8 +110,8 @@ export async function writeAndroidLauncher(resDir) {
     const size = Math.round(48 * mult)
     const dir = path.join(resDir, `mipmap-${name}`)
     mkdirSync(dir, { recursive: true })
-    await render({ size, scale: 0.78, bg: PAPER, radius: 0.22 }).toFile(path.join(dir, 'ic_launcher.png'))
-    await render({ size, scale: 0.78, bg: PAPER, radius: 0.5 }).toFile(path.join(dir, 'ic_launcher_round.png'))
+    await render({ size, scale: 0.9, bg: PAPER, radius: 0.22 }).toFile(path.join(dir, 'ic_launcher.png'))
+    await render({ size, scale: 0.98, bg: PAPER, radius: 0.5 }).toFile(path.join(dir, 'ic_launcher_round.png'))
     for (const stale of ['ic_launcher_foreground.png', 'ic_launcher_background.png']) rmSync(path.join(dir, stale), { force: true })
   }
 }

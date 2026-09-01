@@ -20,6 +20,7 @@
   let b = $state(initDue)
   let dragging = $state(false)
   let dragAnchor = $state(-1)
+  let pressedSelected = false // pointer went down on an already-selected day
 
   const lo = $derived(Math.min(a, b))
   const hi = $derived(Math.max(a, b))
@@ -38,6 +39,7 @@
   }
 
   function onDown(i) {
+    pressedSelected = inRange(i)
     dragging = true
     dragAnchor = i
     a = i
@@ -47,10 +49,12 @@
     if (dragging) b = i
   }
   function onUp(i) {
-    if (dragging) {
-      commit(dragAnchor, i)
-      dragging = false
-    }
+    if (!dragging) return
+    dragging = false
+    // a plain click (no drag) on a day that was already selected clears the
+    // dates: the only way to "un-date" an item without hunting for the x button
+    if (i === dragAnchor && pressedSelected) clear()
+    else commit(dragAnchor, i)
   }
 
   function clear() {

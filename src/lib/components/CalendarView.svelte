@@ -10,8 +10,13 @@
   const byDay = $derived.by(() => {
     const map = {}
     for (const d of days) map[d.iso] = []
+    // a ranged item (start..due) appears on every day of its span; ISO dates
+    // compare correctly as strings, so no Date parsing is needed
     for (const it of items) {
-      if (map[it.due]) map[it.due].push(it)
+      const lo = it.start && it.start < it.due ? it.start : it.due
+      for (const d of days) {
+        if (d.iso >= lo && d.iso <= it.due) map[d.iso].push(it)
+      }
     }
     return map
   })

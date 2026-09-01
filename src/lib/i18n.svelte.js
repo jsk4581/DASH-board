@@ -74,7 +74,7 @@ const dict = {
     noDue: '마감일 없음',
     clearDue: '마감일 지우기',
     clear: '지우기',
-    dateHint: '클릭=하루 · 드래그=기간',
+    dateHint: '클릭=하루 · 드래그=기간 · 다시 클릭=해제',
 
     // sync (GitHub Gist)
     syncTooltip: '기기 간 동기화',
@@ -217,7 +217,7 @@ const dict = {
     noDue: 'No due date',
     clearDue: 'Clear due date',
     clear: 'Clear',
-    dateHint: 'Click = day · Drag = range',
+    dateHint: 'Click = day · Drag = range · Click again = clear',
 
     // sync (GitHub Gist)
     syncTooltip: 'Sync across devices',

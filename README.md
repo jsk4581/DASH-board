@@ -17,7 +17,7 @@ exported to / imported from a JSON file.
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
 - **Timeline** — a 4‑week calendar or 2‑week Gantt chart; page back/forward with the arrows below it
-- **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span
+- **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
 - **Undo / redo** — `Ctrl/⌘ + Z` and `Ctrl/⌘ + Y` (rapid edits are coalesced into one step)
 - **Edit mode / View mode** — flip to a clean, read‑only view
 - **Bilingual UI** — Korean ↔ English, remembered across visits
@@ -153,7 +153,7 @@ active are stored separately and are **not** included in exports.
 
 - **Boards** — the drawer button (top‑left) lists your boards; add / rename / switch / delete
 - **Add item** — the box's `+` or "Add item"; press `Enter` after typing to keep adding
-- **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range)
+- **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range) / click a selected day again to clear
 - **Timeline** — the arrows below the calendar/Gantt page the dates; click the range to jump back to today
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file

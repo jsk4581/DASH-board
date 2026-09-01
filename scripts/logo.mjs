@@ -1,6 +1,6 @@
-// Rasterising helpers for the DASH logo (assets/logo.svg): a calendar card
-// with the bird inside. Used by the app asset generator; needs `sharp`, which
-// @capacitor/assets already brings in.
+// Rasterising helpers for the DASH logo (assets/logo.svg): a full-bleed
+// calendar leaf with the bird on it. Used by the app asset generator; needs
+// `sharp`, which @capacitor/assets already brings in.
 import sharp from 'sharp'
 import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -32,43 +32,52 @@ export function oklch(L, C, hDeg) {
 export const INK = oklch(0.4, 0.12, 255) // --accent-ink (light theme)
 export const ACCENT = oklch(0.62, 0.11, 255) // --accent (dark theme value; reads as a fill)
 export const PAPER = '#ffffff'
-export const FAINT = '#cfd8e6' // card outline
+export const FAINT = '#cfd8e6' // leaf outline (only where the leaf sits on a light ground)
 export const NIGHT = oklch(0.18, 0.005, 285.8) // --bg (dark theme)
 
 // ---- parse the SVG once ------------------------------------------------------
 function parse() {
   const svg = readFileSync(LOGO, 'utf8')
   const num = (re) => Number(svg.match(re)[1])
-  const card = {
-    x: num(/class="card" x="([\d.]+)"/), y: num(/class="card"[^>]*? y="([\d.]+)"/),
-    w: num(/class="card"[^>]*? width="([\d.]+)"/), h: num(/class="card"[^>]*? height="([\d.]+)"/),
-    rx: num(/class="card"[^>]*? rx="([\d.]+)"/),
-  }
-  const band = svg.match(/class="band" d="([^"]+)"/)[1]
-  const [, tx, ty, k] = svg.match(/translate\(([\d.-]+),([\d.-]+)\) scale\(([\d.]+)\)/).map(Number)
+  const page = { rx: num(/class="page"[^>]*? rx="([\d.]+)"/), stroke: num(/\.page[^}]*stroke-width: ([\d.]+)/) }
+  const bandH = num(/<rect class="band" width="1024" height="([\d.]+)"/)
+  const tabs = [...svg.matchAll(/<circle class="band" cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map((m) => m.slice(1).map(Number))
+  const [, cx, cy, tx, ty, k] = svg.match(/data-cx="([\d.]+)" data-cy="([\d.]+)" transform="translate\(([\d.-]+),([\d.-]+)\) scale\(([\d.]+)\)/).map(Number)
   const lines = [...svg.matchAll(/<line x1="(\d+)" y1="(\d+)" x2="(\d+)" y2="(\d+)"/g)].map((m) => m.slice(1).map(Number))
   const bodyPath = svg.match(/class="body" d="([^"]+)"/)[1]
-  return { svg, viewBox: svg.match(/viewBox="([^"]+)"/)[1], card, band, bird: { tx, ty, k, lines, bodyPath } }
+  return { page, bandH, tabs, bird: { cx, cy, tx, ty, k, lines, bodyPath } }
 }
 
-/** The logo's inner markup with colours as presentation attributes (no <style>). */
-export function markInner({ body = INK, wing = ACCENT, band = INK, card = PAPER, outline = FAINT } = {}) {
-  const { svg } = parse()
-  return svg
-    .slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'))
-    .replace(/<style>[\s\S]*?<\/style>/, '')
-    .replace('class="card"', `fill="${card}" stroke="${outline}" stroke-width="10"`)
-    .replace('class="band"', `fill="${band}"`)
-    .replace('class="wing"', `stroke="${wing}"`)
-    .replace('class="body"', `fill="${body}"`)
+function birdEl({ body, wing, scale = 1 }) {
+  const { bird } = parse()
+  const bars = bird.lines.map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`).join('')
+  // optional extra scaling about the bird's own centre (maskable icons)
+  const about = scale === 1 ? '' : `translate(${bird.cx},${bird.cy}) scale(${scale}) translate(${-bird.cx},${-bird.cy}) `
+  return `<g transform="${about}translate(${bird.tx},${bird.ty}) scale(${bird.k})"><g fill="none" stroke="${wing}" stroke-width="62" stroke-linecap="round">${bars}</g><path d="${bird.bodyPath}" fill="${body}"/></g>`
 }
 
-/** Square image with the logo centred at `scale` of the side, on an optional plate. */
-export function composeSvg({ size, scale = 1, bg = null, radius = 0, colours } = {}) {
-  const { viewBox } = parse()
+/**
+ * The leaf's inner markup (1024 units) with colours as presentation attributes.
+ * radius: corner radius as a fraction of the side (0 = square, 0.5 = disc);
+ *         null keeps the SVG's own rounding. page: null draws no leaf (band +
+ *         bird on a transparent ground, for adaptive foregrounds).
+ */
+export function markInner({ body = INK, wing = ACCENT, band = INK, page = PAPER, outline = null, radius = null, birdScale = 1, id = 'leaf' } = {}) {
+  const { page: pg, bandH, tabs } = parse()
+  const rx = radius == null ? pg.rx : Math.round(1024 * radius)
+  const clip = page ? `<clipPath id="${id}"><rect width="1024" height="1024" rx="${rx}"/></clipPath>` : ''
+  const leaf = page ? `<rect width="1024" height="1024" rx="${rx}" fill="${page}"/>` : ''
+  const edge = page && outline ? `<rect width="1024" height="1024" rx="${rx}" fill="none" stroke="${outline}" stroke-width="${pg.stroke}"/>` : ''
+  const bandEl = `<rect width="1024" height="${bandH}" fill="${band}"/>` + tabs.map(([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${band}"/>`).join('')
+  const inner = leaf + bandEl + birdEl({ body, wing, scale: birdScale }) + edge
+  return page ? `${clip}<g clip-path="url(#${id})">${inner}</g>` : inner
+}
+
+/** Square image with the leaf centred at `scale` of the side, on an optional plate. */
+export function composeSvg({ size, scale = 1, bg = null, plateRadius = 0, colours } = {}) {
   const s = Math.round(size * scale), o = Math.round((size - s) / 2)
-  const plate = bg ? `<rect width="${size}" height="${size}" rx="${Math.round(size * radius)}" fill="${bg}"/>` : ''
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">${plate}<svg x="${o}" y="${o}" width="${s}" height="${s}" viewBox="${viewBox}">${markInner(colours)}</svg></svg>`
+  const plate = bg ? `<rect width="${size}" height="${size}" rx="${Math.round(size * plateRadius)}" fill="${bg}"/>` : ''
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">${plate}<svg x="${o}" y="${o}" width="${s}" height="${s}" viewBox="0 0 1024 1024">${markInner(colours)}</svg></svg>`
 }
 
 export function render(opts) {
@@ -78,31 +87,31 @@ export function render(opts) {
 // ---- Android launcher resources ------------------------------------------
 // @capacitor/assets rasterises the adaptive layers at 48dp and stretches them
 // to 108dp, which blurs the launcher icon. Write the foreground as a
-// VectorDrawable instead (sharp at any density); a stroke-only variant serves
-// as the Android 13 monochrome/themed icon. Only the pre-8.0 legacy icons stay PNG.
+// VectorDrawable instead (sharp at any density); the same shapes in one colour
+// serve as the Android 13 monochrome/themed icon. Only the pre-8.0 legacy
+// icons stay PNG.
 const DENSITIES = { ldpi: 0.75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
 
-function roundedRectPath({ x, y, w, h, rx }) {
-  return `M${x + rx},${y} h${w - 2 * rx} a${rx},${rx} 0 0 1 ${rx},${rx} v${h - 2 * rx} a${rx},${rx} 0 0 1 -${rx},${rx} h-${w - 2 * rx} a${rx},${rx} 0 0 1 -${rx},-${rx} v-${h - 2 * rx} a${rx},${rx} 0 0 1 ${rx},-${rx} Z`
-}
-
-// The 1024-unit artwork maps onto the 72dp visible disc of the 108dp adaptive
-// canvas; the card's corners stay inside the 66dp safe zone.
+// The 1024-unit leaf maps onto the 72dp visible disc of the 108dp adaptive
+// canvas (the launcher mask is the leaf's edge); the bird stays inside the
+// 66dp safe zone. The band runs across the whole 108dp canvas so no mask
+// shape can expose the background beside it. The white leaf itself is the
+// background layer.
 function vectorDrawable({ mono = false } = {}) {
-  const { card, band, bird } = parse()
+  const { bandH, tabs, bird } = parse()
   const dp = 108, vis = 72, k = vis / 1024, t = (dp - vis) / 2
-  const cardEl = mono
-    ? `    <path android:pathData="${roundedRectPath(card)}" android:strokeColor="${INK}" android:strokeWidth="26"/>`
-    : `    <path android:pathData="${roundedRectPath(card)}" android:fillColor="${PAPER}" android:strokeColor="${FAINT}" android:strokeWidth="10"/>`
+  const bandColor = INK, wing = mono ? INK : ACCENT
   const bars = bird.lines.map(([x1, y1, x2, y2]) =>
-    `      <path android:pathData="M${x1},${y1} L${x2},${y2}" android:strokeColor="${mono ? INK : ACCENT}" android:strokeWidth="62" android:strokeLineCap="round"/>`).join('\n')
+    `      <path android:pathData="M${x1},${y1} L${x2},${y2}" android:strokeColor="${wing}" android:strokeWidth="62" android:strokeLineCap="round"/>`).join('\n')
+  const tabEls = tabs.map(([cx, cy, r]) =>
+    `    <path android:pathData="M${cx - r},${cy} a${r},${r} 0 1 0 ${2 * r},0 a${r},${r} 0 1 0 -${2 * r},0 Z" android:fillColor="${bandColor}"/>`).join('\n')
   return `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="${dp}dp" android:height="${dp}dp"
     android:viewportWidth="${dp}" android:viewportHeight="${dp}">
+  <path android:pathData="M0,0 H${dp} V${(t + bandH * k).toFixed(3)} H0 Z" android:fillColor="${bandColor}"/>
   <group android:scaleX="${k.toFixed(6)}" android:scaleY="${k.toFixed(6)}" android:translateX="${t}" android:translateY="${t}">
-${cardEl}
-    <path android:pathData="${band}" android:fillColor="${INK}"/>
+${tabEls}
     <group android:scaleX="${bird.k}" android:scaleY="${bird.k}" android:translateX="${bird.tx}" android:translateY="${bird.ty}">
 ${bars}
       <path android:pathData="${bird.bodyPath}" android:fillColor="${INK}"/>
@@ -134,8 +143,8 @@ export async function writeAndroidLauncher(resDir) {
     const size = Math.round(48 * mult)
     const dir = path.join(resDir, `mipmap-${name}`)
     mkdirSync(dir, { recursive: true })
-    await render({ size, scale: 1, bg: PAPER, radius: 0.22 }).toFile(path.join(dir, 'ic_launcher.png'))
-    await render({ size, scale: 1, bg: PAPER, radius: 0.5 }).toFile(path.join(dir, 'ic_launcher_round.png'))
+    await render({ size, colours: { radius: 0.22 } }).toFile(path.join(dir, 'ic_launcher.png'))
+    await render({ size, colours: { radius: 0.5 } }).toFile(path.join(dir, 'ic_launcher_round.png'))
     for (const stale of ['ic_launcher_foreground.png', 'ic_launcher_background.png']) rmSync(path.join(dir, stale), { force: true })
   }
 }

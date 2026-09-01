@@ -1,14 +1,24 @@
 #!/usr/bin/env node
 // Source art for the store app icons and splash (fed to @capacitor/assets):
-//   node scripts/make-app-assets.mjs && npx capacitor-assets generate --android
+//   node scripts/make-app-assets.mjs            # source PNGs + android launcher
+//   npx capacitor-assets generate --android     # splash screens (also rewrites
+//                                               # the launcher, blurrily)
+//   node scripts/make-app-assets.mjs --launcher # so put ours back last
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { render, PAPER, NIGHT, ACCENT_LIGHT } from './logo.mjs'
+import { render, writeAndroidLauncher, PAPER, NIGHT, ACCENT_LIGHT } from './logo.mjs'
 
 const OUT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets')
+const RES = path.join(OUT, '..', 'android', 'app', 'src', 'main', 'res')
 mkdirSync(OUT, { recursive: true })
 const out = (n) => path.join(OUT, n)
+
+if (process.argv.includes('--launcher')) {
+  await writeAndroidLauncher(RES)
+  console.log('android launcher ->', RES)
+  process.exit(0)
+}
 
 // Launcher icon (legacy + store listing): the mark on a white rounded tile.
 await render({ size: 1024, scale: 0.78, bg: PAPER, radius: 0.22 }).toFile(out('icon-only.png'))
@@ -18,4 +28,5 @@ await render({ size: 1024, scale: 0, bg: PAPER }).toFile(out('icon-background.pn
 // Splash: the mark centred on a plain ground, one per theme.
 await render({ size: 2732, scale: 0.19, bg: PAPER }).toFile(out('splash.png'))
 await render({ size: 2732, scale: 0.19, bg: NIGHT, colours: { body: '#ffffff', wing: ACCENT_LIGHT } }).toFile(out('splash-dark.png'))
-console.log('assets ->', OUT)
+await writeAndroidLauncher(RES)
+console.log('assets ->', OUT, '+ android launcher')

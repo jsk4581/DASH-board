@@ -53,3 +53,59 @@ export function composeSvg({ size, scale = 1, bg = null, radius = 0, colours } =
 export function render(opts) {
   return sharp(Buffer.from(composeSvg(opts))).png()
 }
+
+// ---- Android launcher resources ------------------------------------------
+// @capacitor/assets rasterises the adaptive layers at 48dp and stretches them
+// to 108dp, which blurs the launcher icon. Write the foreground as a
+// VectorDrawable instead (sharp at any density, and it doubles as the
+// Android 13 monochrome/themed icon); only the pre-8.0 legacy icons stay PNG.
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
+
+const DENSITIES = { ldpi: 0.75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
+
+function vectorDrawable({ body, wing, dp = 108, box = 56 }) {
+  const svg = readFileSync(LOGO, 'utf8')
+  const d = svg.match(/<path class="body" d="([^"]+)"/)[1]
+  const lines = [...svg.matchAll(/<line x1="(\d+)" y1="(\d+)" x2="(\d+)" y2="(\d+)"/g)]
+  const k = box / 1090 // logo viewBox is 1090 units starting at (12, 96)
+  const tx = (dp - box) / 2 - 12 * k, ty = (dp - box) / 2 - 96 * k
+  const bars = lines.map(([, x1, y1, x2, y2]) =>
+    `    <path android:pathData="M${x1},${y1} L${x2},${y2}" android:strokeColor="${wing}" android:strokeWidth="62" android:strokeLineCap="round"/>`).join('\n')
+  return `<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="${dp}dp" android:height="${dp}dp"
+    android:viewportWidth="${dp}" android:viewportHeight="${dp}">
+  <group android:scaleX="${k.toFixed(6)}" android:scaleY="${k.toFixed(6)}" android:translateX="${tx.toFixed(3)}" android:translateY="${ty.toFixed(3)}">
+${bars}
+    <path android:pathData="${d}" android:fillColor="${body}"/>
+  </group>
+</vector>
+`
+}
+
+const adaptiveXml = `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+    <monochrome android:drawable="@drawable/ic_launcher_foreground"/>
+</adaptive-icon>
+`
+
+export async function writeAndroidLauncher(resDir) {
+  const w = (rel, text) => { mkdirSync(path.join(resDir, path.dirname(rel)), { recursive: true }); writeFileSync(path.join(resDir, rel), text) }
+  w('drawable/ic_launcher_foreground.xml', vectorDrawable({ body: INK, wing: ACCENT }))
+  // the Capacitor template ships a placeholder foreground under drawable-v24,
+  // which would shadow ours on every supported API level
+  for (const stale of ['drawable-v24/ic_launcher_foreground.xml', 'drawable/ic_launcher_background.xml']) rmSync(path.join(resDir, stale), { force: true })
+  w('values/ic_launcher_background.xml', `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${PAPER}</color>\n</resources>\n`)
+  w('mipmap-anydpi-v26/ic_launcher.xml', adaptiveXml)
+  w('mipmap-anydpi-v26/ic_launcher_round.xml', adaptiveXml)
+  for (const [name, mult] of Object.entries(DENSITIES)) {
+    const size = Math.round(48 * mult)
+    const dir = path.join(resDir, `mipmap-${name}`)
+    mkdirSync(dir, { recursive: true })
+    await render({ size, scale: 0.78, bg: PAPER, radius: 0.22 }).toFile(path.join(dir, 'ic_launcher.png'))
+    await render({ size, scale: 0.78, bg: PAPER, radius: 0.5 }).toFile(path.join(dir, 'ic_launcher_round.png'))
+    for (const stale of ['ic_launcher_foreground.png', 'ic_launcher_background.png']) rmSync(path.join(dir, stale), { force: true })
+  }
+}

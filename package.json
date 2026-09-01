@@ -10,7 +10,7 @@
     "build:pages": "GITHUB_PAGES=1 vite build",
     "preview": "vite preview",
     "setup:pages": "bash scripts/setup-pages.sh",
-    "app:assets": "node scripts/make-app-assets.mjs && capacitor-assets generate --android",
+    "app:assets": "node scripts/make-app-assets.mjs && capacitor-assets generate --android && node scripts/make-app-assets.mjs --launcher",
     "app:sync": "vite build && cap sync android",
     "app:debug": "npm run app:sync && cd android && ./gradlew assembleDebug",
     "app:release": "npm run app:sync && cd android && ./gradlew bundleRelease"

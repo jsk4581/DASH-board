@@ -2,6 +2,7 @@
   import Icon from './Icon.svelte'
   import SyncPopover from './SyncPopover.svelte'
   import Drawer from './Drawer.svelte'
+  import Popover from './Popover.svelte'
   import { ui, toggleMode, toggleTheme, toggleLang, setView } from '../ui.svelte.js'
   import { exportFile, importFile, board } from '../store.svelte.js'
   import { undo, redo, history } from '../history.svelte.js'
@@ -14,6 +15,8 @@
   let syncBtn = $state(null)
   let showSync = $state(false)
   let showDrawer = $state(false)
+  let moreBtn = $state(null)
+  let showMore = $state(false)
   let barH = $state(0)
 
   const onBoard = $derived(ui.view === 'board')
@@ -110,20 +113,20 @@
       <div class="sep"></div>
 
       <div class="mode-toggle" role="group" aria-label={t('modeSwitch')}>
-        <button class:active={ui.mode === 'edit'} onclick={() => ui.mode !== 'edit' && toggleMode()}>
-          <Icon name="pencil" size={15} /> {t('edit')}
+        <button class:active={ui.mode === 'edit'} onclick={() => ui.mode !== 'edit' && toggleMode()} title={t('edit')}>
+          <Icon name="pencil" size={15} /> <span class="lbl">{t('edit')}</span>
         </button>
-        <button class:active={ui.mode === 'view'} onclick={() => ui.mode !== 'view' && toggleMode()}>
-          <Icon name="eye" size={15} /> {t('view')}
+        <button class:active={ui.mode === 'view'} onclick={() => ui.mode !== 'view' && toggleMode()} title={t('view')}>
+          <Icon name="eye" size={15} /> <span class="lbl">{t('view')}</span>
         </button>
       </div>
 
-      <div class="sep"></div>
+      <div class="sep wide"></div>
 
-      <button class="tool" onclick={onSave} title={t('saveTitle')}>
+      <button class="tool wide" onclick={onSave} title={t('saveTitle')}>
         <Icon name="download" size={16} /> <span class="lbl">{t('save')}</span>
       </button>
-      <button class="tool" onclick={() => fileInput.click()} title={t('loadTitle')}>
+      <button class="tool wide" onclick={() => fileInput.click()} title={t('loadTitle')}>
         <Icon name="upload" size={16} /> <span class="lbl">{t('load')}</span>
       </button>
       <input
@@ -150,15 +153,47 @@
       </button>
     {/if}
 
-    <button class="tool" onclick={toggleLang} title={t('langSwitch')} aria-label={t('langSwitch')}>
+    <button class="tool wide" onclick={toggleLang} title={t('langSwitch')} aria-label={t('langSwitch')}>
       <Icon name="globe" size={16} /> <span class="lbl">{t('langName')}</span>
     </button>
 
-    <button class="tool icon-only" onclick={toggleTheme} title={t('themeToggle')} aria-label={t('themeToggle')}>
+    <button class="tool icon-only wide" onclick={toggleTheme} title={t('themeToggle')} aria-label={t('themeToggle')}>
       <Icon name={ui.theme === 'dark' ? 'sun' : 'moon'} size={16} />
+    </button>
+
+    <!-- phones: the rarely-used tools fold into one menu so the row fits -->
+    <button
+      class="tool icon-only narrow more-btn"
+      bind:this={moreBtn}
+      onclick={() => (showMore = !showMore)}
+      title={t('more')}
+      aria-label={t('more')}
+    >
+      <Icon name="more" size={17} />
     </button>
   </div>
 </header>
+
+{#if showMore}
+  <Popover anchor={moreBtn} onclose={() => (showMore = false)} placement="bottom-end">
+    <div class="menu">
+      {#if onBoard}
+        <button onclick={() => { showMore = false; onSave() }}>
+          <Icon name="download" size={16} /> {t('save')}
+        </button>
+        <button onclick={() => { showMore = false; fileInput.click() }}>
+          <Icon name="upload" size={16} /> {t('load')}
+        </button>
+      {/if}
+      <button onclick={toggleLang}>
+        <Icon name="globe" size={16} /> {t('langName')}
+      </button>
+      <button onclick={toggleTheme}>
+        <Icon name={ui.theme === 'dark' ? 'sun' : 'moon'} size={16} /> {t(ui.theme === 'dark' ? 'lightTheme' : 'darkTheme')}
+      </button>
+    </div>
+  </Popover>
+{/if}
 
 {#if showDrawer}
   <Drawer onclose={() => (showDrawer = false)} />
@@ -182,6 +217,7 @@
     justify-content: flex-start;
     gap: 12px;
     padding: 11px clamp(14px, 3vw, 32px);
+    padding-top: calc(11px + var(--safe-top));
     background: color-mix(in srgb, var(--surface) 82%, transparent);
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
@@ -258,6 +294,28 @@
 
   .view-switch {
     flex: none;
+  }
+  .narrow {
+    display: none;
+  }
+  .menu {
+    display: flex;
+    flex-direction: column;
+    min-width: 168px;
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    text-align: left;
+  }
+  .menu button:hover {
+    background: var(--surface-hover);
   }
   .view-switch button {
     padding: 5px 9px;
@@ -341,14 +399,34 @@
   }
 
   @media (max-width: 640px) {
-    .tool .lbl {
+    .tool .lbl,
+    .mode-toggle:not(.view-switch) .lbl {
       display: none;
     }
+    .mode-toggle:not(.view-switch) button {
+      padding: 5px 9px;
+    }
+    .wide {
+      display: none;
+    }
+    .narrow {
+      display: inline-flex;
+    }
     .bar {
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
-      padding-top: 9px;
+      padding-top: calc(9px + var(--safe-top));
       padding-bottom: 9px;
+    }
+    .cur-board {
+      max-width: none;
+      flex: 1;
+    }
+    .brand {
+      flex: 1;
+    }
+    .tools {
+      gap: 2px;
     }
     /* the view switch takes its own full-width row under the tools */
     .view-switch {

@@ -47,6 +47,11 @@
   --med: 200ms;
 
   color-scheme: light;
+
+  /* system-bar insets: the app shell draws edge-to-edge under the status and
+     gesture bars (Capacitor injects --safe-area-inset-*; browsers give env()) */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 :root[data-theme='dark'] {

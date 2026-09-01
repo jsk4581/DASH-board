@@ -59,7 +59,7 @@
   main {
     max-width: 1480px;
     margin: 0 auto;
-    padding-bottom: 24px;
+    padding-bottom: calc(24px + var(--safe-bottom));
   }
   /* the chat view owns the rest of the viewport under the sticky toolbar */
   main.memo-main {

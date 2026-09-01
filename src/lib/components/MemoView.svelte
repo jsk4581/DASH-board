@@ -218,7 +218,7 @@
     display: grid;
     grid-template-columns: 272px minmax(0, 1fr);
     gap: 14px;
-    padding: 14px clamp(14px, 3vw, 32px) 14px;
+    padding: 14px clamp(14px, 3vw, 32px) calc(14px + var(--safe-bottom));
     min-height: 0;
   }
 
@@ -426,7 +426,7 @@
   @media (max-width: 720px) {
     .memo {
       grid-template-columns: minmax(0, 1fr);
-      padding: 10px;
+      padding: 10px 10px calc(10px + var(--safe-bottom));
       gap: 0;
     }
     .memo.narrow .chat {

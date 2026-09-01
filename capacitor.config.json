@@ -2,7 +2,9 @@
   "appId": "io.github.jsk4581.dash",
   "appName": "DASH",
   "webDir": "dist",
-  "android": {
-    "adjustMarginsForEdgeToEdge": "auto"
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css"
+    }
   }
 }

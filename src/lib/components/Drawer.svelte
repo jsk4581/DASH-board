@@ -128,6 +128,7 @@
     background: rgba(0, 0, 0, 0.28);
   }
   .drawer {
+    padding-top: var(--safe-top);
     position: fixed;
     top: 0;
     left: 0;

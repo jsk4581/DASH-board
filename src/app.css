@@ -24,8 +24,6 @@
   --accent-hover: oklch(0.69 0.1 255);
   --accent-soft: oklch(0.96 0.025 255);
   --accent-ink: oklch(0.4 0.12 255);       /* legible ink on a pale-accent fill */
-  --mark-body: oklch(0.4 0.12 255);        /* logo: bird body */
-  --mark-wing: oklch(0.62 0.11 255);       /* logo: wing bars */
   --highlight: oklch(0.82 0.08 80);        /* pale amber — today / timeline */
   --highlight-soft: oklch(0.95 0.045 80);
   --pencil: oklch(0.577 0.245 27.325);     /* 강조: red grading circle — stays vivid */
@@ -73,8 +71,6 @@
   --accent-hover: oklch(0.7 0.12 255);
   --accent-soft: oklch(0.3 0.055 255);
   --accent-ink: oklch(0.95 0.03 255);
-  --mark-body: #ffffff;
-  --mark-wing: oklch(0.76 0.085 255);
   --highlight: oklch(0.78 0.09 80);
   --highlight-soft: oklch(0.3 0.05 80);
   --pencil: oklch(0.704 0.191 22.216);

@@ -414,6 +414,8 @@
     .cur-board {
       max-width: none;
       flex: 1;
+      text-align: left; /* the stretched button must not centre the name */
+      padding-left: 4px;
     }
     .brand {
       flex: 1;

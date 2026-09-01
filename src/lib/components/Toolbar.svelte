@@ -138,7 +138,8 @@
       />
     {/if}
 
-    {#if !isNative}
+    <!-- the store app is local-only (gist sync stays web-only); a self-hosted build keeps its panel -->
+    {#if !isNative || sync.host}
       <button
         class="tool icon-only sync-btn"
         bind:this={syncBtn}

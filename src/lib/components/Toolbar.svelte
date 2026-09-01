@@ -79,8 +79,11 @@
     </button>
   {/if}
   <div class="brand">
-    <span class="mark" aria-hidden="true">{@html logoSvg}</span>
-    <span class="logo">DASH</span>
+    {#if !isNative}
+      <!-- the store app has its launcher icon and name; inside it, only the board name -->
+      <span class="mark" aria-hidden="true">{@html logoSvg}</span>
+      <span class="logo">DASH</span>
+    {/if}
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
         {board.name}

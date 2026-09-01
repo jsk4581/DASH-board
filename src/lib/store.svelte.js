@@ -11,6 +11,7 @@ import { t } from './i18n.svelte.js'
 import { BOARD_KEY as STORAGE_KEY, persistBoard, saveTextFile } from './platform.js'
 
 const SCHEMA_VERSION = 2
+const FIRST_BOARD_NAME = 'DASH' // the board a fresh install starts with; extra boards use t('defaultBoardName')
 
 // Accent palette assigned to project cards (cycled on creation).
 export const PALETTE = [
@@ -65,7 +66,7 @@ function seedProjects() {
 }
 
 function seed() {
-  const boards = [{ id: uid(), name: t('defaultBoardName'), projects: seedProjects() }]
+  const boards = [{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }]
   return { activeId: boards[0].id, boards }
 }
 
@@ -101,10 +102,10 @@ export function normalizeBoards(raw) {
   if (Array.isArray(raw)) arr = raw
   else if (Array.isArray(raw?.boards)) arr = raw.boards
   else if (Array.isArray(raw?.projects))
-    arr = [{ id: uid(), name: raw.meta?.title ?? t('defaultBoardName'), projects: raw.projects }]
+    arr = [{ id: uid(), name: raw.meta?.title ?? FIRST_BOARD_NAME, projects: raw.projects }]
   else arr = []
   const boards = arr.map(normalizeBoard)
-  return boards.length ? boards : [{ id: uid(), name: t('defaultBoardName'), projects: [] }]
+  return boards.length ? boards : [{ id: uid(), name: FIRST_BOARD_NAME, projects: [] }]
 }
 
 function load() {

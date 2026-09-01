@@ -9,6 +9,13 @@
   import { sync } from '../sync.svelte.js'
   import { t } from '../i18n.svelte.js'
   import { isNative } from '../platform.js'
+  import logoRaw from '../../../assets/logo.svg?raw'
+
+  // inline the mark so its colours follow the app theme tokens (not the OS scheme)
+  const logoSvg = logoRaw
+    .replace(/<style>[\s\S]*?<\/style>/, '')
+    .replace('class="wing"', 'stroke="var(--mark-wing)"')
+    .replace('class="body"', 'fill="var(--mark-body)"')
 
   let fileInput = $state(null)
   let toast = $state('')
@@ -72,6 +79,7 @@
     </button>
   {/if}
   <div class="brand">
+    <span class="mark" aria-hidden="true">{@html logoSvg}</span>
     <span class="logo">DASH</span>
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
@@ -231,9 +239,20 @@
   }
   .brand {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 9px;
     min-width: 0;
+  }
+  .mark {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    margin-right: -2px;
+    display: inline-flex;
+  }
+  .mark :global(svg) {
+    width: 100%;
+    height: 100%;
   }
   .logo {
     font-size: 19px;
@@ -400,6 +419,9 @@
   }
 
   @media (max-width: 640px) {
+    .logo {
+      display: none;
+    }
     .tool .lbl,
     .mode-toggle:not(.view-switch) .lbl {
       display: none;

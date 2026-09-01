@@ -1,3 +1,5 @@
+<img src="assets/logo.svg" alt="" width="64" align="left" />
+
 # DASH — Daily Agenda & Schedule Hub
 <img alt="DASH — Daily Agenda & Schedule Hub" src="docs/screenshot.png" />
 
@@ -33,7 +35,7 @@ The same code ships as a native Android app through
 a file in the app's private storage, memos in IndexedDB, and "save" opens the
 share sheet with a JSON export. Gist sync is a web-only feature.
 
-    npm run app:assets     # regenerate launcher icons + splash from scripts/make-app-assets.py
+    npm run app:assets     # regenerate launcher icons + splash from assets/logo.svg
     npm run app:debug      # build dist/, sync into android/, produce a debug APK
     npm run app:release    # same, but a signed release bundle (.aab) for Play
 

@@ -3,6 +3,7 @@
   import Board from './lib/components/Board.svelte'
   import Timeline from './lib/components/Timeline.svelte'
   import MemoView from './lib/components/MemoView.svelte'
+  import DoneBoard from './lib/components/DoneBoard.svelte'
   import { ui, setTouchItem } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
 
@@ -39,6 +40,10 @@
 {#if ui.view === 'memo'}
   <main class="memo-main">
     <MemoView />
+  </main>
+{:else if ui.view === 'done'}
+  <main class:editing>
+    <DoneBoard {editing} />
   </main>
 {:else}
   <main class:editing>

@@ -161,8 +161,8 @@
       </button>
       <button
         class="icon-btn danger"
-        title={t('delete')}
-        aria-label={t('deleteItem')}
+        title={item.status === 'done' ? t('archiveItem') : t('delete')}
+        aria-label={item.status === 'done' ? t('archiveItem') : t('deleteItem')}
         onclick={() => removeItem(pid, item.id)}
       >
         <Icon name="trash" size={13} />

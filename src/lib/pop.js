@@ -65,10 +65,6 @@ export function liftOut(node, { disabled = false, duration = 180 } = {}) {
   }
 }
 
-// Timeline date paging: a real horizontal carousel slide. The outgoing panel is
-// pinned (absolute) and slides fully off one side while the incoming panel slides
-// in from the other. `dir` = +1 (next) / -1 (prev); `mode` = 'in' | 'out';
-// `nav` = false on first paint so it doesn't slide on load.
 // Calendar date paging: a gentle VERTICAL move of about one week (one row) with
 // a cross-fade — next scrolls the weeks up, prev scrolls them down. The fade
 // masks the 3-of-4 week overlap between adjacent windows so it reads as a small
@@ -87,23 +83,6 @@ export function vslide(node, { dir = 1, mode = 'in', duration = 300, nav = true,
       const y = mode === 'in' ? dir * dist * u : -dir * dist * u
       const pin = mode === 'out' ? 'position: absolute; top: 0; left: 0; width: 100%;' : ''
       return `${pin} transform: translateY(${y}px); opacity: ${t};`
-    },
-  }
-}
-
-export function hslide(node, { dir = 1, mode = 'in', duration = 300, nav = true } = {}) {
-  if (!nav) return { duration: 0 }
-  // freeze the outgoing panel's own height so the absolute pin doesn't let
-  // taller rows (gantt) get clipped as it slides out
-  const h = mode === 'out' ? node.offsetHeight : 0
-  return {
-    duration,
-    easing: cubicInOut,
-    // u === 1 - t (eased); u = 1 at the off-screen end.
-    css: (t, u) => {
-      const x = mode === 'in' ? dir * 100 * u : -dir * 100 * u
-      const pin = mode === 'out' ? `position: absolute; top: 0; left: 0; width: 100%; height: ${h}px;` : ''
-      return `${pin} transform: translateX(${x}%);`
     },
   }
 }

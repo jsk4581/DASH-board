@@ -18,7 +18,7 @@ exported to / imported from a JSON file.
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
-- **Timeline** — a monthly calendar or 2‑week Gantt chart; page back/forward with the arrows below it. On phones the calendar shows only colour marks and lists the tapped day's items underneath
+- **Timeline** — a monthly calendar (page with the arrows) or a 2‑week Gantt chart (drag the slider to move through the dates). On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
 - **Undo / redo** — `Ctrl/⌘ + Z` and `Ctrl/⌘ + Y` (rapid edits are coalesced into one step)
 - **Edit mode / View mode** — flip to a clean, read‑only view
@@ -156,7 +156,8 @@ active are stored separately and are **not** included in exports.
 - **Boards** — the drawer button (top‑left) lists your boards; add / rename / switch / delete
 - **Add item** — the box's `+` or "Add item"; press `Enter` after typing to keep adding
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range) / click a selected day again to clear
-- **Timeline** — the arrows below the calendar/Gantt page the dates; click the range to jump back to today
+- **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
+- **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

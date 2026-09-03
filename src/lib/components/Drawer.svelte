@@ -1,7 +1,8 @@
 <script>
   import { fly, fade } from 'svelte/transition'
   import Icon from './Icon.svelte'
-  import { library, switchBoard, addBoard, renameBoard, removeBoard } from '../store.svelte.js'
+  import { library, board, switchBoard, addBoard, renameBoard, removeBoard } from '../store.svelte.js'
+  import { ui, setView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
 
   let { onclose } = $props()
@@ -17,8 +18,15 @@
 
   function pick(id) {
     switchBoard(id)
+    setView('board')
     onclose?.()
   }
+  function pickDone() {
+    setView('done')
+    onclose?.()
+  }
+  // items deleted while done, across the active board
+  const doneCount = $derived(board.projects.reduce((n, p) => n + p.archive.length, 0))
   function startRename(b) {
     confirmId = null
     editingId = b.id
@@ -55,7 +63,7 @@
 
   <ul class="blist">
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId}>
+      <li class="brow" class:active={b.id === library.activeId && ui.view !== 'done'}>
         {#if editingId === b.id}
           <input
             class="rename"
@@ -112,6 +120,15 @@
       </li>
     {/each}
   </ul>
+
+  <!-- the Completed tab: the active board's done-and-deleted items -->
+  <div class="tabs">
+    <button class="bname done-tab" class:active={ui.view === 'done'} onclick={pickDone}>
+      <Icon name="check" size={14} strokeWidth={2.5} />
+      <span class="btext">{t('doneTab')}</span>
+      <span class="bcount">{doneCount}</span>
+    </button>
+  </div>
 
   <footer class="df">
     <button class="newb" onclick={onNew}>
@@ -217,6 +234,25 @@
     font-weight: 600;
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
+  }
+
+  .tabs {
+    padding: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .done-tab {
+    width: 100%;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    min-height: 36px;
+  }
+  .done-tab:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .done-tab.active {
+    background: var(--accent-soft);
+    color: var(--text);
   }
 
   .acts {

@@ -28,10 +28,11 @@
     )
   )
 
-  // date navigation: the calendar pages by whole months, the gantt by a week
-  // of its 2-week window; each keeps its own offset so toggling views doesn't
-  // land on an unrelated date
-  let offsetDays = $state(0) // gantt
+  // date navigation: the calendar pages by whole months (arrows); the gantt's
+  // 2-week window slides a day at a time from a range slider. Each keeps its
+  // own offset so toggling views doesn't land on an unrelated date.
+  const SLIDER_DAYS = 84 // the slider reaches 12 weeks either way
+  let offsetDays = $state(0) // gantt: first day of the window, relative to today
   let monthOffset = $state(0) // calendar
   let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
   // true ONLY during the render caused by a date step, so it animates then. Stays
@@ -40,23 +41,17 @@
   const isCal = $derived(ui.timelineView === 'calendar')
   const atStart = $derived(isCal ? monthOffset === 0 : offsetDays === 0)
 
-  function page(by) {
-    paging = true
-    if (isCal) {
-      monthOffset += by
-      picked = null
-    } else offsetDays += 7 * by
-    tick().then(() => (paging = false))
-  }
   function step(by) {
     dir = by > 0 ? 1 : -1
-    page(by)
+    paging = true
+    monthOffset += by
+    picked = null
+    tick().then(() => (paging = false))
   }
   function reset() {
     if (atStart) return
-    const cur = isCal ? monthOffset : offsetDays
-    dir = cur > 0 ? -1 : 1
-    page(isCal ? -monthOffset : -offsetDays / 7)
+    if (isCal) step(-monthOffset)
+    else offsetDays = 0
   }
   const from = $derived(addDays(new Date(), offsetDays))
   const month = $derived(addMonths(new Date(), monthOffset))
@@ -113,26 +108,41 @@
       {/if}
     {:else}
       <!-- gantt keeps its left label column and slides only the date tracks (internally) -->
-      <GanttView projects={board.projects} {from} {dir} {paging} />
+      <GanttView projects={board.projects} {from} />
     {/if}
   </div>
 
-  <nav class="tl-nav" aria-label={t('schedule')}>
-    <button class="nav-arrow" onclick={() => step(-1)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
-      <Icon name="chevronLeft" size={18} />
-    </button>
-    <button
-      class="nav-range"
-      class:dim={atStart}
-      onclick={reset}
-      title={t('backToToday')}
-    >
-      {rangeLabel}
-    </button>
-    <button class="nav-arrow" onclick={() => step(1)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
-      <Icon name="chevron" size={18} />
-    </button>
-  </nav>
+  {#if isCal}
+    <nav class="tl-nav" aria-label={t('schedule')}>
+      <button class="nav-arrow" onclick={() => step(-1)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
+        <Icon name="chevronLeft" size={18} />
+      </button>
+      <button class="nav-range" class:dim={atStart} onclick={reset} title={t('backToToday')}>
+        {rangeLabel}
+      </button>
+      <button class="nav-arrow" onclick={() => step(1)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
+        <Icon name="chevron" size={18} />
+      </button>
+    </nav>
+  {:else}
+    <nav class="tl-nav slider-nav" aria-label={t('schedule')}>
+      <button class="nav-range" class:dim={atStart} onclick={reset} title={t('backToToday')}>
+        {rangeLabel}
+      </button>
+      <!-- the centre of the slider is today; a tick marks it -->
+      <div class="slider">
+        <input
+          type="range"
+          min={-SLIDER_DAYS}
+          max={SLIDER_DAYS}
+          step="1"
+          bind:value={offsetDays}
+          aria-label={t('ganttSlider')}
+          aria-valuetext={rangeLabel}
+        />
+      </div>
+    </nav>
+  {/if}
 </section>
 
 <style>
@@ -245,6 +255,80 @@
   }
   .nav-range.dim {
     color: var(--text-faint);
+  }
+
+  .slider-nav {
+    gap: 14px;
+    padding: 8px 20px 14px;
+  }
+  .slider {
+    position: relative;
+    flex: 1;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    height: 30px;
+  }
+  /* today tick under the middle of the track */
+  .slider::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;
+    height: 10px;
+    margin-left: -1px;
+    transform: translateY(-50%);
+    background: var(--highlight);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+  .slider input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+  .slider input:focus-visible {
+    outline: none;
+  }
+  .slider input::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+  .slider input::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+  .slider input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent-ink);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--fast) var(--ease);
+  }
+  .slider input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent-ink);
+    box-shadow: var(--shadow-sm);
+  }
+  .slider input:active::-webkit-slider-thumb,
+  .slider input:focus-visible::-webkit-slider-thumb {
+    transform: scale(1.15);
+    background: var(--accent-soft);
   }
 
   /* phones: reclaim horizontal space so the 7-day calendar has room to fit */

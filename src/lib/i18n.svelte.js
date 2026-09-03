@@ -70,6 +70,7 @@ const dict = {
     setDue: '마감일 지정',
     delete: '삭제',
     deleteItem: '항목 삭제',
+    archiveItem: '완료 탭으로 보내기',
 
     // date popover
     noDue: '마감일 없음',
@@ -118,6 +119,13 @@ const dict = {
     confirmDeleteBoard: "'{name}' 보드를 삭제할까요?",
     close: '닫기',
     rename: '이름 변경',
+
+    // completed tab
+    doneTab: '완료',
+    doneEmpty: '완료한 뒤 지운 항목이 여기에 모입니다.',
+    restoreItem: '다시 할 일로',
+    deleteForever: '완전히 삭제',
+    ganttSlider: '기간 이동',
 
     // timeline navigation
     prevPeriod: '이전',
@@ -215,6 +223,7 @@ const dict = {
     setDue: 'Set due date',
     delete: 'Delete',
     deleteItem: 'Delete item',
+    archiveItem: 'Move to Completed',
 
     noDue: 'No due date',
     clearDue: 'Clear due date',
@@ -262,6 +271,13 @@ const dict = {
     confirmDeleteBoard: 'Delete the board “{name}”?',
     close: 'Close',
     rename: 'Rename',
+
+    // completed tab
+    doneTab: 'Completed',
+    doneEmpty: 'Items you delete after completing them collect here.',
+    restoreItem: 'Back to the board',
+    deleteForever: 'Delete permanently',
+    ganttSlider: 'Scroll dates',
 
     // timeline navigation
     prevPeriod: 'Previous',

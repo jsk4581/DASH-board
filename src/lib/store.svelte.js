@@ -6,7 +6,7 @@
 // ============================================================
 
 import { tick } from 'svelte'
-import { toISODate } from './date.js'
+import { toISODate, todayISO } from './date.js'
 import { t } from './i18n.svelte.js'
 import { BOARD_KEY as STORAGE_KEY, persistBoard, saveTextFile } from './platform.js'
 
@@ -69,7 +69,8 @@ function seedProjects() {
 }
 
 function seed() {
-  const boards = [{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }]
+  // through normalizeBoards so the seed carries every field a saved board has
+  const boards = normalizeBoards([{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }])
   return { activeId: boards[0].id, boards }
 }
 
@@ -83,12 +84,17 @@ function normalizeItem(it) {
     due: it.due ?? null,
   }
 }
+// an item that was deleted while done: kept per project for the Completed tab
+function normalizeArchived(it) {
+  return { ...normalizeItem(it), archivedAt: it.archivedAt ?? null }
+}
 function normalizeProject(p, i) {
   return {
     id: p.id ?? uid(),
     title: p.title ?? t('untitled'),
     color: p.color ?? PALETTE[i % PALETTE.length],
     items: (p.items ?? []).map(normalizeItem),
+    archive: (p.archive ?? []).map(normalizeArchived),
   }
 }
 function normalizeBoard(b) {
@@ -222,7 +228,7 @@ export function findProject(pid) {
 // ---- project mutations -------------------------------------------------
 export function addProject(title = t('newProject')) {
   const color = PALETTE[board.projects.length % PALETTE.length]
-  const project = { id: uid(), title, color, items: [] }
+  const project = { id: uid(), title, color, items: [], archive: [] }
   board.projects.push(project)
   return project
 }
@@ -262,11 +268,38 @@ export function addItem(pid, text = '') {
   return item
 }
 
+/**
+ * Delete an item. A done item with text is not lost: it moves to the project's
+ * archive, which the Completed tab lists (most recent first).
+ */
 export function removeItem(pid, iid) {
   const p = findProject(pid)
   if (!p) return
   const i = p.items.findIndex((it) => it.id === iid)
-  if (i !== -1) p.items.splice(i, 1)
+  if (i === -1) return
+  const [it] = p.items.splice(i, 1)
+  if (it.status === 'done' && it.text.trim()) {
+    p.archive.unshift({ ...$state.snapshot(it), archivedAt: todayISO() })
+  }
+}
+
+/** Put an archived item back on the board as an open item. */
+export function restoreItem(pid, iid) {
+  const p = findProject(pid)
+  if (!p) return
+  const i = p.archive.findIndex((it) => it.id === iid)
+  if (i === -1) return
+  const { archivedAt, ...it } = $state.snapshot(p.archive[i])
+  p.archive.splice(i, 1)
+  p.items.push({ ...it, status: 'default' })
+}
+
+/** Remove an archived item for good. */
+export function purgeItem(pid, iid) {
+  const p = findProject(pid)
+  if (!p) return
+  const i = p.archive.findIndex((it) => it.id === iid)
+  if (i !== -1) p.archive.splice(i, 1)
 }
 
 export function updateItemText(pid, iid, text) {

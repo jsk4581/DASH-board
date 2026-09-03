@@ -19,7 +19,9 @@
   let showMore = $state(false)
   let barH = $state(0)
 
-  const onBoard = $derived(ui.view === 'board')
+  // the Completed tab is a view of the board (drawer, save, undo all apply)
+  const onBoard = $derived(ui.view !== 'memo')
+  const onDone = $derived(ui.view === 'done')
 
   // the memo view sizes itself to the space under this bar
   $effect(() => {
@@ -75,7 +77,7 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {board.name}
+        {board.name}{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}
       </button>
     {/if}
   </div>
@@ -250,6 +252,16 @@
   }
   .cur-board:hover {
     background: var(--surface-hover);
+  }
+  .done-badge {
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    vertical-align: 2px;
   }
 
   .tools {

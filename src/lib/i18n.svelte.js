@@ -35,7 +35,6 @@ const dict = {
     schedule: '일정',
     thisMonth: '이번 달',
     noItemsDay: '일정 없음',
-    next2w: '오늘부터 2주',
     timelineSwitch: '타임라인 보기 전환',
     calendar: '캘린더',
     gantt: '간트',
@@ -125,7 +124,6 @@ const dict = {
     doneEmpty: '완료한 뒤 지운 항목이 여기에 모입니다.',
     restoreItem: '다시 할 일로',
     deleteForever: '완전히 삭제',
-    ganttSlider: '기간 이동',
 
     // timeline navigation
     prevPeriod: '이전',
@@ -191,7 +189,6 @@ const dict = {
     schedule: 'Schedule',
     thisMonth: 'This month',
     noItemsDay: 'Nothing scheduled',
-    next2w: 'Next 2 weeks',
     timelineSwitch: 'Switch timeline view',
     calendar: 'Calendar',
     gantt: 'Gantt',
@@ -277,7 +274,6 @@ const dict = {
     doneEmpty: 'Items you delete after completing them collect here.',
     restoreItem: 'Back to the board',
     deleteForever: 'Delete permanently',
-    ganttSlider: 'Scroll dates',
 
     // timeline navigation
     prevPeriod: 'Previous',

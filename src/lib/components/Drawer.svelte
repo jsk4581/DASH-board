@@ -61,6 +61,7 @@
     </button>
   </header>
 
+  <div class="dbody">
   <ul class="blist">
     {#each library.boards as b (b.id)}
       <li class="brow" class:active={b.id === library.activeId && ui.view !== 'done'}>
@@ -121,6 +122,10 @@
     {/each}
   </ul>
 
+  <button class="newb" onclick={onNew}>
+    <Icon name="plus" size={15} /> {t('newBoard')}
+  </button>
+
   <!-- the Completed tab: the active board's done-and-deleted items -->
   <div class="tabs">
     <button class="bname done-tab" class:active={ui.view === 'done'} onclick={pickDone}>
@@ -129,12 +134,7 @@
       <span class="bcount">{doneCount}</span>
     </button>
   </div>
-
-  <footer class="df">
-    <button class="newb" onclick={onNew}>
-      <Icon name="plus" size={15} /> {t('newBoard')}
-    </button>
-  </footer>
+  </div>
 </aside>
 
 <style>
@@ -173,12 +173,15 @@
     color: var(--text);
   }
 
+  .dbody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
   .blist {
     list-style: none;
     margin: 0;
-    padding: 8px;
-    overflow-y: auto;
-    flex: 1;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -237,7 +240,8 @@
   }
 
   .tabs {
-    padding: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
   }
   .done-tab {
@@ -297,11 +301,8 @@
     text-overflow: ellipsis;
   }
 
-  .df {
-    padding: 8px;
-    border-top: 1px solid var(--border);
-  }
   .newb {
+    margin-top: 6px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -1,22 +1,30 @@
 <script>
-  import { horizon, dayDiff, startOfDay, relativeTag, weekdayLabel } from '../date.js'
+  import { horizon, dayDiff, startOfDay, addDays, relativeTag, weekdayLabel, monthLabel } from '../date.js'
+  import { viewport } from '../media.svelte.js'
   import { t } from '../i18n.svelte.js'
 
-  // projects: full project list (each with items). `from` is the first day of
-  // the 2-week window; the timeline's slider moves it a day at a time.
-  let { projects, from = undefined } = $props()
+  // projects: full project list (each with items). The gantt is one strip of
+  // fixed-width day columns, 4 weeks back and 8 weeks ahead, that scrolls
+  // horizontally behind a sticky label column; it opens scrolled to today.
+  let { projects } = $props()
 
-  const days = $derived(horizon(14, from))
-  const base = $derived(startOfDay(from ?? new Date()))
+  const BACK = 28, AHEAD = 56
+  const N = BACK + AHEAD
+  const base = $derived(startOfDay(addDays(new Date(), -BACK)))
+  const days = $derived(horizon(N, base))
+  const dayW = $derived(viewport.narrow ? 40 : 48)
 
   function rowFor(it) {
     if (!it.due) return null
-    const dueIdx = dayDiff(base, it.due)
-    if (dueIdx < 0 || dueIdx > 13) return null
+    let dueIdx = dayDiff(base, it.due)
     let startIdx = it.start ? dayDiff(base, it.start) : dueIdx
+    startIdx = Math.min(startIdx, dueIdx)
+    if (dueIdx < 0 || startIdx > N - 1) return null
     const clipLeft = startIdx < 0
-    startIdx = Math.max(0, Math.min(startIdx, dueIdx))
-    return { startIdx, dueIdx, clipLeft }
+    const clipRight = dueIdx > N - 1
+    startIdx = Math.max(0, startIdx)
+    dueIdx = Math.min(N - 1, dueIdx)
+    return { startIdx, dueIdx, clipLeft, clipRight }
   }
 
   // [{ project, rows: [{ item, geom }] }] keeping only projects with dated items
@@ -28,21 +36,38 @@
       }))
       .filter((g) => g.rows.length > 0)
   )
+
+  let scroller = $state(null)
+  let awayFromToday = $state(false)
+
+  // today's column sits right after the label column, with yesterday peeking
+  function scrollToToday(smooth = false) {
+    scroller?.scrollTo({ left: (BACK - 1) * dayW, behavior: smooth ? 'smooth' : 'auto' })
+  }
+  $effect(() => {
+    if (scroller) scrollToToday()
+  })
+  function onScroll() {
+    awayFromToday = Math.abs(scroller.scrollLeft - (BACK - 1) * dayW) > dayW * 3
+  }
 </script>
 
-<div class="gantt">
+<div class="gantt" style="--day-w: {dayW}px; --n: {N};" bind:this={scroller} onscroll={onScroll}>
   <!-- header -->
   <div class="grow head">
-    <div class="label"></div>
-    <div class="track-cell">
-      <div class="track head-track">
-        {#each days as d (d.iso)}
-          <div class="hcell" class:today={d.isToday} class:weekend={d.isWeekend}>
-            <span class="hwd" class:sun={d.dow === 0} class:sat={d.dow === 6}>{weekdayLabel(d.dow)}</span>
-            <span class="hnum">{d.day}</span>
-          </div>
-        {/each}
-      </div>
+    <div class="label corner">
+      {#if awayFromToday}
+        <button class="today-btn" onclick={() => scrollToToday(true)}>{t('backToToday')}</button>
+      {/if}
+    </div>
+    <div class="track head-track">
+      {#each days as d, i (d.iso)}
+        <div class="hcell" class:today={d.isToday} class:weekend={d.isWeekend}>
+          {#if d.isFirstOfMonth || i === 0}<span class="hmon">{monthLabel(d.month)}</span>{/if}
+          <span class="hwd" class:sun={d.dow === 0} class:sat={d.dow === 6}>{weekdayLabel(d.dow)}</span>
+          <span class="hnum">{d.day}</span>
+        </div>
+      {/each}
     </div>
   </div>
 
@@ -57,20 +82,19 @@
     {#each g.rows as r (r.item.id)}
       <div class="grow">
         <div class="label" title={r.item.text}>{r.item.text}</div>
-        <div class="track-cell">
-          <div class="track">
-            {#each days as d}
-              <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>
-            {/each}
-            <div
-              class="bar"
-              class:done={r.item.status === 'done'}
-              class:highlight={r.item.status === 'highlight'}
-              class:clip-left={r.geom.clipLeft}
-              style="--c: {g.project.color}; grid-column: {r.geom.startIdx + 1} / {r.geom.dueIdx + 2};"
-            >
-              <span class="bar-tag">{relativeTag(r.item.due)}</span>
-            </div>
+        <div class="track">
+          {#each days as d}
+            <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>
+          {/each}
+          <div
+            class="bar"
+            class:done={r.item.status === 'done'}
+            class:highlight={r.item.status === 'highlight'}
+            class:clip-left={r.geom.clipLeft}
+            class:clip-right={r.geom.clipRight}
+            style="--c: {g.project.color}; grid-column: {r.geom.startIdx + 1} / {r.geom.dueIdx + 2};"
+          >
+            <span class="bar-tag">{relativeTag(r.item.due)}</span>
           </div>
         </div>
       </div>
@@ -83,19 +107,20 @@
     --label-w: clamp(120px, 18vw, 200px);
     overflow-x: auto;
     padding-bottom: 6px;
+    scrollbar-width: thin;
   }
   .grow {
     display: grid;
-    grid-template-columns: var(--label-w) minmax(420px, 1fr);
+    grid-template-columns: var(--label-w) calc(var(--day-w) * var(--n));
     align-items: stretch;
-    min-width: 0;
+    width: max-content;
   }
-  .track-cell {
-    position: relative;
-    overflow: hidden;
-    min-width: 0;
-  }
+  /* the label column stays put while the day strip scrolls under it */
   .label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--surface);
     padding: 6px 10px 6px 2px;
     font-size: 13.5px;
     color: var(--text);
@@ -105,10 +130,25 @@
     display: flex;
     align-items: center;
   }
-
+  .corner {
+    align-items: flex-end;
+    padding-bottom: 8px;
+  }
+  .today-btn {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    padding: 4px 10px;
+    border-radius: 99px;
+    transition: background var(--fast) var(--ease);
+  }
+  .today-btn:hover {
+    background: var(--accent);
+  }
   .track {
     display: grid;
-    grid-template-columns: repeat(14, 1fr);
+    grid-template-columns: repeat(var(--n), var(--day-w));
     position: relative;
     border-left: 1px solid var(--border);
   }
@@ -116,9 +156,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 4px 0 6px;
+    justify-content: flex-end;
+    position: relative;
+    padding: 16px 0 6px;
     border-right: 1px solid var(--border);
     gap: 1px;
+  }
+  .hmon {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
   }
   .hcell.weekend {
     background: color-mix(in srgb, var(--surface-2) 60%, var(--bg));
@@ -196,8 +247,16 @@
     border-top-left-radius: 3px;
     border-bottom-left-radius: 3px;
   }
+  .bar.clip-right {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+  }
 
   .group-label {
+    position: sticky;
+    left: 0;
+    width: max-content;
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 6px;

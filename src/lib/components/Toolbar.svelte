@@ -82,6 +82,7 @@
     {/if}
   </div>
 
+  {#if !onDone}
   <div class="mode-toggle view-switch" role="group" aria-label={t('viewSwitch')}>
     <button class:active={onBoard} onclick={() => setView('board')} title={t('boardView')}>
       <Icon name="grid" size={15} /> <span class="lbl">{t('boardView')}</span>
@@ -90,6 +91,7 @@
       <Icon name="chat" size={15} /> <span class="lbl">{t('memoView')}</span>
     </button>
   </div>
+  {/if}
 
   <div class="tools">
     {#if onBoard}

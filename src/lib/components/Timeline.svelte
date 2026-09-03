@@ -1,6 +1,6 @@
 <script>
   import { tick } from 'svelte'
-  import { vslide } from '../pop.js'
+  import { hslide } from '../pop.js'
   import Icon from './Icon.svelte'
   import CalendarView from './CalendarView.svelte'
   import DayAgenda from './DayAgenda.svelte'
@@ -28,7 +28,7 @@
     )
   )
 
-  // date navigation (calendar only): whole months, with a vertical slide. The
+  // date navigation (calendar only): whole months, with a horizontal slide. The
   // gantt is one long strip that scrolls horizontally on its own.
   let monthOffset = $state(0)
   let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
@@ -86,8 +86,8 @@
         {#key monthOffset}
           <div
             class="tl-vslide"
-            in:vslide={{ dir, mode: 'in', nav: paging, weeks: 4 }}
-            out:vslide={{ dir, mode: 'out', nav: paging, weeks: 4 }}
+            in:hslide={{ dir, mode: 'in', nav: paging }}
+            out:hslide={{ dir, mode: 'out', nav: paging }}
           >
             <CalendarView items={dated} {month} {selected} onselect={(iso) => (picked = iso)} />
           </div>
@@ -183,7 +183,7 @@
   }
   .tl-viewport {
     position: relative; /* containing block for the pinned outgoing slide */
-    overflow: hidden; /* clips the weeks scrolling in/out vertically */
+    overflow: hidden; /* clips the months sliding in/out sideways */
   }
   .tl-vslide {
     width: 100%;

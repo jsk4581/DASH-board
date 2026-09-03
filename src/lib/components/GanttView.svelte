@@ -83,8 +83,10 @@
       <div class="grow">
         <div class="label" title={r.item.text}>{r.item.text}</div>
         <div class="track">
-          {#each days as d}
-            <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend}></div>
+          {#each days as d, i (d.iso)}
+            <!-- pinned to its column: auto-placement would skip past the bar's
+                 span and shift every later cell's shading one bar to the right -->
+            <div class="bgcell" class:today={d.isToday} class:weekend={d.isWeekend} style="grid-column: {i + 1};"></div>
           {/each}
           <div
             class="bar"
@@ -205,7 +207,6 @@
   /* background cells live in the same grid track so bars overlay them */
   .bgcell {
     grid-row: 1;
-    grid-column: span 1;
     border-right: 1px solid var(--border);
     min-height: 30px;
   }

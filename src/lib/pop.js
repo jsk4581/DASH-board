@@ -86,3 +86,22 @@ export function vslide(node, { dir = 1, mode = 'in', duration = 300, nav = true,
     },
   }
 }
+
+// Calendar month paging: a horizontal carousel. The outgoing month is pinned
+// (absolute) and slides fully off one side while the incoming month slides in
+// from the other. `dir` = +1 (next) / -1 (prev); `nav` = false on first paint
+// and on a view toggle so neither slides.
+export function hslide(node, { dir = 1, mode = 'in', duration = 280, nav = true } = {}) {
+  if (!nav) return { duration: 0 }
+  const h = mode === 'out' ? node.offsetHeight : 0
+  return {
+    duration,
+    easing: cubicInOut,
+    // u = 1 - t (eased); u = 1 at the off-screen end
+    css: (t, u) => {
+      const x = mode === 'in' ? dir * 100 * u : -dir * 100 * u
+      const pin = mode === 'out' ? `position: absolute; top: 0; left: 0; width: 100%; height: ${h}px;` : ''
+      return `${pin} transform: translateX(${x}%);`
+    },
+  }
+}

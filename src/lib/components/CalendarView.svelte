@@ -28,32 +28,12 @@
     return map
   })
 
-  // phone layout: ranged items draw as thin bars that run across the cells they
-  // cover, so each needs a fixed lane for the whole grid or the bar would jump
-  // rows from one day to the next. Greedy interval colouring, at most 3 lanes;
-  // anything past that falls back to a dot.
-  const MAX_LANES = 3
-  const lanes = $derived.by(() => {
-    const ranged = items.filter(isRange).sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0))
-    const laneEnd = []
-    const of = {}
-    for (const it of ranged) {
-      let l = laneEnd.findIndex((end) => end < it.start)
-      if (l < 0) {
-        l = laneEnd.length
-        laneEnd.push(it.due)
-      } else laneEnd[l] = it.due
-      if (l < MAX_LANES) of[it.id] = l
-    }
-    return { of, count: Math.min(laneEnd.length, MAX_LANES) }
-  })
-
-  const MAX_DOTS = 3
+  // phone layout: one dot per item on every day it covers (ranged items
+  // included), capped so the cell stays a fixed height
+  const MAX_DOTS = 4
   function marks(iso) {
     const list = byDay[iso]
-    const bars = Array.from({ length: lanes.count }, (_, l) => list.find((it) => lanes.of[it.id] === l) ?? null)
-    const dots = list.filter((it) => lanes.of[it.id] == null)
-    return { bars, dots: dots.slice(0, MAX_DOTS), more: Math.max(0, dots.length - MAX_DOTS) }
+    return { dots: list.slice(0, MAX_DOTS), more: Math.max(0, list.length - MAX_DOTS) }
   }
 </script>
 
@@ -69,8 +49,6 @@
       class:today={d.isToday}
       class:weekend={d.isWeekend}
       class:outside={!d.inMonth}
-      class:wstart={d.dow === 0}
-      class:wend={d.dow === 6}
       class:sel={narrow && selected === d.iso}
       role="gridcell"
       onclick={() => narrow && onselect(d.iso)}
@@ -81,31 +59,15 @@
       {#if narrow}
         {@const m = marks(d.iso)}
         <div class="marks">
-          {#each m.bars as it, l (l)}
-            {#if it}
-              <span
-                class="bar"
-                class:done={it.status === 'done'}
-                class:highlight={it.status === 'highlight'}
-                class:first={it.start === d.iso}
-                class:last={it.due === d.iso}
-                style="--c: {it.projectColor};"
-              ></span>
-            {:else}
-              <span class="bar empty"></span>
-            {/if}
+          {#each m.dots as it (it.id)}
+            <span
+              class="dot"
+              class:done={it.status === 'done'}
+              class:highlight={it.status === 'highlight'}
+              style="--c: {it.projectColor};"
+            ></span>
           {/each}
-          <div class="dots">
-            {#each m.dots as it (it.id)}
-              <span
-                class="dot"
-                class:done={it.status === 'done'}
-                class:highlight={it.status === 'highlight'}
-                style="--c: {it.projectColor};"
-              ></span>
-            {/each}
-            {#if m.more}<span class="more">+{m.more}</span>{/if}
-          </div>
+          {#if m.more}<span class="more">+{m.more}</span>{/if}
         </div>
       {:else}
         <div class="chips">
@@ -245,9 +207,8 @@
   }
 
   /* phones: a cell is too narrow for any text, so it only carries marks (the
-     project colour, the red highlight ring, done as hollow) and the tapped
-     day's items are listed below the grid. Ranged items run as bars across
-     their days; the bars bleed into the column gap so they read as one line. */
+     project colour, the red highlight ring, done as hollow), one per item per
+     day, and the tapped day's items are listed below the grid. */
   .cal.narrow {
     gap: 3px;
     padding: 4px 0 6px;
@@ -277,51 +238,9 @@
   }
   .marks {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    /* bars overhang the padding so they connect through the gap */
-    margin: 0 -3px;
-  }
-  .bar {
-    display: block;
-    height: 4px;
-    background: var(--c);
-    margin: 0 -3px; /* bleed across the 3px column gap */
-    box-sizing: border-box;
-  }
-  .bar.first,
-  .col.wstart .bar {
-    margin-left: 0;
-  }
-  .bar.last,
-  .col.wend .bar {
-    margin-right: 0;
-  }
-  .bar.first {
-    border-radius: 2px 0 0 2px;
-  }
-  .bar.last {
-    border-radius: 0 2px 2px 0;
-  }
-  .bar.first.last {
-    border-radius: 2px;
-  }
-  .bar.done {
-    opacity: 0.35;
-  }
-  .bar.highlight {
-    /* the red highlight rides under the project colour instead of boxing it */
-    border-bottom: 2px solid var(--pencil);
-  }
-  .bar.empty {
-    background: transparent;
-    border: 0;
-  }
-  .dots {
-    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 3px;
-    padding: 0 3px;
     min-height: 6px;
   }
   .dot {

@@ -4,8 +4,17 @@
   import { library, board, switchBoard, addBoard, renameBoard, removeBoard } from '../store.svelte.js'
   import { ui, setView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
+  import { onBackButton } from '../platform.js'
 
   let { onclose } = $props()
+
+  // hardware back (apps): close the drawer instead of leaving the app
+  $effect(() =>
+    onBackButton(() => {
+      onclose?.()
+      return true
+    })
+  )
 
   let editingId = $state(null)
   let editName = $state('')

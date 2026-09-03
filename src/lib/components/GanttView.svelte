@@ -104,7 +104,7 @@
 
 <style>
   .gantt {
-    --label-w: clamp(120px, 18vw, 200px);
+    --label-w: clamp(88px, 12vw, 180px);
     overflow-x: auto;
     padding-bottom: 6px;
     scrollbar-width: thin;
@@ -129,6 +129,12 @@
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
+  }
+  @media (max-width: 560px) {
+    .label {
+      font-size: 12.5px;
+      padding-right: 6px;
+    }
   }
   .corner {
     align-items: flex-end;

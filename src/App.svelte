@@ -4,8 +4,19 @@
   import Timeline from './lib/components/Timeline.svelte'
   import MemoView from './lib/components/MemoView.svelte'
   import DoneBoard from './lib/components/DoneBoard.svelte'
-  import { ui, setTouchItem } from './lib/ui.svelte.js'
+  import { ui, setTouchItem, setView } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
+  import { onBackButton } from './lib/platform.js'
+
+  // hardware back (apps): the Completed tab returns to the board; the board
+  // and memo roots keep the default, which backgrounds the app
+  $effect(() =>
+    onBackButton(() => {
+      if (ui.view !== 'done') return false
+      setView('board')
+      return true
+    })
+  )
 
   const editing = $derived(ui.mode === 'edit')
 

@@ -1,6 +1,7 @@
 <script>
   import { onMount, tick } from 'svelte'
   import { scale } from 'svelte/transition'
+  import { onBackButton } from '../platform.js'
 
   let { anchor, onclose, placement = 'bottom-start', children } = $props()
 
@@ -34,6 +35,14 @@
   function onKey(e) {
     if (e.key === 'Escape') onclose?.()
   }
+
+  // hardware back (apps): dismiss the popover instead of leaving the app
+  $effect(() =>
+    onBackButton(() => {
+      onclose?.()
+      return true
+    })
+  )
 
   onMount(async () => {
     await tick()

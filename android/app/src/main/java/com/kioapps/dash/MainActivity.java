@@ -1,4 +1,4 @@
-package io.github.jsk4581.dash;
+package com.kioapps.dash;
 
 import com.getcapacitor.BridgeActivity;
 

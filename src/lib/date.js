@@ -7,6 +7,7 @@ export const HORIZON_DAYS = 14
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토']
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS_EN_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 /** Localised single weekday label for a day-of-week index (0=Sun). */
 export function weekdayLabel(dow) {
@@ -21,6 +22,13 @@ export function weekdayNames() {
 /** Localised month label e.g. "6월" / "Jun". */
 export function monthLabel(month) {
   return ui.lang === 'en' ? MONTHS_EN[month - 1] : `${month}월`
+}
+
+/** Month title e.g. "2026년 9월" / "September 2026". */
+export function monthTitle(d) {
+  return ui.lang === 'en'
+    ? `${MONTHS_EN_LONG[d.getMonth()]} ${d.getFullYear()}`
+    : `${d.getFullYear()}년 ${d.getMonth() + 1}월`
 }
 
 /** Local midnight for a given date (defaults to now). */
@@ -63,22 +71,50 @@ export function addDays(d, n) {
   return x
 }
 
+export function startOfMonth(d = new Date()) {
+  const x = startOfDay(d)
+  x.setDate(1)
+  return x
+}
+
+export function addMonths(d, n) {
+  const x = startOfMonth(d)
+  x.setMonth(x.getMonth() + n)
+  return x
+}
+
+function dayInfo(date) {
+  return {
+    iso: toISODate(date),
+    date,
+    day: date.getDate(),
+    month: date.getMonth() + 1,
+    weekday: WEEKDAYS_KO[date.getDay()],
+    dow: date.getDay(),
+    isToday: toISODate(date) === todayISO(),
+    isWeekend: date.getDay() === 0 || date.getDay() === 6,
+    isFirstOfMonth: date.getDate() === 1,
+  }
+}
+
 /** The list of days that make up the timeline, starting today. */
 export function horizon(days = HORIZON_DAYS, from = new Date()) {
   const base = startOfDay(from)
-  return Array.from({ length: days }, (_, i) => {
-    const date = addDays(base, i)
-    return {
-      iso: toISODate(date),
-      date,
-      day: date.getDate(),
-      month: date.getMonth() + 1,
-      weekday: WEEKDAYS_KO[date.getDay()],
-      dow: date.getDay(),
-      isToday: toISODate(date) === todayISO(),
-      isWeekend: date.getDay() === 0 || date.getDay() === 6,
-      isFirstOfMonth: date.getDate() === 1,
-    }
+  return Array.from({ length: days }, (_, i) => dayInfo(addDays(base, i)))
+}
+
+/**
+ * A whole month as a Sunday-first grid: a flat list of 35 or 42 days padded
+ * with the neighbouring months' days (`inMonth` false) so every row has 7.
+ */
+export function monthGrid(d = new Date()) {
+  const first = startOfMonth(d)
+  const start = addDays(first, -first.getDay())
+  const last = addDays(addMonths(first, 1), -1)
+  const rows = Math.ceil((first.getDay() + last.getDate()) / 7)
+  return Array.from({ length: rows * 7 }, (_, i) => {
+    const date = addDays(start, i)
+    return { ...dayInfo(date), inMonth: date.getMonth() === first.getMonth() }
   })
 }
 

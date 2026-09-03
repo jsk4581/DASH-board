@@ -33,7 +33,8 @@ const dict = {
 
     // timeline
     schedule: '일정',
-    next4w: '오늘부터 4주',
+    thisMonth: '이번 달',
+    noItemsDay: '일정 없음',
     next2w: '오늘부터 2주',
     timelineSwitch: '타임라인 보기 전환',
     calendar: '캘린더',
@@ -180,7 +181,8 @@ const dict = {
     loadFailed: 'Load failed: {msg}',
 
     schedule: 'Schedule',
-    next4w: 'Next 4 weeks',
+    thisMonth: 'This month',
+    noItemsDay: 'Nothing scheduled',
     next2w: 'Next 2 weeks',
     timelineSwitch: 'Switch timeline view',
     calendar: 'Calendar',

@@ -3,11 +3,13 @@
   import { vslide } from '../pop.js'
   import Icon from './Icon.svelte'
   import CalendarView from './CalendarView.svelte'
+  import DayAgenda from './DayAgenda.svelte'
   import GanttView from './GanttView.svelte'
   import { board } from '../store.svelte.js'
   import { ui, setTimelineView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
-  import { addDays, toISODate, formatShort } from '../date.js'
+  import { viewport } from '../media.svelte.js'
+  import { addDays, addMonths, toISODate, todayISO, formatShort, monthTitle } from '../date.js'
 
   // flattened dated items (for the calendar)
   const dated = $derived(
@@ -26,19 +28,24 @@
     )
   )
 
-  // date navigation: page the timeline window back/forward by a week
-  // page by 2 weeks on the calendar (4-week window), 1 week on the gantt (2-week window)
-  const STEP = $derived(ui.timelineView === 'calendar' ? 14 : 7)
-  let offsetDays = $state(0)
+  // date navigation: the calendar pages by whole months, the gantt by a week
+  // of its 2-week window; each keeps its own offset so toggling views doesn't
+  // land on an unrelated date
+  let offsetDays = $state(0) // gantt
+  let monthOffset = $state(0) // calendar
   let dir = $state(1) // slide direction: +1 forward (next), -1 backward (prev)
-  // true ONLY during the render caused by a date step → animate then. Stays false
-  // on first paint and on a view toggle (calendar↔gantt), so neither slides.
+  // true ONLY during the render caused by a date step, so it animates then. Stays
+  // false on first paint and on a view toggle (calendar/gantt), so neither slides.
   let paging = $state(false)
-  const spanDays = $derived(ui.timelineView === 'calendar' ? 28 : 14)
+  const isCal = $derived(ui.timelineView === 'calendar')
+  const atStart = $derived(isCal ? monthOffset === 0 : offsetDays === 0)
 
   function page(by) {
     paging = true
-    offsetDays += by
+    if (isCal) {
+      monthOffset += by
+      picked = null
+    } else offsetDays += 7 * by
     tick().then(() => (paging = false))
   }
   function step(by) {
@@ -46,17 +53,24 @@
     page(by)
   }
   function reset() {
-    if (offsetDays === 0) return
-    dir = offsetDays > 0 ? -1 : 1
-    page(-offsetDays)
+    if (atStart) return
+    const cur = isCal ? monthOffset : offsetDays
+    dir = cur > 0 ? -1 : 1
+    page(isCal ? -monthOffset : -offsetDays / 7)
   }
   const from = $derived(addDays(new Date(), offsetDays))
+  const month = $derived(addMonths(new Date(), monthOffset))
   const rangeLabel = $derived(
-    `${formatShort(toISODate(from))} – ${formatShort(toISODate(addDays(from, spanDays - 1)))}`
+    isCal
+      ? monthTitle(month)
+      : `${formatShort(toISODate(from))} – ${formatShort(toISODate(addDays(from, 13)))}`
   )
-  const subtitle = $derived(
-    offsetDays === 0 ? (ui.timelineView === 'calendar' ? t('next4w') : t('next2w')) : rangeLabel
-  )
+  const subtitle = $derived(atStart ? (isCal ? t('thisMonth') : t('next2w')) : rangeLabel)
+
+  // phone calendar: the tapped day whose items are listed under the grid.
+  // Defaults to today when the shown month contains it, else the 1st.
+  let picked = $state(null)
+  const selected = $derived(picked ?? (monthOffset === 0 ? todayISO() : toISODate(month)))
 </script>
 
 <section class="timeline">
@@ -84,16 +98,19 @@
     {#if ui.timelineView === 'calendar'}
       <!-- calendar pages vertically (whole 4-week grid) -->
       <div class="tl-viewport">
-        {#key offsetDays}
+        {#key monthOffset}
           <div
             class="tl-vslide"
-            in:vslide={{ dir, mode: 'in', nav: paging, weeks: STEP / 7 }}
-            out:vslide={{ dir, mode: 'out', nav: paging, weeks: STEP / 7 }}
+            in:vslide={{ dir, mode: 'in', nav: paging, weeks: 4 }}
+            out:vslide={{ dir, mode: 'out', nav: paging, weeks: 4 }}
           >
-            <CalendarView items={dated} {from} />
+            <CalendarView items={dated} {month} {selected} onselect={(iso) => (picked = iso)} />
           </div>
         {/key}
       </div>
+      {#if viewport.narrow}
+        <DayAgenda items={dated} day={selected} />
+      {/if}
     {:else}
       <!-- gantt keeps its left label column and slides only the date tracks (internally) -->
       <GanttView projects={board.projects} {from} {dir} {paging} />
@@ -101,18 +118,18 @@
   </div>
 
   <nav class="tl-nav" aria-label={t('schedule')}>
-    <button class="nav-arrow" onclick={() => step(-STEP)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
+    <button class="nav-arrow" onclick={() => step(-1)} aria-label={t('prevPeriod')} title={t('prevPeriod')}>
       <Icon name="chevronLeft" size={18} />
     </button>
     <button
       class="nav-range"
-      class:dim={offsetDays === 0}
+      class:dim={atStart}
       onclick={reset}
       title={t('backToToday')}
     >
       {rangeLabel}
     </button>
-    <button class="nav-arrow" onclick={() => step(STEP)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
+    <button class="nav-arrow" onclick={() => step(1)} aria-label={t('nextPeriod')} title={t('nextPeriod')}>
       <Icon name="chevron" size={18} />
     </button>
   </nav>

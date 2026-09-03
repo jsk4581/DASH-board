@@ -6,7 +6,7 @@
 **A **lightweight, simple** personal schedule dashboard**
 
 Group your tasks into project boxes, then read all their deadlines at a glance on
-the timeline below — as a **4‑week calendar** or a **2‑week Gantt chart**. 
+the timeline below — as a **monthly calendar** or a **2‑week Gantt chart**. 
 It runs entirely in the browser with no backend; data is saved automatically and can be
 exported to / imported from a JSON file.
 
@@ -18,7 +18,7 @@ exported to / imported from a JSON file.
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
-- **Timeline** — a 4‑week calendar or 2‑week Gantt chart; page back/forward with the arrows below it
+- **Timeline** — a monthly calendar or 2‑week Gantt chart; page back/forward with the arrows below it. On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
 - **Undo / redo** — `Ctrl/⌘ + Z` and `Ctrl/⌘ + Y` (rapid edits are coalesced into one step)
 - **Edit mode / View mode** — flip to a clean, read‑only view

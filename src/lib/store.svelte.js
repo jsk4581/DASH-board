@@ -25,9 +25,12 @@ export const PALETTE = [
   'oklch(0.87 0.06 140)', // pale mint
 ]
 
+let seq = 0
 export function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
-  return 'id-' + Math.abs(Date.now() ^ (performance.now() * 1000)).toString(36)
+  // non-secure contexts (plain http) have no randomUUID; timers are too coarse
+  // to tell two calls apart, so mix in a counter and randomness
+  return 'id-' + Date.now().toString(36) + (seq++).toString(36) + Math.random().toString(36).slice(2, 8)
 }
 
 function seedProjects() {

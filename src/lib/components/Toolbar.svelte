@@ -79,7 +79,7 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {#if onStar}<Icon name="star" size={15} strokeWidth={2.5} /> {t('starTab')}{:else}{board.name}{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
+        {#if onStar}<Icon name="star" size={15} strokeWidth={2.5} /><span class="cur-text">{t('starTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
       </button>
     {/if}
   </div>
@@ -242,14 +242,15 @@
     min-width: 0;
   }
   .cur-board {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 16px;
     font-weight: 700;
     color: var(--text);
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     min-width: 0;
     max-width: 40vw;
     transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
@@ -257,8 +258,13 @@
   .cur-board:hover {
     background: var(--surface-hover);
   }
+  .cur-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .done-badge {
-    margin-left: 8px;
+    margin-left: 2px;
     padding: 2px 7px;
     border-radius: 99px;
     font-size: 11.5px;

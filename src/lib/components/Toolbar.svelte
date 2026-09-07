@@ -79,7 +79,7 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {#if onStar}<Icon name="star" size={15} strokeWidth={2.5} /><span class="cur-text">{t('starTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
+        {#if onStar}<span class="cur-text">{t('starTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
       </button>
     {/if}
   </div>

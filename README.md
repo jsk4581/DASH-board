@@ -158,6 +158,8 @@ active are stored separately and are **not** included in exports.
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range) / click a selected day again to clear
 - **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
 - **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
+- **Highlights** — a pinned entry at the top of the boards drawer that gathers every item circled in red, from every board, with its own calendar and gantt; editing an item there edits it on its board
+- **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

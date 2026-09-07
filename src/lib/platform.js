@@ -83,6 +83,36 @@ export async function saveTextFile(name, text, title = name) {
   URL.revokeObjectURL(url)
 }
 
+// Share target: text another app sent to DASH ("Share" in a browser or
+// YouTube). The store app receives it through a small native plugin
+// (ShareTarget, in the Android project); on the web a `?share` query string
+// with title/text/url does the same, so a PWA share_target can feed it.
+// The handler gets { title, text, url } and may run more than once per session.
+export function onShareReceived(handler) {
+  if (isNative) {
+    import('@capacitor/core').then(({ registerPlugin }) => {
+      const ShareTarget = registerPlugin('ShareTarget')
+      ShareTarget.addListener('share', (data) => handler(data))
+      ShareTarget.getPending()
+        .then((data) => {
+          if (data?.text || data?.url) handler(data)
+        })
+        .catch(() => {})
+    })
+    return
+  }
+  try {
+    const u = new URL(location.href)
+    if (!u.searchParams.has('share')) return
+    const data = { title: u.searchParams.get('title') ?? '', text: u.searchParams.get('text') ?? '', url: u.searchParams.get('url') ?? '' }
+    for (const k of ['share', 'title', 'text', 'url']) u.searchParams.delete(k)
+    history.replaceState(null, '', u.pathname + (u.search || '') + u.hash)
+    if (data.text || data.url) handler(data)
+  } catch {
+    /* ignore */
+  }
+}
+
 // Hardware back button: handlers run newest-first; the first to return true
 // consumes the press. With none left to consume it, the app goes to the
 // background (the usual Android expectation on a root screen).

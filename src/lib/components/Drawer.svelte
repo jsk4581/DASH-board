@@ -34,6 +34,14 @@
     setView('done')
     onclose?.()
   }
+  function pickStar() {
+    setView('star')
+    onclose?.()
+  }
+  // items circled in red, across every board (the pinned Highlights entry)
+  const starCount = $derived(
+    library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.status === 'highlight').length, 0), 0)
+  )
   // items deleted while done, across the active board
   const doneCount = $derived(board.projects.reduce((n, p) => n + p.archive.length, 0))
   function startRename(b) {
@@ -71,9 +79,14 @@
   </header>
 
   <div class="dbody">
+  <button class="bname star-tab" class:active={ui.view === 'star'} onclick={pickStar}>
+    <Icon name="star" size={14} strokeWidth={2.5} />
+    <span class="btext">{t('starTab')}</span>
+    <span class="bcount">{starCount}</span>
+  </button>
   <ul class="blist">
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && ui.view !== 'done'}>
+      <li class="brow" class:active={b.id === library.activeId && ui.view !== 'done' && ui.view !== 'star'}>
         {#if editingId === b.id}
           <input
             class="rename"
@@ -246,6 +259,24 @@
     font-weight: 600;
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
+  }
+
+  .star-tab {
+    width: 100%;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    min-height: 36px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+  .star-tab:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .star-tab.active {
+    background: var(--accent-soft);
+    color: var(--text);
   }
 
   .tabs {

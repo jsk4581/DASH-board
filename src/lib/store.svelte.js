@@ -222,7 +222,13 @@ export function setBoards(boards) {
 
 // ---- lookups -----------------------------------------------------------
 export function findProject(pid) {
-  return board.projects.find((p) => p.id === pid)
+  // project ids are unique across the library, and the Highlights view edits
+  // items that live on boards other than the active one
+  for (const b of library.boards) {
+    const p = b.projects.find((x) => x.id === pid)
+    if (p) return p
+  }
+  return undefined
 }
 
 // ---- project mutations -------------------------------------------------

@@ -22,6 +22,8 @@
   // the Completed tab is a view of the board (drawer, save, undo all apply)
   const onBoard = $derived(ui.view !== 'memo')
   const onDone = $derived(ui.view === 'done')
+  const onStar = $derived(ui.view === 'star')
+  const onSub = $derived(onDone || onStar) // a sub-view of the board
 
   // the memo view sizes itself to the space under this bar
   $effect(() => {
@@ -77,12 +79,12 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {board.name}{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}
+        {#if onStar}<Icon name="star" size={15} strokeWidth={2.5} /> {t('starTab')}{:else}{board.name}{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
       </button>
     {/if}
   </div>
 
-  {#if !onDone}
+  {#if !onSub}
   <div class="mode-toggle view-switch" role="group" aria-label={t('viewSwitch')}>
     <button class:active={onBoard} onclick={() => setView('board')} title={t('boardView')}>
       <Icon name="grid" size={15} /> <span class="lbl">{t('boardView')}</span>

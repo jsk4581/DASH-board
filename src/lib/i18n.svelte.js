@@ -121,6 +121,13 @@ const dict = {
 
     // completed tab
     doneTab: '완료',
+    starTab: '중요',
+    starEmpty: '빨간 동그라미로 강조한 항목이 모든 보드에서 여기에 모입니다.',
+    shareTitle: '메모로 보내기',
+    sharePick: '어느 대화에 넣을까요?',
+    shareNew: '새 대화',
+    shareSend: '보내기',
+    shareCancel: '취소',
     doneEmpty: '완료한 뒤 지운 항목이 여기에 모입니다.',
     restoreItem: '다시 할 일로',
     deleteForever: '완전히 삭제',
@@ -271,6 +278,13 @@ const dict = {
 
     // completed tab
     doneTab: 'Completed',
+    starTab: 'Highlights',
+    starEmpty: 'Items you circle in red on any board collect here.',
+    shareTitle: 'Send to memos',
+    sharePick: 'Which thread should it go to?',
+    shareNew: 'New thread',
+    shareSend: 'Send',
+    shareCancel: 'Cancel',
     doneEmpty: 'Items you delete after completing them collect here.',
     restoreItem: 'Back to the board',
     deleteForever: 'Delete permanently',

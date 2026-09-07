@@ -178,6 +178,14 @@ export function setActive(threadId) {
   saveUI()
 }
 
+// A request to show a thread's chat (not just select it): on a phone the memo
+// view swaps its list for the chat when this ticks.
+export const memoNav = $state({ open: 0 })
+export function openThread(threadId) {
+  setActive(threadId)
+  memoNav.open++
+}
+
 // ---- export / import ------------------------------------------------------
 
 export function serializeMemos() {

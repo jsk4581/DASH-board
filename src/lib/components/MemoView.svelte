@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
   import Icon from './Icon.svelte'
   import MemoChat from './MemoChat.svelte'
-  import { memo, addThread, renameThread, deleteThread, setActive, serializeMemos, mergeMemos } from '../memo.svelte.js'
+  import { memo, memoNav, addThread, renameThread, deleteThread, setActive, serializeMemos, mergeMemos } from '../memo.svelte.js'
   import { t } from '../i18n.svelte.js'
   import { ui } from '../ui.svelte.js'
   import { toISODate } from '../date.js'
@@ -52,6 +52,11 @@
       mq.removeEventListener('change', sync)
       offBack()
     }
+  })
+
+  // an explicit "open this thread" (share sheet) lands in the chat on a phone
+  $effect(() => {
+    if (memoNav.open && narrow) showList = false
   })
 
   function flash(msg) {

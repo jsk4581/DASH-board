@@ -11,9 +11,14 @@
   import { viewport } from '../media.svelte.js'
   import { addMonths, toISODate, todayISO, monthTitle } from '../date.js'
 
+  // `projects` overrides the active board's (the Highlights view passes the
+  // circled items of every board)
+  let { editing = true, projects = null } = $props()
+  const source = $derived(projects ?? board.projects)
+
   // flattened dated items (for the calendar)
   const dated = $derived(
-    board.projects.flatMap((p) =>
+    source.flatMap((p) =>
       p.items
         .filter((it) => it.due)
         .map((it) => ({
@@ -98,7 +103,7 @@
       {/if}
     {:else}
       <!-- gantt keeps its left label column and slides only the date tracks (internally) -->
-      <GanttView projects={board.projects} />
+      <GanttView projects={source} />
     {/if}
   </div>
 

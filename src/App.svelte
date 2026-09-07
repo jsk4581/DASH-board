@@ -4,6 +4,9 @@
   import Timeline from './lib/components/Timeline.svelte'
   import MemoView from './lib/components/MemoView.svelte'
   import DoneBoard from './lib/components/DoneBoard.svelte'
+  import StarBoard from './lib/components/StarBoard.svelte'
+  import ShareSheet from './lib/components/ShareSheet.svelte'
+  import { share, initShare } from './lib/share.svelte.js'
   import { ui, setTouchItem, setView } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
   import { onBackButton } from './lib/platform.js'
@@ -12,11 +15,13 @@
   // and memo roots keep the default, which backgrounds the app
   $effect(() =>
     onBackButton(() => {
-      if (ui.view !== 'done') return false
+      if (ui.view !== 'done' && ui.view !== 'star') return false
       setView('board')
       return true
     })
   )
+  // text shared from another app lands in the memo picker
+  $effect(() => initShare())
 
   const editing = $derived(ui.mode === 'edit')
 
@@ -56,11 +61,19 @@
   <main class:editing>
     <DoneBoard {editing} />
   </main>
+{:else if ui.view === 'star'}
+  <main class:editing>
+    <StarBoard {editing} />
+  </main>
 {:else}
   <main class:editing>
     <Board {editing} />
     <Timeline {editing} />
   </main>
+{/if}
+
+{#if share.pending}
+  <ShareSheet />
 {/if}
 
 <!-- shared "colored-pencil" roughening filter for the 강조 grading circle -->

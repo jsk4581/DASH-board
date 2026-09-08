@@ -16,9 +16,7 @@
   // app only: periodic reminders of these items (settings in a sheet)
   let remindOpen = $state(false)
   const remindSummary = $derived(
-    remind.enabled
-      ? `${t(`every${remind.every}`)} · ${remind.quiet ? `${remind.quietEnd}~${remind.quietStart}` : t('remindAllDay')}`
-      : t('remindOff')
+    remind.enabled && remind.times.length ? [...remind.times].sort().join(', ') : t('remindOff')
   )
 
   const groups = $derived(

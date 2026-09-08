@@ -1,14 +1,12 @@
 <script>
-  // Highlight reminder settings (app only): on/off, how often, quiet hours.
+  // Highlight reminder settings (app only): on/off and the times of day.
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
-  import { remind, remindStatus, setRemindEnabled, slotsFor, fmtMin, EVERY_OPTIONS } from '../remind.svelte.js'
+  import { remind, remindStatus, setRemindEnabled, addTime, removeTime, MAX_TIMES } from '../remind.svelte.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
   let { onclose = () => {} } = $props()
-
-  const times = $derived(slotsFor(remind).map(fmtMin))
 
   $effect(() =>
     onBackButton(() => {
@@ -46,29 +44,23 @@
   {/if}
 
   <div class="opts" class:off={!remind.enabled}>
-    <label class="row">
-      <span class="lbl">{t('remindEvery')}</span>
-      <select bind:value={remind.every}>
-        {#each EVERY_OPTIONS as m (m)}
-          <option value={m}>{t(`every${m}`)}</option>
-        {/each}
-      </select>
-    </label>
-    <label class="row">
-      <span class="lbl">{t('remindQuiet')}</span>
-      <input type="checkbox" class="switch" bind:checked={remind.quiet} />
-    </label>
-    {#if remind.quiet}
-      <div class="row times">
-        <input type="time" bind:value={remind.quietStart} aria-label={t('remindQuiet')} />
-        <span class="tilde">~</span>
-        <input type="time" bind:value={remind.quietEnd} aria-label={t('remindQuiet')} />
-      </div>
+    <p class="sub">{t('remindTimes')}</p>
+    <ul class="times">
+      {#each remind.times as _, i (i)}
+        <li class="row time">
+          <input type="time" bind:value={remind.times[i]} aria-label={t('remindTimes')} />
+          <button class="icon-btn" onclick={() => removeTime(i)} title={t('remindRemove')} aria-label={t('remindRemove')}>
+            <Icon name="x" size={14} />
+          </button>
+        </li>
+      {/each}
+    </ul>
+    {#if remind.times.length === 0}
+      <p class="note warn">{t('remindNoTimes')}</p>
     {/if}
-    <p class="slots">
-      <span class="lbl">{t('remindTimes')}</span>
-      <span class="list">{times.join(', ')}</span>
-    </p>
+    {#if remind.times.length < MAX_TIMES}
+      <button class="add" onclick={addTime}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
+    {/if}
   </div>
   <p class="note">{t('remindHint')}</p>
 </div>
@@ -131,44 +123,49 @@
     opacity: 0.45;
     pointer-events: none;
   }
-  select,
   input[type='time'] {
     font: inherit;
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--text);
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--radius-xs);
-    padding: 6px 8px;
+    padding: 6px 10px;
+    font-variant-numeric: tabular-nums;
   }
-  .times {
-    justify-content: flex-end;
-    min-height: 36px;
-  }
-  .tilde {
-    color: var(--text-faint);
-  }
-  .slots {
-    display: flex;
-    gap: 10px;
-    align-items: baseline;
-    margin: 4px 0 0;
-    padding: 8px 0 2px;
-    border-top: 1px solid var(--border);
-  }
-  .slots .lbl {
-    flex: none;
+  .sub {
+    margin: 6px 0 2px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--text-muted);
-    font-size: 13px;
   }
-  .list {
-    flex: 1;
-    text-align: right;
+  .times {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .row.time {
+    min-height: 36px;
+    justify-content: space-between;
+  }
+  .add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-strong);
+    color: var(--text-muted);
     font-size: 13px;
+    font-weight: 600;
+  }
+  .add:hover {
+    background: var(--surface-hover);
     color: var(--text);
-    font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
   }
   .note {
     margin: 10px 0 0;

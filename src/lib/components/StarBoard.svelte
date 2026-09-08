@@ -5,10 +5,21 @@
   import Icon from './Icon.svelte'
   import TodoItem from './TodoItem.svelte'
   import Timeline from './Timeline.svelte'
+  import RemindSheet from './RemindSheet.svelte'
   import { library } from '../store.svelte.js'
+  import { remind } from '../remind.svelte.js'
+  import { isNative } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
   let { editing = true } = $props()
+
+  // app only: periodic reminders of these items (settings in a sheet)
+  let remindOpen = $state(false)
+  const remindSummary = $derived(
+    remind.enabled
+      ? `${t(`every${remind.every}`)} · ${remind.quiet ? `${remind.quietEnd}~${remind.quietStart}` : t('remindAllDay')}`
+      : t('remindOff')
+  )
 
   const groups = $derived(
     library.boards
@@ -29,6 +40,14 @@
 </script>
 
 <section class="star-board">
+  {#if isNative}
+    <div class="remind-row">
+      <button class="remind-btn" class:on={remind.enabled} onclick={() => (remindOpen = true)}>
+        <Icon name="bell" size={14} />
+        <span class="remind-text">{remindSummary}</span>
+      </button>
+    </div>
+  {/if}
   {#if groups.length === 0}
     <p class="empty">{t('starEmpty')}</p>
   {:else}
@@ -57,10 +76,41 @@
 {#if projects.length > 0}
   <Timeline {editing} {projects} />
 {/if}
+{#if remindOpen}
+  <RemindSheet onclose={() => (remindOpen = false)} />
+{/if}
 
 <style>
   .star-board {
     padding: 18px clamp(14px, 3vw, 32px) 8px;
+  }
+  .remind-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0 10px;
+  }
+  .remind-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .remind-btn.on {
+    color: var(--accent-ink);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .remind-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70vw;
   }
   .grid {
     display: grid;

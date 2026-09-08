@@ -134,3 +134,52 @@ export function onBackButton(handler) {
     if (i >= 0) backHandlers.splice(i, 1)
   }
 }
+
+// Highlight reminders (app only): the store's Highlights view, repeated as a
+// notification on a daily grid of times. Each entry in `list` is one time of
+// day; the plugin repeats it every day until we cancel it, so reminders keep
+// coming even when the app is never opened. Inexact alarms are enough here
+// (a reminder a few minutes late is fine) and need no special permission.
+let lnMod = null
+async function ln() {
+  return (lnMod ??= await import('@capacitor/local-notifications'))
+}
+const REMIND_BASE = 7000
+const REMIND_MAX = 100
+
+export async function requestNotificationPermission() {
+  if (!isNative) return false
+  const { LocalNotifications } = await ln()
+  let { display } = await LocalNotifications.checkPermissions()
+  if (display !== 'granted') ({ display } = await LocalNotifications.requestPermissions())
+  return display === 'granted'
+}
+
+/** Replace every scheduled reminder with `list` (empty list = none). */
+export async function scheduleReminders(list, channel) {
+  if (!isNative) return
+  const { LocalNotifications } = await ln()
+  const { notifications } = await LocalNotifications.getPending()
+  const mine = notifications.filter((n) => n.id >= REMIND_BASE && n.id < REMIND_BASE + REMIND_MAX)
+  if (mine.length) await LocalNotifications.cancel({ notifications: mine.map((n) => ({ id: n.id })) })
+  if (!list.length) return
+  await LocalNotifications.createChannel({ id: channel.id, name: channel.name, description: channel.description, importance: 3 })
+  await LocalNotifications.schedule({
+    notifications: list.slice(0, REMIND_MAX).map((n, i) => ({
+      id: REMIND_BASE + i,
+      channelId: channel.id,
+      smallIcon: 'ic_stat_dash',
+      isExactNotification: false,
+      autoCancel: true,
+      ...n,
+    })),
+  })
+}
+
+/** A tapped reminder: the handler gets the notification's `extra`. */
+export function onNotificationTap(handler) {
+  if (!isNative) return
+  ln().then(({ LocalNotifications }) => {
+    LocalNotifications.addListener('localNotificationActionPerformed', (e) => handler(e.notification?.extra ?? {}))
+  })
+}

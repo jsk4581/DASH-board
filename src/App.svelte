@@ -7,6 +7,7 @@
   import StarBoard from './lib/components/StarBoard.svelte'
   import ShareSheet from './lib/components/ShareSheet.svelte'
   import { share, initShare } from './lib/share.svelte.js'
+  import { initRemind } from './lib/remind.svelte.js'
   import { ui, setTouchItem, setView } from './lib/ui.svelte.js'
   import { undo, redo } from './lib/history.svelte.js'
   import { onBackButton } from './lib/platform.js'
@@ -22,6 +23,8 @@
   )
   // text shared from another app lands in the memo picker
   $effect(() => initShare())
+  // app only: highlight reminders follow the settings and the boards
+  initRemind()
 
   const editing = $derived(ui.mode === 'edit')
 

@@ -5,6 +5,7 @@
   import MemoView from './lib/components/MemoView.svelte'
   import DoneBoard from './lib/components/DoneBoard.svelte'
   import StarBoard from './lib/components/StarBoard.svelte'
+  import RemindBoard from './lib/components/RemindBoard.svelte'
   import ShareSheet from './lib/components/ShareSheet.svelte'
   import { share, initShare } from './lib/share.svelte.js'
   import { initRemind } from './lib/remind.svelte.js'
@@ -16,7 +17,7 @@
   // and memo roots keep the default, which backgrounds the app
   $effect(() =>
     onBackButton(() => {
-      if (ui.view !== 'done' && ui.view !== 'star') return false
+      if (!['done', 'star', 'remind'].includes(ui.view)) return false
       setView('board')
       return true
     })
@@ -67,6 +68,10 @@
 {:else if ui.view === 'star'}
   <main class:editing>
     <StarBoard {editing} />
+  </main>
+{:else if ui.view === 'remind'}
+  <main class:editing>
+    <RemindBoard {editing} />
   </main>
 {:else}
   <main class:editing>

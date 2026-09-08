@@ -1,10 +1,11 @@
-// Highlight reminders (app only, see platform.scheduleReminders): every item
-// circled in red, from every board, sent as a notification at the times of
-// day the user lists (09:00 and 20:00 by default). Each time is one daily
-// repeating notification, so reminders keep coming without the app open;
-// the content is refreshed whenever the app runs. Delivery is inexact (the
-// OS may hold one for up to an hour). The settings live outside the board
-// document, like ui prefs.
+// Reminders (app only, see platform.scheduleReminders): the items the user
+// ticked in the Reminders tab (item.remind, part of the board document so it
+// travels with the board), sent as one notification at each time of day
+// listed here (09:00 and 20:00 by default). Each time is one daily repeating
+// notification, so reminders keep coming without the app open; the content
+// is refreshed whenever the app runs. Delivery is inexact (the OS may hold
+// one for up to an hour). The times live outside the board document, like
+// ui prefs: they belong to this device.
 import { library } from './store.svelte.js'
 import { setView } from './ui.svelte.js'
 import { t } from './i18n.svelte.js'
@@ -66,12 +67,12 @@ export function removeTime(i) {
   remind.times.splice(i, 1)
 }
 
-/** Every highlighted item on every board, dated ones first. */
-export function highlightItems() {
+/** Every ticked item on every board, in board order. */
+export function remindItems() {
   const list = []
   for (const b of library.boards)
-    for (const p of b.projects) for (const it of p.items) if (it.status === 'highlight') list.push({ text: it.text, due: it.due || null })
-  return list.sort((a, b) => (a.due && b.due ? a.due.localeCompare(b.due) : a.due ? -1 : b.due ? 1 : 0))
+    for (const p of b.projects) for (const it of p.items) if (it.remind) list.push({ text: it.text, due: it.due || null })
+  return list
 }
 
 /** Turn reminders on (asks for the notification permission first) or off. */
@@ -87,7 +88,7 @@ export async function setRemindEnabled(on) {
 
 function buildNotifications() {
   if (!remind.enabled) return []
-  const items = highlightItems()
+  const items = remindItems()
   if (!items.length) return []
   const lines = items.map((it) => `• ${it.text}${it.due ? ` (${formatShort(it.due)})` : ''}`)
   const shown = lines.slice(0, MAX_LINES)
@@ -100,7 +101,7 @@ function buildNotifications() {
     body,
     largeBody,
     schedule: { on: { hour: Math.floor(m / 60), minute: m % 60 }, allowWhileIdle: true },
-    extra: { view: 'star' },
+    extra: { view: 'remind' },
   }))
 }
 
@@ -112,15 +113,15 @@ export function initRemind() {
   if (wired || !isNative) return
   wired = true
   onNotificationTap((extra) => {
-    if (extra?.view === 'star') setView('star')
+    if (extra?.view === 'remind') setView('remind')
   })
   $effect.root(() => {
     $effect(() => {
       const list = buildNotifications()
-      const channel = { id: 'highlights', name: t('remindChannel'), description: t('remindChannelDesc') }
+      const channel = { id: 'reminders', name: t('remindChannel'), description: t('remindChannelDesc') }
       const key = JSON.stringify({ list, channel })
       if (key === lastKey) return
-      // edits to a highlighted item's text arrive one keystroke at a time
+      // edits to a picked item's text arrive one keystroke at a time
       clearTimeout(timer)
       timer = setTimeout(() => {
         lastKey = key

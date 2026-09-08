@@ -160,7 +160,7 @@ active are stored separately and are **not** included in exports.
 - **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
 - **Highlights** — a pinned entry at the top of the boards drawer that gathers every item circled in red, from every board, with its own calendar and gantt; editing an item there edits it on its board
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
-- **Highlight reminders** (Android app) — a daily notification listing the highlighted items at the times of day you choose
+- **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

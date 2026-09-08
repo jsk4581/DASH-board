@@ -82,6 +82,7 @@ function normalizeItem(it) {
     status: ['default', 'done', 'highlight'].includes(it.status) ? it.status : 'default',
     start: it.start ?? null,
     due: it.due ?? null,
+    remind: it.remind === true, // picked for the app's reminder notification
   }
 }
 // an item that was deleted while done: kept per project for the Completed tab
@@ -269,7 +270,7 @@ export function setProjectColor(pid, color) {
 export function addItem(pid, text = '') {
   const p = findProject(pid)
   if (!p) return null
-  const item = { id: uid(), text, status: 'default', start: null, due: null }
+  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false }
   p.items.push(item)
   return item
 }
@@ -318,6 +319,12 @@ export function toggleStatus(pid, iid, status) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return
   it.status = it.status === status ? 'default' : status
+}
+
+/** Include this item in (or drop it from) the reminder notification. */
+export function toggleRemind(pid, iid) {
+  const it = findProject(pid)?.items.find((x) => x.id === iid)
+  if (it) it.remind = !it.remind
 }
 
 export function setItemDates(pid, iid, { start = undefined, due = undefined }) {

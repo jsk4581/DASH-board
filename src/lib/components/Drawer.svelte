@@ -38,6 +38,14 @@
     setView('star')
     onclose?.()
   }
+  function pickRemind() {
+    setView('remind')
+    onclose?.()
+  }
+  // items picked for the reminder notification, across every board
+  const remindCount = $derived(
+    library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.remind).length, 0), 0)
+  )
   // items circled in red, across every board (the pinned Highlights entry)
   const starCount = $derived(
     library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.status === 'highlight').length, 0), 0)
@@ -88,9 +96,16 @@
       <span class="bcount">{starCount}</span>
     </button>
   </div>
+  <div class="brow pinned" class:active={ui.view === 'remind'}>
+    <button class="bname" onclick={pickRemind}>
+      <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>
+      <span class="btext">{t('remindTab')}</span>
+      <span class="bcount">{remindCount}</span>
+    </button>
+  </div>
   <ul class="blist">
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && ui.view !== 'done' && ui.view !== 'star'}>
+      <li class="brow" class:active={b.id === library.activeId && !['done', 'star', 'remind'].includes(ui.view)}>
         {#if editingId === b.id}
           <input
             class="rename"

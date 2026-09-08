@@ -132,8 +132,9 @@ const dict = {
     restoreItem: '다시 할 일로',
     deleteForever: '완전히 삭제',
 
-    // highlight reminders (app only)
-    remindTitle: '중요 항목 알림',
+    // reminders tab (notifications come from the Android app)
+    remindTab: '알림',
+    remindTitle: '알림 설정',
     remindOn: '알림 받기',
     remindTimes: '알림 시각 (매일)',
     remindAdd: '시각 추가',
@@ -141,10 +142,14 @@ const dict = {
     remindNoTimes: '알림 시각을 하나 이상 추가하세요.',
     remindOff: '알림 꺼짐',
     remindDenied: '알림 권한이 꺼져 있습니다. 시스템 설정의 앱 알림에서 허용해 주세요.',
-    remindHint: '알림은 정한 시각부터 한 시간 안에 도착합니다. 중요 표시한 항목이 없으면 오지 않고, 목록은 앱을 열 때마다 새로 반영됩니다.',
-    remindChannel: '중요 항목 알림',
-    remindChannelDesc: '빨간 동그라미로 강조한 항목을 정해 둔 시각에 알려 줍니다.',
-    remindNotifTitle: '중요 항목 {n}개',
+    remindHint: '알림은 정한 시각부터 한 시간 안에 도착합니다. 고른 항목이 없으면 오지 않고, 내용은 앱을 열 때마다 새로 반영됩니다.',
+    remindWebNote: '알림은 안드로이드 앱에서 옵니다. 여기서 고른 항목이 앱 알림에 들어갑니다.',
+    remindPick: '알림에 넣을 항목을 고르세요.',
+    remindPickEmpty: '보드에 항목이 없습니다.',
+    remindPicked: '{n}개 선택',
+    remindChannel: '알림',
+    remindChannelDesc: '알림 탭에서 고른 항목을 정해 둔 시각에 알려 줍니다.',
+    remindNotifTitle: '할 일 {n}개',
     remindMore: '외 {n}개',
 
     // timeline navigation
@@ -304,8 +309,9 @@ const dict = {
     restoreItem: 'Back to the board',
     deleteForever: 'Delete permanently',
 
-    // highlight reminders (app only)
-    remindTitle: 'Highlight reminders',
+    // reminders tab (notifications come from the Android app)
+    remindTab: 'Reminders',
+    remindTitle: 'Notification settings',
     remindOn: 'Remind me',
     remindTimes: 'Times (every day)',
     remindAdd: 'Add a time',
@@ -313,10 +319,14 @@ const dict = {
     remindNoTimes: 'Add at least one time.',
     remindOff: 'Reminders off',
     remindDenied: 'Notifications are turned off. Allow them for DASH in the system settings.',
-    remindHint: 'Each reminder arrives within an hour of its time. Nothing is sent while no item is highlighted, and the list refreshes every time you open the app.',
-    remindChannel: 'Highlight reminders',
-    remindChannelDesc: 'Items you circled in red, at the times you set.',
-    remindNotifTitle: '{n} highlighted',
+    remindHint: 'Each reminder arrives within an hour of its time. Nothing is sent while no item is picked, and the content refreshes every time you open the app.',
+    remindWebNote: 'Notifications come from the Android app. The items you pick here go into them.',
+    remindPick: 'Pick the items to be reminded of.',
+    remindPickEmpty: 'No items on your boards yet.',
+    remindPicked: '{n} picked',
+    remindChannel: 'Reminders',
+    remindChannelDesc: 'The items picked in the Reminders tab, at the times you set.',
+    remindNotifTitle: '{n} to do',
     remindMore: '+{n} more',
 
     // timeline navigation

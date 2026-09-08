@@ -1,103 +1,73 @@
 <script>
-  // Highlight reminder settings (app only): on/off and the times of day.
-  import { fade, fly } from 'svelte/transition'
+  // Notification settings card (Reminders tab): on/off and the times of day.
+  // On the web the times are hidden: notifications only come from the app.
   import Icon from './Icon.svelte'
   import { remind, remindStatus, setRemindEnabled, addTime, removeTime, MAX_TIMES } from '../remind.svelte.js'
-  import { onBackButton } from '../platform.js'
+  import { isNative } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
-  let { onclose = () => {} } = $props()
-
-  $effect(() =>
-    onBackButton(() => {
-      onclose()
-      return true
-    })
-  )
   // the switch follows the outcome (the permission prompt may refuse it)
   async function toggle(e) {
     const el = e.currentTarget
     await setRemindEnabled(el.checked)
     el.checked = remind.enabled
   }
-  function onKey(e) {
-    if (e.key === 'Escape') onclose()
-  }
 </script>
 
-<svelte:window onkeydown={onKey} />
-
-<div class="backdrop" transition:fade={{ duration: 140 }} onclick={onclose} role="presentation"></div>
-<div class="sheet" transition:fly={{ y: 24, duration: 200 }} role="dialog" aria-label={t('remindTitle')}>
+<section class="card" aria-label={t('remindTitle')}>
   <header>
-    <Icon name="bell" size={16} />
+    <Icon name="bell" size={15} />
     <h2>{t('remindTitle')}</h2>
-    <button class="icon-btn" onclick={onclose} title={t('close')} aria-label={t('close')}><Icon name="x" size={16} /></button>
   </header>
-
-  <label class="row">
-    <span class="lbl">{t('remindOn')}</span>
-    <input type="checkbox" class="switch" checked={remind.enabled} onchange={toggle} />
-  </label>
-  {#if remindStatus.denied && !remind.enabled}
-    <p class="note warn">{t('remindDenied')}</p>
+  {#if !isNative}
+    <p class="note">{t('remindWebNote')}</p>
+  {:else}
+    <label class="row">
+      <span class="lbl">{t('remindOn')}</span>
+      <input type="checkbox" class="switch" checked={remind.enabled} onchange={toggle} />
+    </label>
+    {#if remindStatus.denied && !remind.enabled}
+      <p class="note warn">{t('remindDenied')}</p>
+    {/if}
+    <div class="opts" class:off={!remind.enabled}>
+      <p class="sub">{t('remindTimes')}</p>
+      <ul class="times">
+        {#each remind.times as _, i (i)}
+          <li class="row time">
+            <input type="time" bind:value={remind.times[i]} aria-label={t('remindTimes')} />
+            <button class="icon-btn" onclick={() => removeTime(i)} title={t('remindRemove')} aria-label={t('remindRemove')}>
+              <Icon name="x" size={14} />
+            </button>
+          </li>
+        {/each}
+      </ul>
+      {#if remind.times.length === 0}
+        <p class="note warn">{t('remindNoTimes')}</p>
+      {/if}
+      {#if remind.times.length < MAX_TIMES}
+        <button class="add" onclick={addTime}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
+      {/if}
+    </div>
+    <p class="note">{t('remindHint')}</p>
   {/if}
-
-  <div class="opts" class:off={!remind.enabled}>
-    <p class="sub">{t('remindTimes')}</p>
-    <ul class="times">
-      {#each remind.times as _, i (i)}
-        <li class="row time">
-          <input type="time" bind:value={remind.times[i]} aria-label={t('remindTimes')} />
-          <button class="icon-btn" onclick={() => removeTime(i)} title={t('remindRemove')} aria-label={t('remindRemove')}>
-            <Icon name="x" size={14} />
-          </button>
-        </li>
-      {/each}
-    </ul>
-    {#if remind.times.length === 0}
-      <p class="note warn">{t('remindNoTimes')}</p>
-    {/if}
-    {#if remind.times.length < MAX_TIMES}
-      <button class="add" onclick={addTime}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
-    {/if}
-  </div>
-  <p class="note">{t('remindHint')}</p>
-</div>
+</section>
 
 <style>
-  .backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    background: rgba(0, 0, 0, 0.32);
-  }
-  .sheet {
-    position: fixed;
-    z-index: 121;
-    left: 50%;
-    bottom: max(16px, var(--safe-bottom));
-    transform: translateX(-50%);
-    width: min(440px, calc(100vw - 24px));
-    max-height: min(78vh, 640px);
-    display: flex;
-    flex-direction: column;
+  .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-pop);
+    box-shadow: var(--shadow-sm);
     padding: 12px 14px 12px;
-    overflow-y: auto;
   }
   header {
     display: flex;
     align-items: center;
     gap: 8px;
     color: var(--text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   header h2 {
-    flex: 1;
     margin: 0;
     font-size: 15px;
     font-weight: 700;

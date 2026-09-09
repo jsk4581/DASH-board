@@ -123,7 +123,10 @@
       {#if sync.status === 'conflict'}
         <p class="conflict">{t('conflictMsg')}</p>
         <div class="row">
-          <button class="primary sm" onclick={pushNow}>{t('useThisDevice')}</button>
+          <button class="primary sm" onclick={() => { sync.showMerge = true; onclose?.() }}>{t('mergeOpen')}</button>
+        </div>
+        <div class="row">
+          <button class="ghost sm" onclick={() => pushNow({ force: true })}>{t('useThisDevice')}</button>
           <button class="ghost sm" onclick={pull}>{t('useCloud')}</button>
         </div>
       {/if}

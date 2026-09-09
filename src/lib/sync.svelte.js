@@ -8,6 +8,7 @@
 import { serializeBoards, replaceBoards } from './store.svelte.js'
 
 const CFG_KEY = 'dash-sync-v1'
+const BASE_KEY = 'dash-sync-base-v1' // the document as last synced (for three-way merges)
 const FILENAME = 'dash-board.json'
 const API = 'https://api.github.com'
 const PUSH_DEBOUNCE = 1600
@@ -20,12 +21,14 @@ export const sync = $state({
   error: '',
   gistId: null,
   lastSyncedAt: null,
+  showMerge: false, // the conflict sheet is open
 })
 
 let token = null
 let gistId = null
 let lastPushed = null // content known to match the remote
 let hydrating = false // true while applying a pulled snapshot (suppress push)
+let conflictRemote = null // the remote document behind the current conflict
 let timer = null
 
 // ---- config persistence (token lives only in this browser) ----
@@ -68,9 +71,15 @@ function setStatus(status, error = '') {
 
 function markSynced(content) {
   lastPushed = content
+  conflictRemote = null
   sync.lastSyncedAt = Date.now()
   setStatus('synced')
   saveCfg({ syncedFp: fp(content) })
+  try {
+    localStorage.setItem(BASE_KEY, content)
+  } catch {
+    /* ignore */
+  }
 }
 
 function netStatus() {
@@ -172,9 +181,15 @@ export async function pull() {
   }
 }
 
-/** Push local to the remote (discard remote differences). Also resolves a conflict toward this device. */
-export async function pushNow() {
+/**
+ * Push local to the remote (discard remote differences). While a conflict is
+ * open only an explicit push ({force:true}, what "use this device" and the
+ * merge sheet do) goes out: the debounced autosave must never settle it.
+ */
+export async function pushNow(opts) {
   if (!sync.connected) return
+  const force = opts === true || opts?.force === true
+  if (sync.status === 'conflict' && !force) return
   const content = serializeBoards()
   if (content === lastPushed && sync.status !== 'conflict') {
     setStatus('synced')
@@ -191,6 +206,33 @@ export async function pushNow() {
     setStatus(netStatus(), e.message)
   }
 }
+
+/** The three documents behind the current conflict (base may be null). */
+export function conflictSnapshot() {
+  let base = null
+  try {
+    const raw = localStorage.getItem(BASE_KEY)
+    if (raw) base = JSON.parse(raw)
+  } catch {
+    /* ignore */
+  }
+  return {
+    base,
+    local: JSON.parse(serializeBoards()),
+    remote: conflictRemote ? JSON.parse(conflictRemote) : null,
+    remoteName: null,
+  }
+}
+
+/** Resolve the conflict with a merged document: apply it here, then push. */
+export async function resolveConflict(doc) {
+  applyContent(JSON.stringify(doc))
+  await pushNow({ force: true })
+}
+
+/** Conflict resolution by side, named for what the buttons say. */
+export const keepLocal = () => pushNow({ force: true })
+export const keepRemote = () => pull()
 
 export function disconnect() {
   if (timer) {
@@ -227,7 +269,10 @@ $effect.root(() => {
     if (content === lastPushed) return
     if (timer) clearTimeout(timer)
     setStatus('syncing')
-    timer = setTimeout(pushNow, PUSH_DEBOUNCE)
+    timer = setTimeout(() => {
+      timer = null
+      if (sync.status !== 'conflict') pushNow()
+    }, PUSH_DEBOUNCE)
   })
 
   // periodic + on-refocus auto-pull of changes made on other devices
@@ -278,6 +323,7 @@ async function startupSync(syncedFp) {
       return
     }
     if (localUnsynced) {
+      conflictRemote = remote
       setStatus('conflict') // both sides changed since last sync → ask the user
       return
     }

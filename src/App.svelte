@@ -7,6 +7,8 @@
   import StarBoard from './lib/components/StarBoard.svelte'
   import RemindBoard from './lib/components/RemindBoard.svelte'
   import ShareSheet from './lib/components/ShareSheet.svelte'
+  import ConflictSheet from './lib/components/ConflictSheet.svelte'
+  import { sync } from './lib/sync.svelte.js'
   import { share, initShare } from './lib/share.svelte.js'
   import { initRemind } from './lib/remind.svelte.js'
   import { ui, setTouchItem, setView } from './lib/ui.svelte.js'
@@ -82,6 +84,9 @@
 
 {#if share.pending}
   <ShareSheet />
+{/if}
+{#if sync.status === 'conflict' && sync.showMerge}
+  <ConflictSheet />
 {/if}
 
 <!-- shared "colored-pencil" roughening filter for the 강조 grading circle -->

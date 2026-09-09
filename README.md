@@ -112,8 +112,11 @@ Gist** as the store — still no backend of your own.
 
 It pulls on launch and pushes changes automatically (debounced). The token is
 stored only in that browser's `localStorage`, so **don't connect on a shared
-computer**. It's single‑user / last‑write‑wins; if a device edited while offline
-and the cloud also changed, you'll be asked which copy to keep.
+computer**. It's single‑user. If a device edited while offline and the cloud
+also changed, Sync shows a three‑way comparison against the last synced copy:
+changes that don't overlap merge on their own, and only the same item edited
+differently on both sides (or deleted on one, edited on the other) asks you to
+pick a side. You can still take one copy wholesale instead.
 
 ## Data format
 

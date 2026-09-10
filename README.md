@@ -17,7 +17,7 @@ exported to / imported from a JSON file.
 - **Three item states** — default · done (strikethrough) · highlight (bold + a hand‑drawn red "grading" circle)
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
-- **Big 3**: a card pinned above every board holding up to three items you pick from any board (or the Dump); the items stay where they live and are edited in place
+- **Daily Big 3**: a card pinned above every board holding up to three items you pick from any board (or the Dump); the items stay where they live and are edited in place
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
 - **Timeline** — a monthly calendar (page with the arrows) or a 2‑week Gantt chart (drag the slider to move through the dates). On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
@@ -165,7 +165,7 @@ active are stored separately and are **not** included in exports.
 - **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
 - **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
-- **Big 3**: "Pick items" on the pinned card opens a list of every item; tick up to three, and the x on a pinned row unpins it
+- **Daily Big 3**: the pinned card's `+` or "Pick items" opens a list of every item; tick up to three, and the x on a pinned row unpins it
 - **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
 - **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and "Select" plus "Move to a board" moves several at once
 - **Drag** — grab the handle on a box header or the left of an item to move it

@@ -22,15 +22,19 @@
       <h2 class="title">{t('big3')}</h2>
       <span class="hint">{t('big3Hint')}</span>
       <span class="count">{t('big3Count', { n: picked.length })}</span>
-      {#if editing}
-        <button class="pick" onclick={() => (showPicker = true)}>
-          <Icon name="plus" size={14} /> {t('big3Pick')}
-        </button>
+      {#if editing && picked.length < BIG3_MAX}
+        <div class="head-actions">
+          <button class="icon-btn" title={t('big3Pick')} aria-label={t('big3Pick')} onclick={() => (showPicker = true)}>
+            <Icon name="plus" size={16} />
+          </button>
+        </div>
       {/if}
     </header>
 
     {#if picked.length === 0}
-      <button class="empty-hint" onclick={() => (showPicker = true)}>{t('big3Empty')}</button>
+      <div class="list">
+        <button class="empty-hint" onclick={() => (showPicker = true)}>{t('big3Empty')}</button>
+      </div>
     {:else}
       <ol class="slots">
         {#each picked as e, i (e.item.id)}
@@ -49,15 +53,14 @@
             {/if}
           </li>
         {/each}
-        {#each Array(Math.max(0, BIG3_MAX - picked.length)) as _, i (i)}
-          <li class="slot free">
-            <span class="rank">{picked.length + i + 1}</span>
-            {#if editing}
-              <button class="free-btn" onclick={() => (showPicker = true)}>{t('big3Pick')}</button>
-            {/if}
-          </li>
-        {/each}
       </ol>
+      {#if editing && picked.length < BIG3_MAX}
+        <footer class="card-foot">
+          <button class="add-row" onclick={() => (showPicker = true)}>
+            <Icon name="plus" size={15} /> {t('big3Pick')}
+          </button>
+        </footer>
+      {/if}
     {/if}
   </article>
 {/if}
@@ -123,23 +126,25 @@
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
   }
-  .pick {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  /* the same hover-revealed head actions as a project card */
+  .head-actions {
+    display: flex;
+    gap: 1px;
     flex: none;
-    padding: 5px 10px;
-    border-radius: 99px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted);
-    border: 1px solid var(--border-strong);
-    transition: background var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
   }
-  .pick:hover {
-    color: var(--accent-ink);
-    border-color: var(--accent);
-    background: var(--accent-soft);
+  .big3:hover .head-actions,
+  .big3:focus-within .head-actions {
+    opacity: 1;
+    transform: none;
+  }
+  @media (hover: none) {
+    .head-actions {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   .slots {
@@ -160,11 +165,6 @@
     border-radius: var(--radius-sm);
     min-height: 44px;
   }
-  .slot.free {
-    grid-template-areas: 'rank row row';
-    align-items: center;
-    border: 1px dashed var(--border);
-  }
   .rank {
     grid-area: rank;
     width: 20px;
@@ -180,11 +180,6 @@
     background: var(--highlight-soft);
     font-variant-numeric: tabular-nums;
     flex: none;
-  }
-  .slot.free .rank {
-    margin-top: 0;
-    color: var(--text-faint);
-    background: var(--surface-hover);
   }
   .row {
     grid-area: row;
@@ -217,28 +212,42 @@
       opacity: 1;
     }
   }
-  .free-btn {
-    grid-area: row;
-    justify-self: start;
-    font-size: 13px;
-    color: var(--text-faint);
-    padding: 6px 4px;
-    border-radius: var(--radius-xs);
-  }
-  .free-btn:hover {
-    color: var(--accent-ink);
+  /* the empty state and the footer row mirror a project card's */
+  .list {
+    padding: 6px;
   }
   .empty-hint {
-    display: block;
     width: 100%;
     text-align: left;
-    padding: 12px 14px;
+    padding: 8px 10px;
     color: var(--text-faint);
-    font-size: 13.5px;
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-strong);
+    transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
   }
   .empty-hint:hover {
-    color: var(--accent-ink);
-    background: var(--surface-2);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .card-foot {
+    padding: 0 8px 8px;
+  }
+  .add-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-faint);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 5px 7px;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .add-row:hover {
+    background: var(--surface-hover);
+    color: var(--accent);
   }
 
   @media (max-width: 760px) {

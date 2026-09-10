@@ -12,6 +12,9 @@ import { BOARD_KEY as STORAGE_KEY, persistBoard, saveTextFile } from './platform
 
 const SCHEMA_VERSION = 2
 const FIRST_BOARD_NAME = 'DASH' // the board a fresh install starts with; extra boards use t('defaultBoardName')
+// the Dump: one loose list of items outside every board, moved onto a board
+// later. A fixed id, so the item helpers can address it like a project.
+export const DUMP_ID = 'dump'
 
 // Accent palette assigned to project cards (cycled on creation).
 export const PALETTE = [
@@ -71,7 +74,7 @@ function seedProjects() {
 function seed() {
   // through normalizeBoards so the seed carries every field a saved board has
   const boards = normalizeBoards([{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }])
-  return { activeId: boards[0].id, boards }
+  return { activeId: boards[0].id, boards, dump: normalizeDump(null) }
 }
 
 // ---- normalization -----------------------------------------------------
@@ -106,6 +109,12 @@ function normalizeBoard(b) {
   }
 }
 
+/** The Dump list of a document: `{dump: [items]}`; absent in older documents. */
+export function normalizeDump(raw) {
+  const items = Array.isArray(raw?.dump) ? raw.dump : []
+  return { id: DUMP_ID, items: items.map(normalizeItem) }
+}
+
 /** Accept the new `{boards}` shape, a bare array, or a legacy single `{projects}` board. */
 export function normalizeBoards(raw) {
   let arr
@@ -125,7 +134,7 @@ function load() {
       const parsed = JSON.parse(raw)
       const boards = normalizeBoards(parsed)
       const activeId = boards.some((b) => b.id === parsed?.activeId) ? parsed.activeId : boards[0].id
-      return { activeId, boards }
+      return { activeId, boards, dump: normalizeDump(parsed) }
     }
   } catch (e) {
     console.warn('[DASH] failed to load saved board:', e)
@@ -223,6 +232,7 @@ export function setBoards(boards) {
 
 // ---- lookups -----------------------------------------------------------
 export function findProject(pid) {
+  if (pid === DUMP_ID) return library.dump
   // project ids are unique across the library, and the Highlights view edits
   // items that live on boards other than the active one
   for (const b of library.boards) {
@@ -233,10 +243,11 @@ export function findProject(pid) {
 }
 
 // ---- project mutations -------------------------------------------------
-export function addProject(title = t('newProject')) {
-  const color = PALETTE[board.projects.length % PALETTE.length]
+export function addProject(title = t('newProject'), boardId = null) {
+  const b = (boardId && library.boards.find((x) => x.id === boardId)) || active()
+  const color = PALETTE[b.projects.length % PALETTE.length]
   const project = { id: uid(), title, color, items: [], archive: [] }
-  board.projects.push(project)
+  b.projects.push(project)
   return project
 }
 
@@ -285,7 +296,7 @@ export function removeItem(pid, iid) {
   const i = p.items.findIndex((it) => it.id === iid)
   if (i === -1) return
   const [it] = p.items.splice(i, 1)
-  if (it.status === 'done' && it.text.trim()) {
+  if (it.status === 'done' && it.text.trim() && p.archive) {
     p.archive.unshift({ ...$state.snapshot(it), archivedAt: todayISO() })
   }
 }
@@ -327,6 +338,21 @@ export function toggleRemind(pid, iid) {
   if (it) it.remind = !it.remind
 }
 
+/**
+ * Move Dump items (by id, in Dump order) onto a project of a board. They keep
+ * their id, text, state and dates and land at the end of the project.
+ */
+export function moveDumpItems(ids, pid) {
+  const target = findProject(pid)
+  if (!target || pid === DUMP_ID) return 0
+  const want = new Set(ids)
+  const moving = library.dump.items.filter((it) => want.has(it.id))
+  if (!moving.length) return 0
+  library.dump.items = library.dump.items.filter((it) => !want.has(it.id))
+  for (const it of moving) target.items.push($state.snapshot(it))
+  return moving.length
+}
+
 export function setItemDates(pid, iid, { start = undefined, due = undefined }) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return
@@ -341,7 +367,11 @@ export function clearItemDates(pid, iid) {
 // ---- serialize / replace (used by sync, undo-redo, export/import) ------
 /** All boards as a versioned JSON document (the unit of sync, undo, export). */
 export function serializeBoards() {
-  return JSON.stringify({ version: SCHEMA_VERSION, boards: $state.snapshot(library.boards) }, null, 2)
+  return JSON.stringify(
+    { version: SCHEMA_VERSION, boards: $state.snapshot(library.boards), dump: $state.snapshot(library.dump.items) },
+    null,
+    2
+  )
 }
 
 /** Replace all boards from a parsed object; keep the active selection if still valid. */
@@ -349,6 +379,7 @@ export function replaceBoards(raw) {
   lockSwap()
   const boards = normalizeBoards(raw)
   library.boards = boards
+  library.dump = normalizeDump(raw)
   if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id
 }
 

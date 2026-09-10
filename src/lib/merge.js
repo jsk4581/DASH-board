@@ -17,12 +17,29 @@ const PROJECT_FIELDS = ['title', 'color', 'parent']
 const BOARD_FIELDS = ['name']
 const FIELDS = { item: ITEM_FIELDS, project: PROJECT_FIELDS, board: BOARD_FIELDS }
 
+// The Dump list (`doc.dump`, items outside every board) is indexed as the
+// one project of a pseudo board, so its items merge like any other item.
+// Both pseudo entities are fixed and never compared themselves.
+export const DUMP = 'dump'
+const DUMP_BOARD = '__dump__'
+const pseudo = (id) => id === DUMP || id === DUMP_BOARD
+
 /** Flatten a document into id-keyed maps plus the child orders. */
 function index(doc) {
   const boards = new Map()
   const projects = new Map()
   const items = new Map()
   const order = { boards: [], projects: {}, items: {}, archive: {} }
+  boards.set(DUMP_BOARD, { id: DUMP_BOARD, name: '' })
+  projects.set(DUMP, { id: DUMP, parent: DUMP_BOARD, title: '', color: '' })
+  order.projects[DUMP_BOARD] = [DUMP]
+  order.items[DUMP] = []
+  order.archive[DUMP] = []
+  for (const it of doc?.dump ?? []) {
+    if (!it?.id) continue
+    items.set(it.id, itemEntity(it, DUMP, 'items'))
+    order.items[DUMP].push(it.id)
+  }
   for (const b of doc?.boards ?? []) {
     if (!b?.id) continue
     boards.set(b.id, { id: b.id, name: b.name ?? '' })
@@ -112,6 +129,10 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
       const lc = change(kind, b, l)
       const rc = change(kind, b, r)
       const key = `${kind}:${id}`
+      if (pseudo(id)) {
+        merged[kind].set(id, { ...(l ?? r ?? b) })
+        continue
+      }
       const parentOf = (e) => (kind === 'item' || kind === 'project' ? e?.parent : null)
       const touch = (side, e) => {
         const p = parentOf(e)
@@ -281,10 +302,14 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     if (kind === 'board') return [nameOf('board', id)]
     if (kind === 'project') return [nameOf('board', parentOf('project', id)), nameOf('project', id)]
     const pid = parentOf('item', id)
+    if (pid === DUMP) return [nameOf('item', id)] // the entry is flagged `dump` instead
     return [nameOf('board', parentOf('project', pid)), nameOf('project', pid), nameOf('item', id)]
   }
   const name = { board: (id) => nameOf('board', id), project: (id) => nameOf('project', id) }
-  for (const e of [...auto, ...conflicts]) e.path = pathOf(e.kind, e.id)
+  for (const e of [...auto, ...conflicts]) {
+    e.path = pathOf(e.kind, e.id)
+    if (e.kind === 'item' && parentOf('item', e.id) === DUMP) e.dump = true
+  }
   for (const c of conflicts) {
     if (c.children) {
       const kidsChanged = (side) => {
@@ -372,7 +397,14 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     const boardsPresent = new Set(final.board.keys())
     const bo = mergeOrder(noBase ? null : B.order.boards, L.order.boards, R.order.boards, boardsPresent)
     if (bo.both) orderNote.push({ kind: 'boards', id: null, path: [] })
-    const boards = bo.order.map((bid) => {
+    const dumpPresent = new Set([...final.item.values()].filter((it) => it.parent === DUMP).map((it) => it.id))
+    const dOrder = mergeOrder(noBase ? null : B.order.items[DUMP], L.order.items[DUMP], R.order.items[DUMP], dumpPresent)
+    if (dOrder.both) orderNote.push({ kind: 'dump', id: null, path: [] })
+    const dump = dOrder.order.map((iid) => {
+      const it = final.item.get(iid)
+      return { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind }
+    })
+    const boards = bo.order.filter((bid) => !pseudo(bid)).map((bid) => {
       const present = new Set([...final.project.values()].filter((p) => p.parent === bid).map((p) => p.id))
       const po = mergeOrder(noBase ? null : B.order.projects[bid] ?? [], L.order.projects[bid] ?? [], R.order.projects[bid] ?? [], present)
       if (po.both) orderNote.push({ kind: 'board', id: bid, path: [nameOf('board', bid)] })
@@ -394,7 +426,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
       const b = final.board.get(bid)
       return { id: b.id, name: b.name, projects }
     })
-    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, orderNotes: [...orderNote] }
+    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, orderNotes: [...orderNote] }
   }
 
   return { auto, conflicts, noBase, merge }

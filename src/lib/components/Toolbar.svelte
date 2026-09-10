@@ -21,6 +21,7 @@
 
   // the Completed tab is a view of the board (drawer, save, undo all apply)
   const onBoard = $derived(ui.view !== 'memo')
+  const onDump = $derived(ui.view === 'dump')
   const onDone = $derived(ui.view === 'done')
   const onStar = $derived(ui.view === 'star')
   const onRemind = $derived(ui.view === 'remind')
@@ -80,14 +81,17 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {#if onStar}<span class="cur-text">{t('starTab')}</span>{:else if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
+        {#if onStar}<span class="cur-text">{t('starTab')}</span>{:else if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else if onDump}<span class="cur-text">{t('dumpTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
       </button>
     {/if}
   </div>
 
   {#if !onSub}
   <div class="mode-toggle view-switch" role="group" aria-label={t('viewSwitch')}>
-    <button class:active={onBoard} onclick={() => setView('board')} title={t('boardView')}>
+    <button class:active={onDump} onclick={() => setView('dump')} title={t('dumpTab')}>
+      <Icon name="inbox" size={15} /> <span class="lbl">{t('dumpTab')}</span>
+    </button>
+    <button class:active={onBoard && !onDump} onclick={() => setView('board')} title={t('boardView')}>
       <Icon name="grid" size={15} /> <span class="lbl">{t('boardView')}</span>
     </button>
     <button class:active={!onBoard} onclick={() => setView('memo')} title={t('memoView')}>

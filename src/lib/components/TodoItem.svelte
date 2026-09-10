@@ -7,7 +7,8 @@
   import { relativeTag, formatLabel, formatShort } from '../date.js'
   import { t } from '../i18n.svelte.js'
 
-  let { pid, item, editing = true, autofocus = false, onenter } = $props()
+  // onmove (Dump only): adds a "move to a board" action to the item's pill
+  let { pid, item, editing = true, autofocus = false, onenter, onmove } = $props()
 
   let inputEl = $state(null)
   let dateBtn = $state(null)
@@ -159,6 +160,11 @@
       >
         <Icon name="calendar" size={13} />
       </button>
+      {#if onmove}
+        <button class="icon-btn" title={t('dumpMoveOne')} aria-label={t('dumpMoveOne')} onclick={() => onmove(item.id)}>
+          <Icon name="moveTo" size={13} />
+        </button>
+      {/if}
       <button
         class="icon-btn danger"
         title={item.status === 'done' ? t('archiveItem') : t('delete')}

@@ -4,7 +4,7 @@
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
   import { sync, conflictSnapshot, resolveConflict, keepLocal, keepRemote } from '../sync.svelte.js'
-  import { diffBoards } from '../merge.js'
+  import { diffBoards, DUMP } from '../merge.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
@@ -77,9 +77,14 @@
     return v == null || v === '' ? t('vNone') : String(v)
   }
   const sideVal = (fld, side) => {
-    if (fld.field === 'parent') return side === 'local' ? fld.localName : side === 'remote' ? fld.remoteName : fld.baseName
+    if (fld.field === 'parent') {
+      if (fld[side] === DUMP) return t('dumpTab')
+      return side === 'local' ? fld.localName : side === 'remote' ? fld.remoteName : fld.baseName
+    }
     return val(fld.field, fld[side])
   }
+  // the Dump's items carry no board/project names: label them with the tab
+  const fullPath = (e) => (e.dump ? [t('dumpTab'), ...e.path] : e.path)
   const typeLabel = (c) =>
     t(
       c.type === 'edit'
@@ -134,9 +139,9 @@
             <li class="conflict" class:picked={choices[c.key]}>
               <div class="path">
                 <span class="kind">{kindLabel(c.kind)}</span>
-                {#each c.path as seg, i}
+                {#each fullPath(c) as seg, i}
                   {#if i > 0}<span class="sep">›</span>{/if}
-                  <span class="seg" class:last={i === c.path.length - 1}>{seg || t('vNone')}</span>
+                  <span class="seg" class:last={i === fullPath(c).length - 1}>{seg || t('vNone')}</span>
                 {/each}
               </div>
               <div class="type">
@@ -184,7 +189,7 @@
               <span class="verb">{t(a.change === 'added' ? 'chAdded' : a.change === 'removed' ? 'chRemoved' : 'chEdited')}</span>
               <span class="apath">
                 <span class="kind">{kindLabel(a.kind)}</span>
-                {a.path.filter(Boolean).join(' › ') || t('vNone')}
+                {fullPath(a).filter(Boolean).join(' › ') || t('vNone')}
               </span>
               {#if a.fields.length}
                 <span class="fields">
@@ -204,7 +209,7 @@
             <li>
               <span class="chip local">{t('mergeThis')}</span>
               <span class="verb">{t('mergeOrderBoth')}</span>
-              <span class="apath">{o.kind === 'boards' ? t('mergeOrderBoards') : o.path.filter(Boolean).join(' › ')}</span>
+              <span class="apath">{o.kind === 'boards' ? t('mergeOrderBoards') : o.kind === 'dump' ? t('dumpTab') : o.path.filter(Boolean).join(' › ')}</span>
             </li>
           {/each}
         </ul>

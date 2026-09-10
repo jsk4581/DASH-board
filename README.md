@@ -26,6 +26,7 @@ exported to / imported from a JSON file.
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
+- **Dump**: one charcoal card outside every board for things that have no place yet; jot them down, then move one or several onto a board's project (or a new project) from there
 - **Memos**: a chat-style notebook beside the board. One thread per topic, notes to yourself with edit/delete, day dividers and clickable links; stored in IndexedDB, with JSON export/import
 
 ## Android app
@@ -146,7 +147,8 @@ The JSON used by export / import:
         }
       ]
     }
-  ]
+  ],
+  "dump": [ /* items with the same shape, not yet on any board */ ]
 }
 ```
 
@@ -164,6 +166,7 @@ active are stored separately and are **not** included in exports.
 - **Highlights** — a pinned entry at the top of the boards drawer that gathers every item circled in red, from every board, with its own calendar and gantt; editing an item there edits it on its board
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
 - **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
+- **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and "Select" plus "Move to a board" moves several at once
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

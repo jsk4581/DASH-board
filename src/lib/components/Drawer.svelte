@@ -105,7 +105,7 @@
   </div>
   <ul class="blist">
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && !['done', 'star', 'remind'].includes(ui.view)}>
+      <li class="brow" class:active={b.id === library.activeId && !['done', 'star', 'remind', 'dump'].includes(ui.view)}>
         {#if editingId === b.id}
           <input
             class="rename"

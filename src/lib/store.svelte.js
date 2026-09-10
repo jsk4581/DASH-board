@@ -111,9 +111,14 @@ function normalizeBoard(b) {
   }
 }
 
-/** The Dump list of a document: `{dump: [items]}`; absent in older documents. */
+/**
+ * The Dump list of a document: `{dump: [items]}` in a file or sync document,
+ * `{dump: {id, items}}` in the autosaved library snapshot; absent in older
+ * documents.
+ */
 export function normalizeDump(raw) {
-  const items = Array.isArray(raw?.dump) ? raw.dump : []
+  const d = raw?.dump
+  const items = Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []
   return { id: DUMP_ID, items: items.map(normalizeItem) }
 }
 

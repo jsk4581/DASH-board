@@ -173,7 +173,8 @@
     <ul class="done-list">
       {#each completed as it (it.id)}
         <li class="done-row" class:highlight={it.status === 'highlight'}>
-          <span class="tick"><Icon name="check" size={12} strokeWidth={3} /></span>
+          <span class="grip-slot"></span>
+          <span class="dot"><span class="checkbox"><Icon name="check" size={13} strokeWidth={3} /></span></span>
           <span class="done-text">{it.text}</span>
           {#if it.created ?? it.archivedAt}<span class="when">{formatShort(it.created ?? it.archivedAt)}</span>{/if}
           <span class="done-acts">
@@ -353,40 +354,60 @@
     flex-direction: column;
     gap: 1px;
   }
+  /* a completed row reads like a done item row (same grip slot, checkbox
+     and text geometry); only the right-hand part differs */
   .done-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 6px 6px 8px;
-    border-radius: var(--radius-xs);
-    min-height: 34px;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 4px 4px 4px 2px;
+    border-radius: var(--radius-sm);
+    transition: background var(--fast) var(--ease);
   }
   .done-row:hover {
-    background: var(--surface-hover);
+    background: var(--surface-2);
   }
-  .tick {
-    display: inline-flex;
+  .grip-slot {
+    width: 14px;
+    margin: 2px -2px 0 -4px;
+    flex: none;
+  }
+  .dot {
+    margin-top: 1px;
+    width: 22px;
+    height: 22px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--done);
-    color: var(--surface);
     flex: none;
+  }
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1.6px solid var(--accent);
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-ink);
   }
   .done-text {
     flex: 1;
     min-width: 0;
-    font-size: 14px;
+    padding-top: 2px;
+    line-height: 1.4;
     color: var(--done);
     text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
   }
   .done-row.highlight .done-text {
     font-weight: 700;
   }
   .when {
+    margin-top: 4px;
     font-size: 11.5px;
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
@@ -396,6 +417,7 @@
     display: flex;
     gap: 1px;
     flex: none;
+    margin-top: -1px;
     opacity: 0;
     transition: opacity var(--fast) var(--ease);
   }

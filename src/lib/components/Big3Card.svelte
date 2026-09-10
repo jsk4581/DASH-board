@@ -111,7 +111,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* the count surfaces on hover, as on a project card (always on touch) */
+  /* the count surfaces on hover, as on a project card */
   .count {
     font-size: 12px;
     font-weight: 600;
@@ -124,11 +124,6 @@
   .card:hover .count,
   .card:focus-within .count {
     opacity: 1;
-  }
-  @media (hover: none) {
-    .count {
-      opacity: 1;
-    }
   }
 
   .list {

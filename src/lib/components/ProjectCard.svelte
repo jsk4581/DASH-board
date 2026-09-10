@@ -133,27 +133,6 @@
     {/if}
   </header>
 
-  {#if showDone}
-    <ul class="done-list" class:empty={completed.length === 0}>
-      {#each completed as it (it.id)}
-        <li class="done-row" class:highlight={it.status === 'highlight'}>
-          <span class="tick"><Icon name="check" size={12} strokeWidth={3} /></span>
-          <span class="done-text">{it.text}</span>
-          {#if it.created ?? it.archivedAt}<span class="when">{formatShort(it.created ?? it.archivedAt)}</span>{/if}
-          <span class="done-acts">
-            <button class="icon-btn" title={t('restoreItem')} aria-label={t('restoreItem')} onclick={() => restoreItem(project.id, it.id)}>
-              <Icon name="undo" size={13} />
-            </button>
-            <button class="icon-btn danger" title={t('deleteForever')} aria-label={t('deleteForever')} onclick={() => purgeItem(project.id, it.id)}>
-              <Icon name="trash" size={13} />
-            </button>
-          </span>
-        </li>
-      {:else}
-        <li class="done-none">{t('doneEmpty')}</li>
-      {/each}
-    </ul>
-  {:else}
   <div
     class="list"
     class:empty={shown.length === 0}
@@ -188,9 +167,31 @@
       <button class="empty-hint" onclick={add}>{t('addFirstItem')}</button>
     {/if}
   </div>
+
+  <!-- Completed: the done-and-deleted items run on under the open ones -->
+  {#if showDone}
+    <ul class="done-list">
+      {#each completed as it (it.id)}
+        <li class="done-row" class:highlight={it.status === 'highlight'}>
+          <span class="tick"><Icon name="check" size={12} strokeWidth={3} /></span>
+          <span class="done-text">{it.text}</span>
+          {#if it.created ?? it.archivedAt}<span class="when">{formatShort(it.created ?? it.archivedAt)}</span>{/if}
+          <span class="done-acts">
+            <button class="icon-btn" title={t('restoreItem')} aria-label={t('restoreItem')} onclick={() => restoreItem(project.id, it.id)}>
+              <Icon name="undo" size={13} />
+            </button>
+            <button class="icon-btn danger" title={t('deleteForever')} aria-label={t('deleteForever')} onclick={() => purgeItem(project.id, it.id)}>
+              <Icon name="trash" size={13} />
+            </button>
+          </span>
+        </li>
+      {:else}
+        <li class="done-none">{t('doneEmpty')}</li>
+      {/each}
+    </ul>
   {/if}
 
-  {#if canAdd && project.items.length > 0 && !showDone}
+  {#if canAdd && project.items.length > 0}
     <footer class="card-foot">
       <button class="add-row" onclick={add}>
         <Icon name="plus" size={15} /> {t('addItem')}
@@ -314,7 +315,7 @@
     font-weight: 500;
   }
 
-  /* the count and the tools surface together on hover (always on touch) */
+  /* the count and the tools surface together on hover */
   .count {
     font-size: 12px;
     font-weight: 600;
@@ -339,13 +340,6 @@
     opacity: 1;
     transform: none;
   }
-  @media (hover: none) {
-    .count,
-    .head-actions {
-      opacity: 1;
-      transform: none;
-    }
-  }
   .head-actions .icon-btn.on {
     color: var(--accent-ink);
     background: var(--accent-soft);
@@ -354,14 +348,10 @@
   .done-list {
     list-style: none;
     margin: 0;
-    padding: 6px;
+    padding: 0 6px 6px;
     display: flex;
     flex-direction: column;
     gap: 1px;
-    flex: 1;
-  }
-  .done-list.empty {
-    min-height: 44px;
   }
   .done-row {
     display: flex;

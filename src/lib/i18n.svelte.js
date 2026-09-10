@@ -48,6 +48,7 @@ const dict = {
     // project card
     dragMove: '드래그하여 이동',
     projectGrip: '프로젝트 이동 핸들',
+    boardGrip: '보드 이동 핸들',
     changeColor: '색상 변경',
     projectColor: '프로젝트 색상',
     projectNamePlaceholder: '프로젝트 이름',
@@ -297,6 +298,7 @@ const dict = {
 
     dragMove: 'Drag to move',
     projectGrip: 'Project move handle',
+    boardGrip: 'Board move handle',
     changeColor: 'Change color',
     projectColor: 'Project color',
     projectNamePlaceholder: 'Project name',

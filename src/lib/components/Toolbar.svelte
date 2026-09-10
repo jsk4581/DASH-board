@@ -130,7 +130,7 @@
         aria-pressed={ui.focus}
         title={t('focusTitle')}
       >
-        <Icon name="focus" size={16} /> <span class="lbl">{t('focus')}</span>
+        <Icon name="star" size={16} fill={ui.focus} /> <span class="lbl">{t('focus')}</span>
       </button>
 
       <div class="sep wide"></div>

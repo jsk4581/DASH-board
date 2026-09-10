@@ -60,12 +60,15 @@
 {/if}
 
 <style>
-  /* the same column template as the board grid, so the card is card-sized */
+  /* the same column template as the board grid, so the card is card-sized;
+     a faint rule under it sets it apart from the board's own cards */
   .pinned {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 14px;
     margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
   }
   .card {
     background: var(--surface);

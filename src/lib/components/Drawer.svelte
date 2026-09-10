@@ -1,7 +1,9 @@
 <script>
   import { fly, fade } from 'svelte/transition'
+  import { flip } from 'svelte/animate'
+  import { dragHandleZone, dragHandle } from 'svelte-dnd-action'
   import Icon from './Icon.svelte'
-  import { library, board, switchBoard, addBoard, renameBoard, removeBoard } from '../store.svelte.js'
+  import { library, board, switchBoard, addBoard, renameBoard, removeBoard, setBoards } from '../store.svelte.js'
   import { ui, setView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
   import { onBackButton } from '../platform.js'
@@ -19,6 +21,12 @@
   let editingId = $state(null)
   let editName = $state('')
   let confirmId = $state(null)
+
+  // boards reorder by their grip (the row's own drag order is the library's)
+  const FLIP = 150
+  function handleReorder(e) {
+    setBoards(e.detail.items)
+  }
 
   function focusNow(el) {
     el.focus()
@@ -79,18 +87,20 @@
   </header>
 
   <div class="dbody">
-  <!-- pinned Reminders entry: same row geometry as a board row, the icon
-       centred on the dot column so the labels line up -->
-  <div class="brow pinned" class:active={ui.view === 'remind'}>
-    <button class="bname" onclick={pickRemind}>
-      <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>
-      <span class="btext">{t('remindTab')}</span>
-      <span class="bcount">{remindCount}</span>
-    </button>
-  </div>
-  <ul class="blist">
+  <ul
+    class="blist"
+    use:dragHandleZone={{
+      items: library.boards,
+      type: 'boards',
+      dragDisabled: editingId != null || confirmId != null,
+      flipDurationMs: FLIP,
+      dropTargetStyle: {},
+    }}
+    onconsider={handleReorder}
+    onfinalize={handleReorder}
+  >
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && !['done', 'remind', 'dump'].includes(ui.view)}>
+      <li class="brow" class:active={b.id === library.activeId && !['done', 'remind', 'dump'].includes(ui.view)} animate:flip={{ duration: FLIP }}>
         {#if editingId === b.id}
           <input
             class="rename"
@@ -131,6 +141,9 @@
             <span class="bcount">{b.projects.length}</span>
           </button>
           <div class="acts">
+            <span class="grip" use:dragHandle title={t('dragMove')} aria-label={t('boardGrip')}>
+              <Icon name="grip" size={14} />
+            </span>
             <button class="icon-btn sm" onclick={() => startRename(b)} title={t('rename')} aria-label={t('rename')}>
               <Icon name="pencil" size={13} />
             </button>
@@ -152,8 +165,18 @@
     <Icon name="plus" size={15} /> {t('newBoard')}
   </button>
 
-  <!-- the Completed tab: the active board's done-and-deleted items -->
+  <!-- the pinned tabs, same row geometry as a board row with the icon
+       centred on the dot column so the labels line up: Reminders (items
+       picked across every board) and Completed (the active board's
+       done-and-deleted items) -->
   <div class="tabs">
+    <div class="brow" class:active={ui.view === 'remind'}>
+      <button class="bname" onclick={pickRemind}>
+        <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>
+        <span class="btext">{t('remindTab')}</span>
+        <span class="bcount">{remindCount}</span>
+      </button>
+    </div>
     <div class="brow" class:active={ui.view === 'done'}>
       <button class="bname" onclick={pickDone}>
         <span class="slot"><Icon name="check" size={14} strokeWidth={2.5} /></span>
@@ -278,14 +301,13 @@
   .brow.active .slot {
     color: var(--accent);
   }
-  .pinned {
-    margin-bottom: 8px;
-  }
-
   .tabs {
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .acts {
@@ -298,6 +320,25 @@
   .brow:hover .acts,
   .brow.active .acts {
     opacity: 1;
+  }
+  /* no hover on touch: the grip and tools stay out so every board can be dragged */
+  @media (hover: none) {
+    .acts {
+      opacity: 1;
+    }
+  }
+  .grip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--text-faint);
+    cursor: grab;
+    touch-action: none;
+  }
+  .grip:active {
+    cursor: grabbing;
   }
   .icon-btn.sm {
     width: 24px;

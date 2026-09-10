@@ -11,10 +11,12 @@
   import { viewport } from '../media.svelte.js'
   import { addMonths, toISODate, todayISO, monthTitle } from '../date.js'
 
-  // `projects` overrides the active board's (the Highlights view passes the
-  // circled items of every board)
-  let { editing = true, projects = null } = $props()
-  const source = $derived(projects ?? board.projects)
+  // `projects` overrides the active board's; focus keeps only the starred items
+  let { editing = true, projects = null, focus = false } = $props()
+  const source = $derived.by(() => {
+    const src = projects ?? board.projects
+    return focus ? src.map((p) => ({ ...p, items: p.items.filter((it) => it.status === 'highlight') })) : src
+  })
 
   // flattened dated items (for the calendar)
   const dated = $derived(

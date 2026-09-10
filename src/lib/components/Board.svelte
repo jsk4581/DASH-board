@@ -8,7 +8,12 @@
   import { pop, liftOut } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
-  let { editing = true } = $props()
+  // focus: every project shows only its starred items, and projects without
+  // one are left out; nothing is added or reordered while it is on
+  let { editing = true, focus = false } = $props()
+
+  const starred = (p) => p.items.filter((it) => it.status === 'highlight')
+  const shown = $derived(focus ? board.projects.filter((p) => starred(p).length > 0) : board.projects)
 
   const FLIP = 200
   // suppress the pop while dragging (reorder adds/removes nodes too)
@@ -30,32 +35,34 @@
   <div
     class="grid"
     use:dragHandleZone={{
-      items: board.projects,
+      items: shown,
       type: 'projects',
-      dragDisabled: !editing,
+      dragDisabled: !editing || focus,
       flipDurationMs: FLIP,
       dropTargetStyle: {},
     }}
     onconsider={handleConsider}
     onfinalize={handleFinalize}
   >
-    {#each board.projects as project (project.id)}
+    {#each shown as project (project.id)}
       <div
         class="cell"
         animate:flip={{ duration: FLIP }}
         in:pop={{ disabled: dragging || swapping.on }}
         out:liftOut={{ disabled: dragging || swapping.on }}
       >
-        <ProjectCard {project} {editing} />
+        <ProjectCard {project} {editing} {focus} />
       </div>
     {/each}
   </div>
 
-  {#if board.projects.length === 0 && !editing}
+  {#if focus && shown.length === 0}
+    <p class="empty-board">{t('focusEmpty')}</p>
+  {:else if board.projects.length === 0 && !editing}
     <p class="empty-board">{t('boardEmpty')}</p>
   {/if}
 
-  {#if editing}
+  {#if editing && !focus}
     <button class="add-project" onclick={() => addProject(t('newProject'))}>
       <Icon name="plus" size={17} />
       {t('newProject')}

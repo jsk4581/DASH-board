@@ -16,7 +16,10 @@
   import { pop, collapse } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
-  let { project, editing = true } = $props()
+  // focus: only the starred items, no adding or reordering
+  let { project, editing = true, focus = false } = $props()
+  const shown = $derived(focus ? project.items.filter((it) => it.status === 'highlight') : project.items)
+  const canAdd = $derived(editing && !focus)
 
   const FLIP = 180
   let autofocusId = $state(null)
@@ -65,7 +68,7 @@
 
 <article class="card" style="--card-accent: {project.color};">
   <header class="card-head">
-    {#if editing}
+    {#if canAdd}
       <span class="card-grip" use:dragHandle title={t('dragMove')} aria-label={t('projectGrip')}>
         <Icon name="grip" size={16} />
       </span>
@@ -93,7 +96,7 @@
 
     <span class="count" title={t('doneTotal')}>{done}/{project.items.length}</span>
 
-    {#if editing}
+    {#if canAdd}
       <div class="head-actions">
         <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
           <Icon name="plus" size={16} />
@@ -112,18 +115,18 @@
 
   <div
     class="list"
-    class:empty={project.items.length === 0}
+    class:empty={shown.length === 0}
     use:dragHandleZone={{
-      items: project.items,
+      items: shown,
       type: 'items',
-      dragDisabled: !editing,
+      dragDisabled: !canAdd,
       flipDurationMs: FLIP,
       dropTargetStyle: {},
     }}
     onconsider={handleConsider}
     onfinalize={handleFinalize}
   >
-    {#each project.items as item (item.id)}
+    {#each shown as item (item.id)}
       <div
         class="item-wrap"
         animate:flip={{ duration: FLIP }}
@@ -140,12 +143,12 @@
       </div>
     {/each}
 
-    {#if project.items.length === 0 && editing}
+    {#if project.items.length === 0 && canAdd}
       <button class="empty-hint" onclick={add}>{t('addFirstItem')}</button>
     {/if}
   </div>
 
-  {#if editing && project.items.length > 0}
+  {#if canAdd && project.items.length > 0}
     <footer class="card-foot">
       <button class="add-row" onclick={add}>
         <Icon name="plus" size={15} /> {t('addItem')}

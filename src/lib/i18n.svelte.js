@@ -14,9 +14,9 @@ const dict = {
     undoTitle: '되돌리기 (Ctrl+Z)',
     redo: '다시 실행',
     redoTitle: '다시 실행 (Ctrl+Y)',
-    modeSwitch: '모드 전환',
-    edit: '수정',
-    view: '보기',
+    focus: '포커스',
+    focusTitle: '포커스 모드: 별표 항목만 표시',
+    focusEmpty: '별표 항목이 없습니다. 항목의 별표를 켜면 여기에 모입니다.',
     save: '저장',
     saveTitle: '현재 보드를 JSON 파일로 저장 (Ctrl+S)',
     load: '불러오기',
@@ -42,7 +42,7 @@ const dict = {
     ganttEmpty: '기간이 지정된 항목이 없습니다. 항목에 마감일/기간을 지정해 보세요.',
 
     // board
-    boardEmpty: '표시할 프로젝트가 없습니다. 수정 모드에서 추가하세요.',
+    boardEmpty: '표시할 프로젝트가 없습니다.',
     newProject: '새 프로젝트',
 
     // project card
@@ -178,6 +178,7 @@ const dict = {
     big3Unpin: 'Daily Big 3에서 빼기',
     big3PickEmpty: '고를 항목이 없습니다.',
     fBig3: 'Daily Big 3',
+    fCreated: '추가일',
     shareTitle: '메모로 보내기',
     sharePick: '어느 대화에 넣을까요?',
     shareNew: '새 대화',
@@ -265,9 +266,9 @@ const dict = {
     undoTitle: 'Undo (Ctrl+Z)',
     redo: 'Redo',
     redoTitle: 'Redo (Ctrl+Y)',
-    modeSwitch: 'Switch mode',
-    edit: 'Edit',
-    view: 'View',
+    focus: 'Focus',
+    focusTitle: 'Focus mode: only the starred items',
+    focusEmpty: 'No starred items. Star an item and it shows up here.',
     save: 'Save',
     saveTitle: 'Save the board as a JSON file (Ctrl+S)',
     load: 'Load',
@@ -291,7 +292,7 @@ const dict = {
     calendarAria: 'Deadline calendar',
     ganttEmpty: 'No scheduled items yet. Set a due date or period on an item.',
 
-    boardEmpty: 'No projects to show. Add one in Edit mode.',
+    boardEmpty: 'No projects to show.',
     newProject: 'New project',
 
     dragMove: 'Drag to move',
@@ -424,6 +425,7 @@ const dict = {
     big3Unpin: 'Unpin from Daily Big 3',
     big3PickEmpty: 'Nothing to pick yet.',
     fBig3: 'Daily Big 3',
+    fCreated: 'Added',
     shareTitle: 'Send to memos',
     sharePick: 'Which thread should it go to?',
     shareNew: 'New thread',

@@ -22,7 +22,7 @@ exported to / imported from a JSON file.
 - **Timeline** — a monthly calendar (page with the arrows) or a 2‑week Gantt chart (drag the slider to move through the dates). On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
 - **Undo / redo** — `Ctrl/⌘ + Z` and `Ctrl/⌘ + Y` (rapid edits are coalesced into one step)
-- **Edit mode / View mode** — flip to a clean, read‑only view
+- **Focus mode**: one switch in the toolbar, and every board shows only its starred items
 - **Bilingual UI** — Korean ↔ English, remembered across visits
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
@@ -142,7 +142,8 @@ The JSON used by export / import:
               "text": "A task",
               "status": "default",            // "default" | "done" | "highlight"
               "start": "2026-06-21",          // range start, or null
-              "due": "2026-06-25"             // due date, or null
+              "due": "2026-06-25",            // due date, or null
+              "created": "2026-06-20"         // the day it was added, or null
             }
           ]
         }
@@ -154,7 +155,7 @@ The JSON used by export / import:
 ```
 
 A legacy single‑board file (`{ "projects": [...] }`) is still imported — it becomes
-one board. UI preferences (mode, theme, timeline view, language) and which board is
+one board. UI preferences (focus, theme, timeline view, language) and which board is
 active are stored separately and are **not** included in exports.
 
 ## Keyboard & interaction

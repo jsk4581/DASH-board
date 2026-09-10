@@ -29,8 +29,6 @@
   // app only: highlight reminders follow the settings and the boards
   initRemind()
 
-  const editing = $derived(ui.mode === 'edit')
-
   function onKeydown(e) {
     if (ui.view === 'memo') return // memo composer keeps the browser's own text undo
     const mod = e.ctrlKey || e.metaKey
@@ -64,21 +62,21 @@
     <MemoView />
   </main>
 {:else if ui.view === 'done'}
-  <main class:editing>
-    <DoneBoard {editing} />
+  <main>
+    <DoneBoard />
   </main>
 {:else if ui.view === 'remind'}
-  <main class:editing>
-    <RemindBoard {editing} />
+  <main>
+    <RemindBoard />
   </main>
 {:else if ui.view === 'dump'}
-  <main class:editing>
-    <DumpBoard {editing} />
+  <main>
+    <DumpBoard focus={ui.focus} />
   </main>
 {:else}
-  <main class:editing>
-    <Board {editing} />
-    <Timeline {editing} />
+  <main>
+    <Board focus={ui.focus} />
+    <Timeline focus={ui.focus} />
   </main>
 {/if}
 

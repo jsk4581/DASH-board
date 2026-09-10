@@ -13,11 +13,14 @@
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
-  let { editing = true } = $props()
+  // focus: only the starred items, no adding or reordering
+  let { editing = true, focus = false } = $props()
 
   const FLIP = 180
-  const items = $derived(library.dump.items)
-  const done = $derived(items.filter((it) => it.status === 'done').length)
+  const all = $derived(library.dump.items)
+  const items = $derived(focus ? all.filter((it) => it.status === 'highlight') : all)
+  const canAdd = $derived(editing && !focus)
+  const done = $derived(all.filter((it) => it.status === 'done').length)
 
   let autofocusId = $state(null)
   let selecting = $state(false)
@@ -127,12 +130,14 @@
           </div>
         {:else}
           <h2 class="title">{t('dumpTab')}</h2>
-          <span class="count" title={t('doneTotal')}>{done}/{items.length}</span>
+          <span class="count" title={t('doneTotal')}>{done}/{all.length}</span>
           {#if editing}
             <div class="head-actions">
-              <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
-                <Icon name="plus" size={16} />
-              </button>
+              {#if canAdd}
+                <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
+                  <Icon name="plus" size={16} />
+                </button>
+              {/if}
               {#if items.length > 0}
                 <button class="icon-btn" title={t('dumpMove')} aria-label={t('dumpMove')} onclick={startSelecting}>
                   <Icon name="moveTo" size={15} />
@@ -168,7 +173,7 @@
           use:dragHandleZone={{
             items,
             type: 'dump-items',
-            dragDisabled: !editing,
+            dragDisabled: !canAdd,
             flipDurationMs: FLIP,
             dropTargetStyle: {},
           }}
@@ -180,11 +185,11 @@
               <TodoItem pid={DUMP_ID} {item} {editing} autofocus={item.id === autofocusId} onenter={add} onmove={editing ? moveOne : undefined} />
             </div>
           {/each}
-          {#if items.length === 0 && editing}
+          {#if items.length === 0 && canAdd}
             <button class="empty-hint" onclick={add}>{t('addFirstItem')}</button>
           {/if}
         </div>
-        {#if editing && items.length > 0}
+        {#if canAdd && items.length > 0}
           <footer class="card-foot">
             <button class="add-row" onclick={add}>
               <Icon name="plus" size={15} /> {t('addItem')}
@@ -194,7 +199,9 @@
       {/if}
     </article>
   </div>
-  {#if items.length === 0 && !editing}
+  {#if focus && items.length === 0}
+    <p class="empty-board">{t('focusEmpty')}</p>
+  {:else if items.length === 0 && !editing}
     <p class="empty-board">{t('dumpEmpty')}</p>
   {/if}
 </section>

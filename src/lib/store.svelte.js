@@ -87,6 +87,7 @@ function normalizeItem(it) {
     due: it.due ?? null,
     remind: it.remind === true, // picked for the app's reminder notification
     big3: it.big3 === true, // one of the Big 3 pinned above the board
+    created: it.created ?? null, // the day the item was added (ISO date); older items have none
   }
 }
 // an item that was deleted while done: kept per project for the Completed tab
@@ -282,7 +283,7 @@ export function setProjectColor(pid, color) {
 export function addItem(pid, text = '') {
   const p = findProject(pid)
   if (!p) return null
-  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false }
+  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, created: todayISO() }
   p.items.push(item)
   return item
 }

@@ -19,7 +19,7 @@ function prefersDark() {
 }
 
 export const ui = $state({
-  mode: saved.mode === 'view' ? 'view' : 'edit', // 'edit' | 'view'
+  focus: saved.focus === true, // focus mode: only the starred items of each board
   theme: saved.theme ?? (prefersDark() ? 'dark' : 'light'), // 'light' | 'dark'
   timelineView: saved.timelineView === 'gantt' ? 'gantt' : 'calendar', // 'calendar' | 'gantt'
   lang: saved.lang === 'ko' ? 'ko' : 'en', // 'ko' | 'en' (defaults to English)
@@ -55,8 +55,8 @@ export function setTouchItem(id) {
   if (touchItem.id !== id) touchItem.id = id
 }
 
-export function toggleMode() {
-  ui.mode = ui.mode === 'edit' ? 'view' : 'edit'
+export function toggleFocus() {
+  ui.focus = !ui.focus
 }
 
 export function toggleTheme() {
@@ -74,5 +74,3 @@ export function setView(v) {
 export function toggleLang() {
   ui.lang = ui.lang === 'ko' ? 'en' : 'ko'
 }
-
-export const isEditing = () => ui.mode === 'edit'

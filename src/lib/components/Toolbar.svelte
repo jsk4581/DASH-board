@@ -3,7 +3,7 @@
   import SyncPopover from './SyncPopover.svelte'
   import Drawer from './Drawer.svelte'
   import Popover from './Popover.svelte'
-  import { ui, toggleMode, toggleTheme, toggleLang, setView } from '../ui.svelte.js'
+  import { ui, toggleFocus, toggleTheme, toggleLang, setView } from '../ui.svelte.js'
   import { exportFile, importFile, board } from '../store.svelte.js'
   import { undo, redo, history } from '../history.svelte.js'
   import { sync } from '../sync.svelte.js'
@@ -122,14 +122,16 @@
 
       <div class="sep"></div>
 
-      <div class="mode-toggle" role="group" aria-label={t('modeSwitch')}>
-        <button class:active={ui.mode === 'edit'} onclick={() => ui.mode !== 'edit' && toggleMode()} title={t('edit')}>
-          <Icon name="pencil" size={15} /> <span class="lbl">{t('edit')}</span>
-        </button>
-        <button class:active={ui.mode === 'view'} onclick={() => ui.mode !== 'view' && toggleMode()} title={t('view')}>
-          <Icon name="eye" size={15} /> <span class="lbl">{t('view')}</span>
-        </button>
-      </div>
+      <!-- focus mode: every board shows only its starred items -->
+      <button
+        class="tool focus-btn"
+        class:on={ui.focus}
+        onclick={toggleFocus}
+        aria-pressed={ui.focus}
+        title={t('focusTitle')}
+      >
+        <Icon name="focus" size={16} /> <span class="lbl">{t('focus')}</span>
+      </button>
 
       <div class="sep wide"></div>
 
@@ -340,6 +342,15 @@
     padding: 5px 9px;
   }
 
+  .focus-btn.on {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+  .focus-btn.on:hover {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+
   .sep {
     width: 1px;
     height: 22px;
@@ -418,12 +429,8 @@
   }
 
   @media (max-width: 640px) {
-    .tool .lbl,
-    .mode-toggle:not(.view-switch) .lbl {
+    .tool .lbl {
       display: none;
-    }
-    .mode-toggle:not(.view-switch) button {
-      padding: 5px 9px;
     }
     .wide {
       display: none;

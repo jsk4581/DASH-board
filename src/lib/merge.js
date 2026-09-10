@@ -12,7 +12,7 @@
 // Everything here is plain data: no store, no UI.
 // ============================================================
 
-const ITEM_FIELDS = ['text', 'status', 'start', 'due', 'remind', 'big3', 'parent', 'where']
+const ITEM_FIELDS = ['text', 'status', 'start', 'due', 'remind', 'big3', 'created', 'parent', 'where']
 const PROJECT_FIELDS = ['title', 'color', 'parent']
 const BOARD_FIELDS = ['name']
 const FIELDS = { item: ITEM_FIELDS, project: PROJECT_FIELDS, board: BOARD_FIELDS }
@@ -74,6 +74,7 @@ function itemEntity(it, parent, where) {
     due: it.due ?? null,
     remind: it.remind === true,
     big3: it.big3 === true,
+    created: it.created ?? null,
     parent,
     where,
     archivedAt: it.archivedAt ?? null,
@@ -403,7 +404,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     if (dOrder.both) orderNote.push({ kind: 'dump', id: null, path: [] })
     const dump = dOrder.order.map((iid) => {
       const it = final.item.get(iid)
-      return { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3 }
+      return { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, created: it.created }
     })
     const boards = bo.order.filter((bid) => !pseudo(bid)).map((bid) => {
       const present = new Set([...final.project.values()].filter((p) => p.parent === bid).map((p) => p.id))
@@ -417,7 +418,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
           if (io.both && where === 'items') orderNote.push({ kind: 'project', id: pid, path: [nameOf('board', bid), nameOf('project', pid)] })
           return io.order.map((iid) => {
             const it = final.item.get(iid)
-            const out = { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3 }
+            const out = { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, created: it.created }
             if (where === 'archive') out.archivedAt = it.archivedAt
             return out
           })

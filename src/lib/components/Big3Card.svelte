@@ -29,7 +29,7 @@
       <div class="list" class:empty={picked.length === 0}>
         {#each picked as e (e.item.id)}
           <div class="item-wrap">
-            <TodoItem pid={e.pid} item={e.item} {editing} onremove={editing ? () => toggleBig3(e.pid, e.item.id) : undefined} removeLabel={t('big3Unpin')} />
+            <TodoItem pid={e.pid} item={e.item} {editing} underline onremove={editing ? () => toggleBig3(e.pid, e.item.id) : undefined} removeLabel={t('big3Unpin')} />
           </div>
         {/each}
         {#if picked.length === 0 && editing}

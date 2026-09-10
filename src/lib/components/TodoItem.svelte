@@ -10,7 +10,9 @@
   // onmove (Dump only): adds a "move to a board" action to the item's pill.
   // onremove (Daily Big 3): the pill's trash calls it instead of deleting,
   // labelled removeLabel.
-  let { pid, item, editing = true, autofocus = false, onenter, onmove, onremove, removeLabel } = $props()
+  // underline: a highlighted item is underlined instead of circled, and the
+  // pill has no star (the Daily Big 3 card)
+  let { pid, item, editing = true, autofocus = false, onenter, onmove, onremove, removeLabel, underline = false } = $props()
 
   let inputEl = $state(null)
   let dateBtn = $state(null)
@@ -64,6 +66,7 @@
   class="item"
   class:done={item.status === 'done'}
   class:highlight={item.status === 'highlight'}
+  class:underline
   class:revealed={touchItem.id === item.id}
   data-item-id={item.id}
 >
@@ -106,7 +109,7 @@
         <span class="text">{item.text || ' '}</span>
       {/if}
 
-      {#if item.status === 'highlight' && item.text.trim() && textW > 0}
+      {#if item.status === 'highlight' && !underline && item.text.trim() && textW > 0}
         {@const g = grade(textW, textH)}
         <svg
           class="grade"
@@ -141,16 +144,18 @@
 
   {#if editing}
     <div class="actions">
-      <button
-        class="icon-btn"
-        class:active={item.status === 'highlight'}
-        data-act="highlight"
-        title={t('highlight')}
-        aria-label={t('toggleHighlight')}
-        onclick={() => toggleStatus(pid, item.id, 'highlight')}
-      >
-        <Icon name="star" size={13} fill={item.status === 'highlight'} />
-      </button>
+      {#if !underline}
+        <button
+          class="icon-btn"
+          class:active={item.status === 'highlight'}
+          data-act="highlight"
+          title={t('highlight')}
+          aria-label={t('toggleHighlight')}
+          onclick={() => toggleStatus(pid, item.id, 'highlight')}
+        >
+          <Icon name="star" size={13} fill={item.status === 'highlight'} />
+        </button>
+      {/if}
       <button
         class="icon-btn"
         class:active={!!item.due}
@@ -327,6 +332,14 @@
   .item.highlight .sizer {
     font-weight: 700;
     /* 강조는 글자색을 바꾸지 않고 볼드 + 빨간 동그라미로만 표시 */
+  }
+  /* underlined instead of circled (the Daily Big 3 card) */
+  .item.highlight.underline .text,
+  .item.highlight.underline .text-input {
+    text-decoration: underline;
+    text-decoration-color: var(--pencil);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
   }
 
   /* compact date stamp tucked into the item's lower-right corner.

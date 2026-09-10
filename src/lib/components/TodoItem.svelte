@@ -337,7 +337,7 @@
   .item.highlight.underline .text,
   .item.highlight.underline .text-input {
     text-decoration: underline;
-    text-decoration-color: var(--pencil);
+    text-decoration-color: currentColor;
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
   }

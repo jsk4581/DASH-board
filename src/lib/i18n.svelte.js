@@ -172,12 +172,9 @@ const dict = {
     // completed tab
     doneTab: '완료',
     big3: 'Daily Big 3',
-    big3Hint: '오늘 꼭 끝낼 세 가지',
-    big3Pick: '항목 고르기',
     big3PickTitle: 'Daily Big 3 고르기',
     big3Count: '{n}/3',
     big3Full: '세 개가 찼습니다. 하나를 빼고 고르세요.',
-    big3Empty: '보드에서 항목을 최대 세 개까지 골라 여기에 고정합니다.',
     big3Unpin: 'Daily Big 3에서 빼기',
     big3PickEmpty: '고를 항목이 없습니다.',
     fBig3: 'Daily Big 3',
@@ -222,9 +219,7 @@ const dict = {
 
     // the Dump
     dumpTab: 'Dump',
-    dumpLead: '정리되지 않은 것을 일단 여기에 적어 두고, 나중에 보드로 옮깁니다.',
     dumpEmpty: '비어 있습니다. 떠오르는 대로 적어 두세요.',
-    dumpSelect: '선택',
     dumpSelectAll: '전체 선택',
     dumpSelectNone: '선택 해제',
     dumpMove: '보드로 옮기기',
@@ -423,12 +418,9 @@ const dict = {
     // completed tab
     doneTab: 'Completed',
     big3: 'Daily Big 3',
-    big3Hint: 'The three to finish today',
-    big3Pick: 'Pick items',
     big3PickTitle: 'Pick the Daily Big 3',
     big3Count: '{n}/3',
     big3Full: 'Three already. Unpin one to pick another.',
-    big3Empty: 'Pick up to three items from your boards to pin here.',
     big3Unpin: 'Unpin from Daily Big 3',
     big3PickEmpty: 'Nothing to pick yet.',
     fBig3: 'Daily Big 3',
@@ -473,9 +465,7 @@ const dict = {
 
     // the Dump
     dumpTab: 'Dump',
-    dumpLead: 'Jot down anything unsorted here, and move it onto a board later.',
     dumpEmpty: 'Empty. Write things down as they come.',
-    dumpSelect: 'Select',
     dumpSelectAll: 'Select all',
     dumpSelectNone: 'Clear selection',
     dumpMove: 'Move to a board',

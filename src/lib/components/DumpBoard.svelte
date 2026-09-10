@@ -1,8 +1,8 @@
 <script>
-  // The Dump: one charcoal card of loose items outside every board, for
-  // jotting things down before they have a place. Items are ordinary items
-  // (state, dates, drag order) and move onto a board's project from here,
-  // one at a time from the item's pill, or several at once in select mode.
+  // The Dump: a project card outside every board, charcoal as its colour,
+  // for jotting things down before they have a place. Items are ordinary
+  // items (state, dates, drag order) and move onto a board's project from
+  // here: one from the arrow on the item's pill, several from select mode.
   import { dragHandleZone } from 'svelte-dnd-action'
   import { flip } from 'svelte/animate'
   import Icon from './Icon.svelte'
@@ -17,6 +17,7 @@
 
   const FLIP = 180
   const items = $derived(library.dump.items)
+  const done = $derived(items.filter((it) => it.status === 'done').length)
 
   let autofocusId = $state(null)
   let selecting = $state(false)
@@ -109,86 +110,93 @@
 
 <svelte:window onkeydown={onKey} />
 
-<section class="dump">
-  <p class="lead">{t('dumpLead')}</p>
-
-  <article class="card" class:selecting>
-    <header class="card-head">
-      <span class="mark"><Icon name="inbox" size={16} /></span>
-      {#if selecting}
-        <h2 class="title">{t('dumpSelected', { n: pickedCount })}</h2>
-        <button class="head-btn" onclick={toggleAll}>{allPicked ? t('dumpSelectNone') : t('dumpSelectAll')}</button>
-        <button class="icon-btn" onclick={stopSelecting} title={t('close')} aria-label={t('close')}>
-          <Icon name="x" size={15} />
-        </button>
-      {:else}
-        <h2 class="title">{t('dumpTab')}</h2>
-        <span class="count">{items.length}</span>
-        {#if editing}
-          <button class="head-btn" onclick={startSelecting} disabled={items.length === 0}>
-            <Icon name="check" size={13} strokeWidth={2.5} /> {t('dumpSelect')}
-          </button>
-          <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
-            <Icon name="plus" size={16} />
-          </button>
-        {/if}
-      {/if}
-    </header>
-
-    {#if selecting}
-      <ul class="picklist">
-        {#each items as it (it.id)}
-          <li>
-            <button class="row" class:on={picked.has(it.id)} class:done={it.status === 'done'} onclick={() => toggle(it.id)} aria-pressed={picked.has(it.id)}>
-              <span class="tick">{#if picked.has(it.id)}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
-              <span class="text">{it.text}</span>
-              {#if it.due}<span class="due">{formatShort(it.due)}</span>{/if}
+<section class="board">
+  <div class="grid">
+    <article class="card">
+      <header class="card-head">
+        <span class="mark"><Icon name="inbox" size={14} strokeWidth={2.2} /></span>
+        {#if selecting}
+          <h2 class="title">{t('dumpSelected', { n: pickedCount })}</h2>
+          <div class="head-actions on">
+            <button class="icon-btn" onclick={toggleAll} title={allPicked ? t('dumpSelectNone') : t('dumpSelectAll')} aria-label={allPicked ? t('dumpSelectNone') : t('dumpSelectAll')}>
+              <Icon name="check" size={15} strokeWidth={2.5} />
             </button>
-          </li>
-        {/each}
-      </ul>
-      <footer class="bar">
-        <button class="ghost" onclick={stopSelecting}>{t('close')}</button>
-        <button class="primary" onclick={movePicked} disabled={pickedCount === 0}>
-          <Icon name="moveTo" size={14} /> {t('dumpMove')}
-        </button>
-      </footer>
-    {:else}
-      <div
-        class="list"
-        class:empty={items.length === 0}
-        use:dragHandleZone={{
-          items,
-          type: 'dump-items',
-          dragDisabled: !editing,
-          flipDurationMs: FLIP,
-          dropTargetStyle: {},
-        }}
-        onconsider={handleConsider}
-        onfinalize={handleFinalize}
-      >
-        {#each items as item (item.id)}
-          <div class="item-wrap" animate:flip={{ duration: FLIP }}>
-            <TodoItem pid={DUMP_ID} {item} {editing} autofocus={item.id === autofocusId} onenter={add} onmove={editing ? moveOne : undefined} />
+            <button class="icon-btn" onclick={stopSelecting} title={t('close')} aria-label={t('close')}>
+              <Icon name="x" size={15} />
+            </button>
           </div>
-        {/each}
-        {#if items.length === 0}
+        {:else}
+          <h2 class="title">{t('dumpTab')}</h2>
+          <span class="count" title={t('doneTotal')}>{done}/{items.length}</span>
           {#if editing}
-            <button class="empty-hint" onclick={add}>{t('dumpEmpty')}</button>
-          {:else}
-            <p class="empty-note">{t('dumpEmpty')}</p>
+            <div class="head-actions">
+              <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
+                <Icon name="plus" size={16} />
+              </button>
+              {#if items.length > 0}
+                <button class="icon-btn" title={t('dumpMove')} aria-label={t('dumpMove')} onclick={startSelecting}>
+                  <Icon name="moveTo" size={15} />
+                </button>
+              {/if}
+            </div>
           {/if}
         {/if}
-      </div>
-      {#if editing && items.length > 0}
-        <footer class="card-foot">
-          <button class="add-row" onclick={add}>
-            <Icon name="plus" size={15} /> {t('addItem')}
+      </header>
+
+      {#if selecting}
+        <ul class="picklist">
+          {#each items as it (it.id)}
+            <li>
+              <button class="row" class:on={picked.has(it.id)} class:done={it.status === 'done'} onclick={() => toggle(it.id)} aria-pressed={picked.has(it.id)}>
+                <span class="tick">{#if picked.has(it.id)}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
+                <span class="text">{it.text}</span>
+                {#if it.due}<span class="due">{formatShort(it.due)}</span>{/if}
+              </button>
+            </li>
+          {/each}
+        </ul>
+        <footer class="bar">
+          <button class="ghost" onclick={stopSelecting}>{t('close')}</button>
+          <button class="primary" onclick={movePicked} disabled={pickedCount === 0}>
+            <Icon name="moveTo" size={14} /> {t('dumpMove')}
           </button>
         </footer>
+      {:else}
+        <div
+          class="list"
+          class:empty={items.length === 0}
+          use:dragHandleZone={{
+            items,
+            type: 'dump-items',
+            dragDisabled: !editing,
+            flipDurationMs: FLIP,
+            dropTargetStyle: {},
+          }}
+          onconsider={handleConsider}
+          onfinalize={handleFinalize}
+        >
+          {#each items as item (item.id)}
+            <div class="item-wrap" animate:flip={{ duration: FLIP }}>
+              <TodoItem pid={DUMP_ID} {item} {editing} autofocus={item.id === autofocusId} onenter={add} onmove={editing ? moveOne : undefined} />
+            </div>
+          {/each}
+          {#if items.length === 0 && editing}
+            <button class="empty-hint" onclick={add}>{t('addFirstItem')}</button>
+          {/if}
+        </div>
+        {#if editing && items.length > 0}
+          <footer class="card-foot">
+            <button class="add-row" onclick={add}>
+              <Icon name="plus" size={15} /> {t('addItem')}
+            </button>
+          </footer>
+        {/if}
       {/if}
-    {/if}
-  </article>
+    </article>
+  </div>
+  {#if items.length === 0 && !editing}
+    <p class="empty-board">{t('dumpEmpty')}</p>
+  {/if}
 </section>
 
 {#if moveIds}
@@ -200,19 +208,17 @@
 {/if}
 
 <style>
-  .dump {
-    padding: 18px clamp(14px, 3vw, 32px) 24px;
-    max-width: 760px;
-    margin: 0 auto;
+  /* the board's own padding and column template, so the card sits where
+     the first project card would */
+  .board {
+    padding: 18px clamp(14px, 3vw, 32px) 8px;
   }
-  .lead {
-    margin: 0 0 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    align-items: start;
   }
-
-  /* an ordinary card whose point colour is charcoal */
   .card {
     --card-accent: oklch(0.36 0.008 286);
     background: var(--surface);
@@ -221,13 +227,24 @@
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
-    overflow: clip;
-    position: relative;
+    overflow: hidden;
+    transition: box-shadow var(--med) var(--ease), border-color var(--med) var(--ease);
   }
   :global(:root[data-theme='dark']) .card {
     --card-accent: oklch(0.62 0.01 286);
   }
-  .card::before {
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 10px 9px 13px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .card-head::before {
     content: '';
     position: absolute;
     left: 0;
@@ -236,26 +253,19 @@
     width: 3px;
     background: var(--card-accent);
   }
-
-  .card-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 10px 9px 14px;
-    border-bottom: 1px solid var(--border);
-    min-height: 48px;
-  }
   .mark {
     display: flex;
-    color: var(--card-accent);
     flex: none;
+    color: var(--card-accent);
   }
   .title {
     flex: 1;
     min-width: 0;
-    margin: 0;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 650;
+    margin: 0;
+    padding: 2px 4px;
+    margin-left: -4px;
     color: var(--text);
     white-space: nowrap;
     overflow: hidden;
@@ -268,26 +278,19 @@
     font-variant-numeric: tabular-nums;
     flex: none;
   }
-  .head-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  .head-actions {
+    display: flex;
+    gap: 1px;
     flex: none;
-    padding: 5px 10px;
-    border-radius: 99px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted);
-    border: 1px solid var(--border-strong);
-    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+    opacity: 0;
+    transform: translateX(4px);
+    transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
   }
-  .head-btn:hover:not(:disabled) {
-    background: var(--surface-hover);
-    color: var(--text);
-  }
-  .head-btn:disabled {
-    opacity: 0.4;
-    cursor: default;
+  .card:hover .head-actions,
+  .card:focus-within .head-actions,
+  .head-actions.on {
+    opacity: 1;
+    transform: none;
   }
 
   .list {
@@ -295,33 +298,30 @@
     display: flex;
     flex-direction: column;
     gap: 1px;
+    flex: 1;
   }
   .list.empty {
-    min-height: 56px;
+    padding: 6px;
+    min-height: 44px;
   }
   .item-wrap {
     outline: none;
     border-radius: var(--radius-sm);
   }
-  .empty-hint,
-  .empty-note {
+  .empty-hint {
     width: 100%;
-    margin: 0;
     text-align: left;
-    padding: 10px 12px;
+    padding: 8px 10px;
     color: var(--text-faint);
     font-size: 14px;
     border-radius: var(--radius-sm);
-  }
-  .empty-hint {
     border: 1px dashed var(--border-strong);
     transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
   }
   .empty-hint:hover {
-    color: var(--accent-ink);
+    color: var(--accent);
     border-color: var(--accent);
   }
-
   .card-foot {
     padding: 4px 8px 8px;
   }
@@ -339,7 +339,12 @@
   }
   .add-row:hover {
     background: var(--surface-hover);
-    color: var(--accent-ink);
+    color: var(--accent);
+  }
+  .empty-board {
+    text-align: center;
+    color: var(--text-faint);
+    padding: 40px 0;
   }
 
   /* select mode: rows with a tick, and a bar that stays in reach */
@@ -412,7 +417,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 8px 10px 10px;
+    padding: 8px 8px 8px;
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
@@ -421,9 +426,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 7px 12px;
     border-radius: var(--radius-sm);
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
   }
   .ghost {
@@ -461,5 +466,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  @media (max-width: 560px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

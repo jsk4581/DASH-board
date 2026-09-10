@@ -165,9 +165,9 @@ active are stored separately and are **not** included in exports.
 - **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
 - **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
-- **Daily Big 3**: the pinned card's `+` or "Pick items" opens a list of every item; tick up to three, and the x on a pinned row unpins it
+- **Daily Big 3**: the pinned card's "Add item" opens a list of every item; tick up to three, and the trash on a pinned row unpins it
 - **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
-- **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and "Select" plus "Move to a board" moves several at once
+- **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and the arrow in the card head selects several to move at once
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file
 - **Undo / redo** — `Ctrl/⌘ + Z` / `Ctrl/⌘ + Y` (also `Ctrl/⌘ + Shift + Z`)

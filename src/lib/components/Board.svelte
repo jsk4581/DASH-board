@@ -25,7 +25,7 @@
 </script>
 
 <section class="board">
-  <!-- the Big 3 sits above every board, pinned -->
+  <!-- the Daily Big 3: a card-sized cell pinned above every board -->
   <Big3Card {editing} />
   <div
     class="grid"

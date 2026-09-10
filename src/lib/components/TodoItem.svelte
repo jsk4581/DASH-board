@@ -7,8 +7,10 @@
   import { relativeTag, formatLabel, formatShort } from '../date.js'
   import { t } from '../i18n.svelte.js'
 
-  // onmove (Dump only): adds a "move to a board" action to the item's pill
-  let { pid, item, editing = true, autofocus = false, onenter, onmove } = $props()
+  // onmove (Dump only): adds a "move to a board" action to the item's pill.
+  // onremove (Daily Big 3): the pill's trash calls it instead of deleting,
+  // labelled removeLabel.
+  let { pid, item, editing = true, autofocus = false, onenter, onmove, onremove, removeLabel } = $props()
 
   let inputEl = $state(null)
   let dateBtn = $state(null)
@@ -167,9 +169,9 @@
       {/if}
       <button
         class="icon-btn danger"
-        title={item.status === 'done' ? t('archiveItem') : t('delete')}
-        aria-label={item.status === 'done' ? t('archiveItem') : t('deleteItem')}
-        onclick={() => removeItem(pid, item.id)}
+        title={onremove ? removeLabel : item.status === 'done' ? t('archiveItem') : t('delete')}
+        aria-label={onremove ? removeLabel : item.status === 'done' ? t('archiveItem') : t('deleteItem')}
+        onclick={() => (onremove ? onremove(item.id) : removeItem(pid, item.id))}
       >
         <Icon name="trash" size={13} />
       </button>

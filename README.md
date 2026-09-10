@@ -17,6 +17,7 @@ exported to / imported from a JSON file.
 - **Three item states** — default · done (strikethrough) · highlight (bold + a hand‑drawn red "grading" circle)
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
+- **Big 3**: a card pinned above every board holding up to three items you pick from any board (or the Dump); the items stay where they live and are edited in place
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
 - **Timeline** — a monthly calendar (page with the arrows) or a 2‑week Gantt chart (drag the slider to move through the dates). On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
@@ -26,7 +27,7 @@ exported to / imported from a JSON file.
 - **Autosave + export/import** — `localStorage` autosave, JSON backup you can move between devices
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
-- **Dump**: one charcoal card outside every board for things that have no place yet; jot them down, then move one or several onto a board's project (or a new project) from there
+- **Dump**: one card outside every board, charcoal as its colour, for things that have no place yet; jot them down, then move one or several onto a board's project (or a new project) from there
 - **Memos**: a chat-style notebook beside the board. One thread per topic, notes to yourself with edit/delete, day dividers and clickable links; stored in IndexedDB, with JSON export/import
 
 ## Android app
@@ -163,8 +164,8 @@ active are stored separately and are **not** included in exports.
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range) / click a selected day again to clear
 - **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
 - **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
-- **Highlights** — a pinned entry at the top of the boards drawer that gathers every item circled in red, from every board, with its own calendar and gantt; editing an item there edits it on its board
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
+- **Big 3**: "Pick items" on the pinned card opens a list of every item; tick up to three, and the x on a pinned row unpins it
 - **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
 - **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and "Select" plus "Move to a board" moves several at once
 - **Drag** — grab the handle on a box header or the left of an item to move it

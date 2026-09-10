@@ -34,10 +34,6 @@
     setView('done')
     onclose?.()
   }
-  function pickStar() {
-    setView('star')
-    onclose?.()
-  }
   function pickRemind() {
     setView('remind')
     onclose?.()
@@ -45,10 +41,6 @@
   // items picked for the reminder notification, across every board
   const remindCount = $derived(
     library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.remind).length, 0), 0)
-  )
-  // items circled in red, across every board (the pinned Highlights entry)
-  const starCount = $derived(
-    library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.status === 'highlight').length, 0), 0)
   )
   // items deleted while done, across the active board
   const doneCount = $derived(board.projects.reduce((n, p) => n + p.archive.length, 0))
@@ -87,15 +79,8 @@
   </header>
 
   <div class="dbody">
-  <!-- pinned Highlights entry: same row geometry as a board row, the star
+  <!-- pinned Reminders entry: same row geometry as a board row, the icon
        centred on the dot column so the labels line up -->
-  <div class="brow pinned" class:active={ui.view === 'star'}>
-    <button class="bname" onclick={pickStar}>
-      <span class="slot"><Icon name="star" size={14} strokeWidth={2.5} /></span>
-      <span class="btext">{t('starTab')}</span>
-      <span class="bcount">{starCount}</span>
-    </button>
-  </div>
   <div class="brow pinned" class:active={ui.view === 'remind'}>
     <button class="bname" onclick={pickRemind}>
       <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>
@@ -105,7 +90,7 @@
   </div>
   <ul class="blist">
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && !['done', 'star', 'remind', 'dump'].includes(ui.view)}>
+      <li class="brow" class:active={b.id === library.activeId && !['done', 'remind', 'dump'].includes(ui.view)}>
         {#if editingId === b.id}
           <input
             class="rename"

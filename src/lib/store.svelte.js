@@ -86,6 +86,7 @@ function normalizeItem(it) {
     start: it.start ?? null,
     due: it.due ?? null,
     remind: it.remind === true, // picked for the app's reminder notification
+    big3: it.big3 === true, // one of the Big 3 pinned above the board
   }
 }
 // an item that was deleted while done: kept per project for the Completed tab
@@ -281,7 +282,7 @@ export function setProjectColor(pid, color) {
 export function addItem(pid, text = '') {
   const p = findProject(pid)
   if (!p) return null
-  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false }
+  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false }
   p.items.push(item)
   return item
 }
@@ -330,6 +331,23 @@ export function toggleStatus(pid, iid, status) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return
   it.status = it.status === status ? 'default' : status
+}
+
+export const BIG3_MAX = 3
+/** Every Big 3 item, boards first (board order) then the Dump. */
+export function big3Items() {
+  const out = []
+  for (const b of library.boards) for (const p of b.projects) for (const it of p.items) if (it.big3) out.push({ pid: p.id, item: it, project: p, board: b })
+  for (const it of library.dump.items) if (it.big3) out.push({ pid: DUMP_ID, item: it, project: null, board: null })
+  return out
+}
+/** Pin or unpin a Big 3 item; a pin past the cap is refused (returns false). */
+export function toggleBig3(pid, iid) {
+  const it = findProject(pid)?.items.find((x) => x.id === iid)
+  if (!it) return false
+  if (!it.big3 && big3Items().length >= BIG3_MAX) return false
+  it.big3 = !it.big3
+  return true
 }
 
 /** Include this item in (or drop it from) the reminder notification. */

@@ -70,7 +70,7 @@
   function val(f, v, entry) {
     if (f === 'status') return t(v === 'done' ? 'stDone' : v === 'highlight' ? 'stHighlight' : 'stDefault')
     if (f === 'start' || f === 'due') return v ? formatShort(v) : t('vNone')
-    if (f === 'remind') return t(v ? 'vOn' : 'vOff')
+    if (f === 'remind' || f === 'big3') return t(v ? 'vOn' : 'vOff')
     if (f === 'where') return t(v === 'archive' ? 'vArchive' : 'vItems')
     if (f === 'parent') return entry?.[`${entry._side}Name`] ?? ''
     if (f === 'color') return ''

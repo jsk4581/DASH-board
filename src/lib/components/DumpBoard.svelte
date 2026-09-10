@@ -212,47 +212,29 @@
     color: var(--text-muted);
   }
 
-  /* the charcoal card: the dark token set, whatever the page theme, so the
-     shared item component re-skins itself without knowing where it is */
+  /* an ordinary card whose point colour is charcoal */
   .card {
-    --surface: oklch(0.3 0.008 286);
-    --surface-2: oklch(0.335 0.008 286);
-    --surface-hover: oklch(0.37 0.008 286);
-    --border: oklch(1 0 0 / 11%);
-    --border-strong: oklch(1 0 0 / 20%);
-    --text: oklch(0.985 0 0);
-    --text-muted: oklch(0.74 0.012 286);
-    --text-faint: oklch(0.58 0.014 286);
-    --accent: oklch(0.7 0.11 255);
-    --accent-hover: oklch(0.76 0.12 255);
-    --accent-soft: oklch(0.36 0.06 255);
-    --accent-ink: oklch(0.95 0.03 255);
-    --done: oklch(0.56 0.014 286);
-    --pencil: oklch(0.72 0.19 22);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+    --card-accent: oklch(0.36 0.008 286);
     background: var(--surface);
-    color: var(--text);
-    border: 1px solid oklch(1 0 0 / 8%);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    box-shadow: 0 6px 22px rgba(24, 24, 27, 0.16);
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     overflow: clip;
+    position: relative;
   }
   :global(:root[data-theme='dark']) .card {
-    --surface: oklch(0.14 0.006 286);
-    --surface-2: oklch(0.18 0.006 286);
-    --surface-hover: oklch(0.22 0.006 286);
-    border-color: oklch(1 0 0 / 12%);
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+    --card-accent: oklch(0.62 0.01 286);
   }
-  .card :global(.icon-btn.danger:hover) {
-    background: #3a1a1a;
-    color: #ff6b6b;
-  }
-  .card :global(.due-stamp.overdue) {
-    background: #3a1c1c;
-    color: #ff8080;
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--card-accent);
   }
 
   .card-head {
@@ -265,7 +247,7 @@
   }
   .mark {
     display: flex;
-    color: var(--text-muted);
+    color: var(--card-accent);
     flex: none;
   }
   .title {
@@ -452,7 +434,7 @@
   }
   .primary {
     background: var(--accent);
-    color: oklch(0.15 0.02 255);
+    color: var(--accent-ink);
   }
   .primary:hover:not(:disabled) {
     background: var(--accent-hover);

@@ -2,6 +2,7 @@
   import { dragHandleZone } from 'svelte-dnd-action'
   import { flip } from 'svelte/animate'
   import ProjectCard from './ProjectCard.svelte'
+  import Big3Card from './Big3Card.svelte'
   import Icon from './Icon.svelte'
   import { board, addProject, setProjects, swapping } from '../store.svelte.js'
   import { pop, liftOut } from '../pop.js'
@@ -24,6 +25,8 @@
 </script>
 
 <section class="board">
+  <!-- the Big 3 sits above every board, pinned -->
+  <Big3Card {editing} />
   <div
     class="grid"
     use:dragHandleZone={{

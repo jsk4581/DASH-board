@@ -23,9 +23,8 @@
   const onBoard = $derived(ui.view !== 'memo')
   const onDump = $derived(ui.view === 'dump')
   const onDone = $derived(ui.view === 'done')
-  const onStar = $derived(ui.view === 'star')
   const onRemind = $derived(ui.view === 'remind')
-  const onSub = $derived(onDone || onStar || onRemind) // a sub-view of the board
+  const onSub = $derived(onDone || onRemind) // a sub-view of the board
 
   // the memo view sizes itself to the space under this bar
   $effect(() => {
@@ -81,7 +80,7 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {#if onStar}<span class="cur-text">{t('starTab')}</span>{:else if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else if onDump}<span class="cur-text">{t('dumpTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
+        {#if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else if onDump}<span class="cur-text">{t('dumpTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
       </button>
     {/if}
   </div>

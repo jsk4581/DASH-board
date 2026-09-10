@@ -70,7 +70,7 @@ const dict = {
     setDue: '마감일 지정',
     delete: '삭제',
     deleteItem: '항목 삭제',
-    archiveItem: '완료 탭으로 보내기',
+    archiveItem: '완료 내역으로 보내기',
 
     // date popover
     noDue: '마감일 없음',
@@ -170,8 +170,8 @@ const dict = {
     close: '닫기',
     rename: '이름 변경',
 
-    // completed tab
-    doneTab: '완료',
+    // completed (the card's own list of done-and-deleted items)
+    doneTab: '완료 내역',
     big3: 'Daily Big 3',
     big3PickTitle: 'Daily Big 3 고르기',
     big3Count: '{n}/3',
@@ -185,7 +185,7 @@ const dict = {
     shareNew: '새 대화',
     shareSend: '보내기',
     shareCancel: '취소',
-    doneEmpty: '완료한 뒤 지운 항목이 여기에 모입니다.',
+    doneEmpty: '완료한 뒤 지운 항목이 여기에 모입니다. 추가한 날짜 순입니다.',
     restoreItem: '다시 할 일로',
     deleteForever: '완전히 삭제',
 
@@ -418,7 +418,7 @@ const dict = {
     close: 'Close',
     rename: 'Rename',
 
-    // completed tab
+    // completed (the card's own list of done-and-deleted items)
     doneTab: 'Completed',
     big3: 'Daily Big 3',
     big3PickTitle: 'Pick the Daily Big 3',
@@ -433,7 +433,7 @@ const dict = {
     shareNew: 'New thread',
     shareSend: 'Send',
     shareCancel: 'Cancel',
-    doneEmpty: 'Items you delete after completing them collect here.',
+    doneEmpty: 'Items you delete after completing them collect here, in the order they were added.',
     restoreItem: 'Back to the board',
     deleteForever: 'Delete permanently',
 

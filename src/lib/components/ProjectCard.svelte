@@ -6,6 +6,8 @@
   import Popover from './Popover.svelte'
   import {
     addItem,
+    restoreItem,
+    purgeItem,
     removeProject,
     renameProject,
     setProjectColor,
@@ -14,6 +16,7 @@
     swapping,
   } from '../store.svelte.js'
   import { pop, collapse } from '../pop.js'
+  import { formatShort } from '../date.js'
   import { t } from '../i18n.svelte.js'
 
   // focus: only the starred items, no adding or reordering
@@ -29,6 +32,14 @@
   let dragging = $state(false)
 
   const done = $derived(project.items.filter((i) => i.status === 'done').length)
+
+  // Completed: the items deleted after being checked off, listed in the card
+  // in place of the open items, oldest added first (an item from before the
+  // added date existed sorts by the day it was completed)
+  let showDone = $state(false)
+  const completed = $derived(
+    [...project.archive].sort((a, b) => (a.created ?? a.archivedAt ?? '').localeCompare(b.created ?? b.archivedAt ?? ''))
+  )
 
   function handleConsider(e) {
     dragging = true
@@ -96,23 +107,53 @@
 
     <span class="count" title={t('doneTotal')}>{done}/{project.items.length}</span>
 
-    {#if canAdd}
+    {#if editing}
       <div class="head-actions">
-        <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
-          <Icon name="plus" size={16} />
-        </button>
         <button
-          class="icon-btn danger"
-          title={t('deleteProject')}
-          aria-label={t('deleteProject')}
-          onclick={delProject}
+          class="icon-btn"
+          class:on={showDone}
+          title={t('doneTab')}
+          aria-label={t('doneTab')}
+          aria-pressed={showDone}
+          onclick={() => (showDone = !showDone)}
         >
-          <Icon name="trash" size={15} />
+          <Icon name="checkCircle" size={16} />
         </button>
+        {#if canAdd}
+          <button
+            class="icon-btn danger"
+            title={t('deleteProject')}
+            aria-label={t('deleteProject')}
+            onclick={delProject}
+          >
+            <Icon name="trash" size={15} />
+          </button>
+        {/if}
       </div>
     {/if}
   </header>
 
+  {#if showDone}
+    <ul class="done-list" class:empty={completed.length === 0}>
+      {#each completed as it (it.id)}
+        <li class="done-row" class:highlight={it.status === 'highlight'}>
+          <span class="tick"><Icon name="check" size={12} strokeWidth={3} /></span>
+          <span class="done-text">{it.text}</span>
+          {#if it.created ?? it.archivedAt}<span class="when">{formatShort(it.created ?? it.archivedAt)}</span>{/if}
+          <span class="done-acts">
+            <button class="icon-btn" title={t('restoreItem')} aria-label={t('restoreItem')} onclick={() => restoreItem(project.id, it.id)}>
+              <Icon name="undo" size={13} />
+            </button>
+            <button class="icon-btn danger" title={t('deleteForever')} aria-label={t('deleteForever')} onclick={() => purgeItem(project.id, it.id)}>
+              <Icon name="trash" size={13} />
+            </button>
+          </span>
+        </li>
+      {:else}
+        <li class="done-none">{t('doneEmpty')}</li>
+      {/each}
+    </ul>
+  {:else}
   <div
     class="list"
     class:empty={shown.length === 0}
@@ -147,8 +188,9 @@
       <button class="empty-hint" onclick={add}>{t('addFirstItem')}</button>
     {/if}
   </div>
+  {/if}
 
-  {#if canAdd && project.items.length > 0}
+  {#if canAdd && project.items.length > 0 && !showDone}
     <footer class="card-foot">
       <button class="add-row" onclick={add}>
         <Icon name="plus" size={15} /> {t('addItem')}
@@ -272,14 +314,16 @@
     font-weight: 500;
   }
 
+  /* the count and the tools surface together on hover (always on touch) */
   .count {
     font-size: 12px;
     font-weight: 600;
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
     flex: none;
+    opacity: 0;
+    transition: opacity var(--fast) var(--ease);
   }
-
   .head-actions {
     display: flex;
     gap: 1px;
@@ -288,10 +332,99 @@
     transform: translateX(4px);
     transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
   }
+  .card:hover .count,
+  .card:focus-within .count,
   .card:hover .head-actions,
   .card:focus-within .head-actions {
     opacity: 1;
     transform: none;
+  }
+  @media (hover: none) {
+    .count,
+    .head-actions {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .head-actions .icon-btn.on {
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+  }
+
+  .done-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+  }
+  .done-list.empty {
+    min-height: 44px;
+  }
+  .done-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 8px;
+    border-radius: var(--radius-xs);
+    min-height: 34px;
+  }
+  .done-row:hover {
+    background: var(--surface-hover);
+  }
+  .tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--done);
+    color: var(--surface);
+    flex: none;
+  }
+  .done-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    color: var(--done);
+    text-decoration: line-through;
+    overflow-wrap: anywhere;
+  }
+  .done-row.highlight .done-text {
+    font-weight: 700;
+  }
+  .when {
+    font-size: 11.5px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .done-acts {
+    display: flex;
+    gap: 1px;
+    flex: none;
+    opacity: 0;
+    transition: opacity var(--fast) var(--ease);
+  }
+  .done-row:hover .done-acts,
+  .done-row:focus-within .done-acts {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .done-acts {
+      opacity: 1;
+    }
+  }
+  .done-acts .icon-btn.danger:hover {
+    color: #d92d2d;
+  }
+  .done-none {
+    padding: 8px 10px;
+    color: var(--text-faint);
+    font-size: 13.5px;
   }
 
   .list {

@@ -133,11 +133,6 @@
           <span class="count" title={t('doneTotal')}>{done}/{all.length}</span>
           {#if editing}
             <div class="head-actions">
-              {#if canAdd}
-                <button class="icon-btn" title={t('addItem')} aria-label={t('addItem')} onclick={add}>
-                  <Icon name="plus" size={16} />
-                </button>
-              {/if}
               {#if items.length > 0}
                 <button class="icon-btn" title={t('dumpMove')} aria-label={t('dumpMove')} onclick={startSelecting}>
                   <Icon name="moveTo" size={15} />
@@ -278,12 +273,24 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* the count surfaces on hover, as on a project card (always on touch) */
   .count {
     font-size: 12px;
     font-weight: 600;
     color: var(--text-faint);
     font-variant-numeric: tabular-nums;
     flex: none;
+    opacity: 0;
+    transition: opacity var(--fast) var(--ease);
+  }
+  .card:hover .count,
+  .card:focus-within .count {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .count {
+      opacity: 1;
+    }
   }
   .head-actions {
     display: flex;

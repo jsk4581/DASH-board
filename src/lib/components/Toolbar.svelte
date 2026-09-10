@@ -19,12 +19,11 @@
   let showMore = $state(false)
   let barH = $state(0)
 
-  // the Completed tab is a view of the board (drawer, save, undo all apply)
+  // the Reminders tab is a view of the board (drawer, save, undo all apply)
   const onBoard = $derived(ui.view !== 'memo')
   const onDump = $derived(ui.view === 'dump')
-  const onDone = $derived(ui.view === 'done')
   const onRemind = $derived(ui.view === 'remind')
-  const onSub = $derived(onDone || onRemind) // a sub-view of the board
+  const onSub = $derived(onRemind) // a sub-view of the board
 
   // the memo view sizes itself to the space under this bar
   $effect(() => {
@@ -80,7 +79,7 @@
   <div class="brand">
     {#if onBoard}
       <button class="cur-board" onclick={() => (showDrawer = true)} title={t('boardsTooltip')}>
-        {#if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else if onDump}<span class="cur-text">{t('dumpTab')}</span>{:else}<span class="cur-text">{board.name}</span>{#if onDone}<span class="done-badge">{t('doneTab')}</span>{/if}{/if}
+        {#if onRemind}<span class="cur-text">{t('remindTab')}</span>{:else if onDump}<span class="cur-text">{t('dumpTab')}</span>{:else}<span class="cur-text">{board.name}</span>{/if}
       </button>
     {/if}
   </div>
@@ -268,16 +267,6 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-  .done-badge {
-    margin-left: 2px;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--accent-ink);
-    background: var(--accent-soft);
-    vertical-align: 2px;
   }
 
   .tools {

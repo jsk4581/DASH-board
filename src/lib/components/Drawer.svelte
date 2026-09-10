@@ -3,7 +3,7 @@
   import { flip } from 'svelte/animate'
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action'
   import Icon from './Icon.svelte'
-  import { library, board, switchBoard, addBoard, renameBoard, removeBoard, setBoards } from '../store.svelte.js'
+  import { library, switchBoard, addBoard, renameBoard, removeBoard, setBoards } from '../store.svelte.js'
   import { ui, setView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
   import { onBackButton } from '../platform.js'
@@ -38,10 +38,6 @@
     setView('board')
     onclose?.()
   }
-  function pickDone() {
-    setView('done')
-    onclose?.()
-  }
   function pickRemind() {
     setView('remind')
     onclose?.()
@@ -50,8 +46,6 @@
   const remindCount = $derived(
     library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.remind).length, 0), 0)
   )
-  // items deleted while done, across the active board
-  const doneCount = $derived(board.projects.reduce((n, p) => n + p.archive.length, 0))
   function startRename(b) {
     confirmId = null
     editingId = b.id
@@ -100,7 +94,7 @@
     onfinalize={handleReorder}
   >
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && !['done', 'remind', 'dump'].includes(ui.view)} animate:flip={{ duration: FLIP }}>
+      <li class="brow" class:active={b.id === library.activeId && !['remind', 'dump'].includes(ui.view)} animate:flip={{ duration: FLIP }}>
         {#if editingId === b.id}
           <input
             class="rename"
@@ -165,23 +159,15 @@
     <Icon name="plus" size={15} /> {t('newBoard')}
   </button>
 
-  <!-- the pinned tabs, same row geometry as a board row with the icon
-       centred on the dot column so the labels line up: Reminders (items
-       picked across every board) and Completed (the active board's
-       done-and-deleted items) -->
+  <!-- the pinned Reminders tab (items picked across every board): same row
+       geometry as a board row, the icon centred on the dot column so the
+       labels line up -->
   <div class="tabs">
     <div class="brow" class:active={ui.view === 'remind'}>
       <button class="bname" onclick={pickRemind}>
         <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>
         <span class="btext">{t('remindTab')}</span>
         <span class="bcount">{remindCount}</span>
-      </button>
-    </div>
-    <div class="brow" class:active={ui.view === 'done'}>
-      <button class="bname" onclick={pickDone}>
-        <span class="slot"><Icon name="check" size={14} strokeWidth={2.5} /></span>
-        <span class="btext">{t('doneTab')}</span>
-        <span class="bcount">{doneCount}</span>
       </button>
     </div>
   </div>

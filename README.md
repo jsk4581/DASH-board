@@ -164,7 +164,7 @@ active are stored separately and are **not** included in exports.
 - **Add item** — the box's `+` or "Add item"; press `Enter` after typing to keep adding
 - **Due date** — an item's calendar button → mini calendar: click (one day) / drag (range) / click a selected day again to clear
 - **Timeline** — the arrows page the calendar by month and the slider scrolls the Gantt by day; click the date label to jump back to today
-- **Completed** — deleting an item that is already checked off moves it to the board's Completed tab (in the boards drawer), where it can be restored or deleted for good
+- **Completed**: deleting an item that is already checked off keeps it in the card's Completed list (the circled check that appears when you hover the card head), oldest added first, where it can be restored or deleted for good
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
 - **Daily Big 3**: the pinned card's "Add item" opens a list of every item; tick up to three, and the trash on a pinned row unpins it
 - **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose

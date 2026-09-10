@@ -3,7 +3,6 @@
   import Board from './lib/components/Board.svelte'
   import Timeline from './lib/components/Timeline.svelte'
   import MemoView from './lib/components/MemoView.svelte'
-  import DoneBoard from './lib/components/DoneBoard.svelte'
   import RemindBoard from './lib/components/RemindBoard.svelte'
   import DumpBoard from './lib/components/DumpBoard.svelte'
   import ShareSheet from './lib/components/ShareSheet.svelte'
@@ -15,11 +14,11 @@
   import { undo, redo } from './lib/history.svelte.js'
   import { onBackButton } from './lib/platform.js'
 
-  // hardware back (apps): the Completed tab returns to the board; the board,
+  // hardware back (apps): the Reminders tab returns to the board; the board,
   // memo and Dump roots keep the default, which backgrounds the app
   $effect(() =>
     onBackButton(() => {
-      if (!['done', 'remind'].includes(ui.view)) return false
+      if (ui.view !== 'remind') return false
       setView('board')
       return true
     })
@@ -60,10 +59,6 @@
 {#if ui.view === 'memo'}
   <main class="memo-main">
     <MemoView />
-  </main>
-{:else if ui.view === 'done'}
-  <main>
-    <DoneBoard />
   </main>
 {:else if ui.view === 'remind'}
   <main>

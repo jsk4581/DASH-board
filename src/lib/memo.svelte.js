@@ -40,19 +40,27 @@ function persist(ops) {
   idb.batch(db, ['threads', 'messages'], ops).catch((e) => console.warn('[DASH] memo save failed:', e))
 }
 
+// The open thread is remembered only while the app lives (sessionStorage):
+// after a restart the memo tab opens on the thread list again.
 function loadUI() {
   try {
-    return JSON.parse(localStorage.getItem(UI_KEY) || '{}')
+    return JSON.parse(sessionStorage.getItem(UI_KEY) || '{}')
   } catch {
     return {}
   }
 }
 function saveUI() {
   try {
-    localStorage.setItem(UI_KEY, JSON.stringify({ activeId: memo.activeId }))
+    sessionStorage.setItem(UI_KEY, JSON.stringify({ activeId: memo.activeId }))
   } catch {
     /* ignore */
   }
+}
+
+try {
+  localStorage.removeItem(UI_KEY) // an older build kept it across restarts
+} catch {
+  /* ignore */
 }
 
 const thread = (id) => memo.threads.find((th) => th.id === id)

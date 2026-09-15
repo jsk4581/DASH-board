@@ -2,8 +2,8 @@
   // The Diary: one sheet per day (gratitude, right
   // after waking, today's feedback), today first and the earlier days lined
   // up beside it on a wide screen, one at a time on a phone. The three
-  // standing pages (my future, inner motivation, identity) sit above in a
-  // folded band. Every sheet has the project card's chrome. The board's
+  // standing pages (my future, inner motivation, identity) sit above in
+  // three columns. Every sheet has the project card's chrome. The board's
   // calendar follows underneath.
   import Icon from './Icon.svelte'
   import Timeline from './Timeline.svelte'
@@ -45,12 +45,6 @@
   }
   const weekday = (date) => weekdayLabel(fromISODate(date).getDay())
 
-  // the standing pages open by themselves until one of them has text (a
-  // preference once toggled; before that it follows the data, which may
-  // still be arriving from sync when the view mounts)
-  let openPref = $state(null)
-  const open = $derived(openPref ?? !DIARY_STANDING.some((k) => library.diary[k]))
-  const standingSummary = (k) => (library.diary[k] || '').split('\n').find((l) => l.trim()) ?? ''
 
   // the row of sheets: a "today" button once it is scrolled away
   let row = $state(null)
@@ -80,38 +74,21 @@
 </script>
 
 <section class="diary">
-  <!-- the standing pages: a folded band, or three columns -->
-  <div class="creed" class:open>
-    <button class="fold" onclick={() => (openPref = !open)} aria-expanded={open}>
-      {#if open}
-        <span class="fold-title">{t('diaryCreed')}</span>
-      {:else}
-        {#each DIARY_STANDING as k (k)}
-          <span class="sum">
-            <span class="sum-k">{t(LABEL[k])}</span>
-            <span class="sum-v" class:ph={!standingSummary(k)}>{standingSummary(k) || t('diaryEmptyPage')}</span>
-          </span>
-        {/each}
-      {/if}
-      <span class="fold-act">{open ? t('diaryCollapse') : t('diaryExpand')} <Icon name="chevron" size={14} /></span>
-    </button>
-    {#if open}
-      <div class="creed-pages">
-        {#each DIARY_STANDING as k (k)}
-          <div class="creed-page">
-            <h3 class="sec">{t(LABEL[k])}</h3>
-            <textarea
-              class="lines"
-              rows="1"
-              placeholder={t(PH[k])}
-              value={library.diary[k]}
-              oninput={(e) => setDiaryText(k, e.target.value)}
-              use:autogrow={library.diary[k]}
-            ></textarea>
-          </div>
-        {/each}
+  <!-- the standing pages: three columns above the days -->
+  <div class="creed">
+    {#each DIARY_STANDING as k (k)}
+      <div class="creed-page">
+        <h3 class="sec">{t(LABEL[k])}</h3>
+        <textarea
+          class="lines"
+          rows="1"
+          placeholder={t(PH[k])}
+          value={library.diary[k]}
+          oninput={(e) => setDiaryText(k, e.target.value)}
+          use:autogrow={library.diary[k]}
+        ></textarea>
       </div>
-    {/if}
+    {/each}
   </div>
 
   <!-- the days: today first, earlier days beside it -->
@@ -170,7 +147,6 @@
     overflow: hidden;
     transition: box-shadow var(--med) var(--ease), border-color var(--med) var(--ease);
   }
-  .creed:hover,
   .sheet:hover,
   .sheet:focus-within {
     box-shadow: var(--shadow-md);
@@ -211,73 +187,7 @@
   }
 
   /* ---- the standing pages ---- */
-  .fold {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 5px 10px 5px 13px;
-    min-height: 30px;
-    text-align: left;
-    color: var(--text);
-    transition: background var(--fast) var(--ease);
-  }
-  .fold:hover {
-    background: var(--surface-hover);
-  }
-  .creed.open .fold {
-    border-bottom: 1px solid var(--border);
-  }
-  .fold-title {
-    flex: 1;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-  .sum {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-size: 12.5px;
-  }
-  .sum-k {
-    flex: none;
-    font-weight: 650;
-    color: var(--text);
-    font-size: 12px;
-  }
-  .sum-v {
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-muted);
-  }
-  .sum-v.ph {
-    color: var(--text-faint);
-  }
-  .fold-act {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-  .fold:hover .fold-act {
-    color: var(--accent);
-  }
-  .fold-act :global(svg) {
-    transform: rotate(90deg);
-    transition: transform var(--fast) var(--ease);
-  }
-  .creed.open .fold-act :global(svg) {
-    transform: rotate(-90deg);
-  }
-  .creed-pages {
+  .creed {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
   }
@@ -400,21 +310,12 @@
   }
 
   @media (max-width: 720px) {
-    .creed-pages {
+    .creed {
       grid-template-columns: 1fr;
     }
     .creed-page + .creed-page {
       border-left: none;
       border-top: 1px solid var(--border);
-    }
-    .fold {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 2px;
-      padding: 6px 10px 6px 13px;
-    }
-    .fold-act {
-      align-self: flex-end;
     }
     .creed-page {
       padding: 5px 13px 6px;

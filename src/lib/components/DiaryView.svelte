@@ -1,10 +1,10 @@
 <script>
-  // The Diary as a stack of paper: one ruled sheet per day (gratitude, right
+  // The Diary: one sheet per day (gratitude, right
   // after waking, today's feedback), today first and the earlier days lined
   // up beside it on a wide screen, one at a time on a phone. The three
   // standing pages (my future, inner motivation, identity) sit above in a
-  // folded band that opens into the same ruled paper. The board's calendar
-  // follows underneath.
+  // folded band. Every sheet has the project card's chrome. The board's
+  // calendar follows underneath.
   import Icon from './Icon.svelte'
   import Timeline from './Timeline.svelte'
   import { library, setDiaryText, setDiaryDay, DIARY_STANDING, DIARY_DAILY } from '../store.svelte.js'
@@ -68,14 +68,19 @@
       el.style.height = 'auto'
       el.style.height = el.scrollHeight + 'px'
     }
-    fit()
+    // the value lands after the action runs: measure again on the next frame
+    const soon = () => {
+      fit()
+      requestAnimationFrame(fit)
+    }
+    soon()
     el.addEventListener('input', fit)
-    return { update: fit, destroy: () => el.removeEventListener('input', fit) }
+    return { update: soon, destroy: () => el.removeEventListener('input', fit) }
   }
 </script>
 
 <section class="diary">
-  <!-- the standing pages: a folded band, or three columns of paper -->
+  <!-- the standing pages: a folded band, or three columns -->
   <div class="creed" class:open>
     <button class="fold" onclick={() => (openPref = !open)} aria-expanded={open}>
       {#if open}
@@ -119,10 +124,11 @@
   <div class="sheets" bind:this={row} onscroll={onScroll}>
     {#each dates as date (date)}
       <article class="sheet" class:today={date === today} class:written={hasText(date)}>
-        <header class="day">
-          <span class="d">{heading(date)}</span>
-          <span class="w">{weekday(date)} · {ago(date)}</span>
+        <header class="card-head">
+          <h2 class="title">{heading(date)}</h2>
+          <span class="meta">{weekday(date)} · {ago(date)}</span>
         </header>
+        <div class="pages">
         {#each DIARY_DAILY as k (k)}
           <h3 class="sec">{t(LABEL[k])}</h3>
           <textarea
@@ -134,6 +140,7 @@
             use:autogrow={dayText(date, k)}
           ></textarea>
         {/each}
+        </div>
       </article>
     {/each}
     <button class="sheet more" onclick={() => (span += SPAN)}>
@@ -147,29 +154,69 @@
 
 <style>
   .diary {
-    --paper: var(--surface);
-    --serif: 'Noto Serif KR', 'Apple Myungjo', 'Nanum Myeongjo', 'Batang', Georgia, serif;
-    --lh: 1.9;
     padding: 18px clamp(14px, 3vw, 32px) 8px;
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  /* ---- the standing pages ---- */
-  .creed {
-    background: var(--paper);
+  /* the card chrome, as on the board */
+  .creed,
+  .sheet {
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    transition: box-shadow var(--med) var(--ease), border-color var(--med) var(--ease);
   }
+  .creed:hover,
+  .sheet:hover,
+  .sheet:focus-within {
+    box-shadow: var(--shadow-md);
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 13px 9px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 650;
+    margin: 0;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta {
+    flex: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .sheet.today {
+    border-color: var(--accent);
+  }
+  .sheet.today .meta {
+    color: var(--accent-ink);
+  }
+  .sheet:not(.today):not(.written):not(:focus-within) {
+    opacity: 0.8;
+  }
+
+  /* ---- the standing pages ---- */
   .fold {
     display: flex;
     align-items: center;
     gap: 18px;
     width: 100%;
-    padding: 11px 14px 11px 18px;
+    padding: 11px 13px;
     text-align: left;
     color: var(--text);
     transition: background var(--fast) var(--ease);
@@ -182,10 +229,8 @@
   }
   .fold-title {
     flex: 1;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 650;
   }
   .sum {
     flex: 1;
@@ -193,25 +238,23 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    font-size: 13.5px;
+    font-size: 14px;
   }
   .sum-k {
     flex: none;
-    font-weight: 700;
-    color: var(--text-muted);
-    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--text);
+    font-size: 13.5px;
   }
   .sum-v {
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: var(--serif);
-    color: var(--text);
+    color: var(--text-muted);
   }
   .sum-v.ph {
     color: var(--text-faint);
-    font-family: inherit;
   }
   .fold-act {
     flex: none;
@@ -220,7 +263,10 @@
     gap: 3px;
     font-size: 12.5px;
     font-weight: 600;
-    color: var(--accent-ink);
+    color: var(--text-muted);
+  }
+  .fold:hover .fold-act {
+    color: var(--accent);
   }
   .fold-act :global(svg) {
     transform: rotate(90deg);
@@ -232,10 +278,9 @@
   .creed-pages {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0;
   }
   .creed-page {
-    padding: 14px 22px 18px;
+    padding: 10px 13px 12px;
   }
   .creed-page + .creed-page {
     border-left: 1px solid var(--border);
@@ -252,8 +297,7 @@
   .row-title {
     margin: 0;
     font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-weight: 600;
     color: var(--text-muted);
   }
   .today-btn {
@@ -279,108 +323,74 @@
   }
   .sheet {
     flex: none;
-    width: 360px;
+    width: 320px;
     scroll-snap-align: start;
-    background: var(--paper);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    padding: 20px 24px 22px;
-    transition: box-shadow var(--med) var(--ease), border-color var(--med) var(--ease);
   }
-  .sheet:hover,
-  .sheet:focus-within {
-    box-shadow: var(--shadow-md);
-  }
-  .sheet.today {
-    border-color: var(--accent);
-  }
-  .sheet:not(.today):not(.written):not(:focus-within) {
-    opacity: 0.78;
-  }
-  .day {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .day .d {
-    font-family: var(--serif);
-    font-size: 21px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--text);
-  }
-  .day .w {
-    font-size: 12px;
-    color: var(--text-faint);
-  }
-  .sheet.today .day .w {
-    color: var(--accent-ink);
-    font-weight: 600;
+  .pages {
+    padding: 8px 13px 12px;
   }
 
+  /* a page: its label, then the text */
   .sec {
-    margin: 14px 0 0;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--accent-ink);
+    margin: 8px 0 2px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .creed-page .sec {
     margin-top: 0;
   }
-
-  /* ruled paper: one line per row of text */
   .lines {
     display: block;
     width: 100%;
-    min-height: calc(var(--lh) * 2em);
-    padding: 0;
+    min-height: calc(1.5em * 2 + 8px);
+    padding: 3px 6px;
+    margin: 0 -6px;
+    width: calc(100% + 12px);
     border: none;
     outline: none;
     background: transparent;
+    border-radius: var(--radius-xs);
     resize: none;
     overflow: hidden;
     color: var(--text);
     font: inherit;
-    font-family: var(--serif);
-    font-size: 14.5px;
-    line-height: var(--lh);
-    background-image: linear-gradient(to bottom, transparent calc(var(--lh) * 1em - 1px), var(--border) calc(var(--lh) * 1em - 1px));
-    background-size: 100% calc(var(--lh) * 1em);
-    background-attachment: local;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: background var(--fast) var(--ease);
+  }
+  .lines:focus {
+    background: var(--surface-hover);
   }
   .creed-page .lines {
-    min-height: calc(var(--lh) * 3em);
+    min-height: calc(1.5em * 3 + 8px);
   }
   .lines::placeholder {
     color: var(--text-faint);
-    font-family: inherit;
   }
 
   .sheet.more {
-    width: 120px;
+    width: 110px;
     align-self: stretch;
-    min-height: 200px;
+    min-height: 180px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    border-style: dashed;
-    border-color: var(--border-strong);
+    border: 1.5px dashed var(--border-strong);
     background: transparent;
     box-shadow: none;
     color: var(--text-muted);
     font-size: 12.5px;
-    font-weight: 600;
+    font-weight: 550;
     text-align: center;
-    transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+    transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease), background var(--fast) var(--ease);
   }
   .sheet.more:hover {
     color: var(--accent);
     border-color: var(--accent);
+    background: var(--accent-soft);
   }
 
   @media (max-width: 720px) {
@@ -395,7 +405,6 @@
       flex-direction: column;
       align-items: stretch;
       gap: 4px;
-      padding: 10px 14px;
     }
     .fold-act {
       align-self: flex-end;
@@ -407,7 +416,6 @@
     }
     .sheet {
       width: calc(100% - 4px);
-      padding: 16px 18px 18px;
     }
     .sheet.more {
       width: 96px;

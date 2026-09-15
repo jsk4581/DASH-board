@@ -102,7 +102,7 @@
             <h3 class="sec">{t(LABEL[k])}</h3>
             <textarea
               class="lines"
-              rows="3"
+              rows="1"
               placeholder={t(PH[k])}
               value={library.diary[k]}
               oninput={(e) => setDiaryText(k, e.target.value)}
@@ -214,9 +214,10 @@
   .fold {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 14px;
     width: 100%;
-    padding: 11px 13px;
+    padding: 5px 10px 5px 13px;
+    min-height: 30px;
     text-align: left;
     color: var(--text);
     transition: background var(--fast) var(--ease);
@@ -229,22 +230,23 @@
   }
   .fold-title {
     flex: 1;
-    font-size: 15px;
-    font-weight: 650;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
   }
   .sum {
     flex: 1;
     min-width: 0;
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: 12.5px;
   }
   .sum-k {
     flex: none;
     font-weight: 650;
     color: var(--text);
-    font-size: 13.5px;
+    font-size: 12px;
   }
   .sum-v {
     min-width: 0;
@@ -260,8 +262,8 @@
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    font-size: 12.5px;
+    gap: 2px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-muted);
   }
@@ -280,7 +282,7 @@
     grid-template-columns: repeat(3, 1fr);
   }
   .creed-page {
-    padding: 10px 13px 12px;
+    padding: 6px 13px 7px;
   }
   .creed-page + .creed-page {
     border-left: 1px solid var(--border);
@@ -338,7 +340,8 @@
     color: var(--text-muted);
   }
   .creed-page .sec {
-    margin-top: 0;
+    margin: 0 0 1px;
+    font-size: 12px;
   }
   .lines {
     display: block;
@@ -363,7 +366,10 @@
     background: var(--surface-hover);
   }
   .creed-page .lines {
-    min-height: calc(1.5em * 3 + 8px);
+    min-height: calc(1.45em + 6px);
+    font-size: 13px;
+    line-height: 1.45;
+    padding: 3px 6px 4px;
   }
   .lines::placeholder {
     color: var(--text-faint);
@@ -404,10 +410,14 @@
     .fold {
       flex-direction: column;
       align-items: stretch;
-      gap: 4px;
+      gap: 2px;
+      padding: 6px 10px 6px 13px;
     }
     .fold-act {
       align-self: flex-end;
+    }
+    .creed-page {
+      padding: 5px 13px 6px;
     }
     /* one sheet at a time, swiped */
     .sheets {

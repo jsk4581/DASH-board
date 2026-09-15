@@ -15,7 +15,18 @@
 const ITEM_FIELDS = ['text', 'status', 'start', 'due', 'remind', 'big3', 'created', 'parent', 'where']
 const PROJECT_FIELDS = ['title', 'color', 'parent']
 const BOARD_FIELDS = ['name']
-const FIELDS = { item: ITEM_FIELDS, project: PROJECT_FIELDS, board: BOARD_FIELDS }
+const DIARY_FIELDS = ['text']
+const FIELDS = { item: ITEM_FIELDS, project: PROJECT_FIELDS, board: BOARD_FIELDS, diary: DIARY_FIELDS }
+
+// The diary (`doc.diary`) is indexed as one entity per page: the standing
+// pages by name, a day's pages as "<page>@<date>". A page with no text is
+// absent, so clearing one merges like a delete.
+const DIARY_STANDING = ['future', 'motivation', 'identity']
+const DIARY_DAILY = ['gratitude', 'morning', 'feedback']
+export const diaryPage = (id) => {
+  const at = id.indexOf('@')
+  return at < 0 ? { page: id, date: null } : { page: id.slice(0, at), date: id.slice(at + 1) }
+}
 
 // The Dump list (`doc.dump`, items outside every board) is indexed as the
 // one project of a pseudo board, so its items merge like any other item.
@@ -29,7 +40,16 @@ function index(doc) {
   const boards = new Map()
   const projects = new Map()
   const items = new Map()
+  const diary = new Map()
   const order = { boards: [], projects: {}, items: {}, archive: {} }
+  const dd = doc?.diary ?? {}
+  for (const k of DIARY_STANDING) if (typeof dd[k] === 'string' && dd[k]) diary.set(k, { id: k, text: dd[k] })
+  for (const [date, page] of Object.entries(dd.days ?? {})) {
+    for (const k of DIARY_DAILY) {
+      const v = page?.[k]
+      if (typeof v === 'string' && v) diary.set(`${k}@${date}`, { id: `${k}@${date}`, text: v })
+    }
+  }
   boards.set(DUMP_BOARD, { id: DUMP_BOARD, name: '' })
   projects.set(DUMP, { id: DUMP, parent: DUMP_BOARD, title: '', color: '' })
   order.projects[DUMP_BOARD] = [DUMP]
@@ -63,7 +83,7 @@ function index(doc) {
       }
     }
   }
-  return { boards, projects, items, order }
+  return { boards, projects, items, diary, order }
 }
 function itemEntity(it, parent, where) {
   return {
@@ -109,7 +129,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
   const auto = []
   const conflicts = []
   // merged entity fields, decided here; conflicts are patched in merge()
-  const merged = { board: new Map(), project: new Map(), item: new Map() }
+  const merged = { board: new Map(), project: new Map(), item: new Map(), diary: new Map() }
   // per entity: the fields still open (conflict) and the two candidates
   const open = new Map()
 
@@ -121,6 +141,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     ['item', B.items, L.items, R.items],
     ['project', B.projects, L.projects, R.projects],
     ['board', B.boards, L.boards, R.boards],
+    ['diary', B.diary, L.diary, R.diary],
   ]
   for (const [kind, bm, lm, rm] of kinds) {
     const ids = new Set([...bm.keys(), ...lm.keys(), ...rm.keys()])
@@ -301,6 +322,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     return null
   }
   const pathOf = (kind, id) => {
+    if (kind === 'diary') return [id] // the UI labels the page
     if (kind === 'board') return [nameOf('board', id)]
     if (kind === 'project') return [nameOf('board', parentOf('project', id)), nameOf('project', id)]
     const pid = parentOf('item', id)
@@ -377,8 +399,8 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
 
   function merge(choices = {}) {
     const pick = (key) => choices[key]
-    const final = { board: new Map(), project: new Map(), item: new Map() }
-    for (const kind of ['board', 'project', 'item']) for (const [id, e] of merged[kind]) final[kind].set(id, { ...e })
+    const final = { board: new Map(), project: new Map(), item: new Map(), diary: new Map() }
+    for (const kind of ['board', 'project', 'item', 'diary']) for (const [id, e] of merged[kind]) final[kind].set(id, { ...e })
     for (const c of conflicts) {
       const side = pick(c.key)
       if (!side) throw new Error('unresolved:' + c.key)
@@ -428,7 +450,15 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
       const b = final.board.get(bid)
       return { id: b.id, name: b.name, projects }
     })
-    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, orderNotes: [...orderNote] }
+    const diary = { days: {} }
+    for (const k of DIARY_STANDING) diary[k] = final.diary.get(k)?.text ?? ''
+    for (const [id, e] of final.diary) {
+      const { page, date } = diaryPage(id)
+      if (!date) continue
+      diary.days[date] ??= Object.fromEntries(DIARY_DAILY.map((k) => [k, '']))
+      diary.days[date][page] = e.text
+    }
+    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, diary, orderNotes: [...orderNote] }
   }
 
   return { auto, conflicts, noBase, merge }

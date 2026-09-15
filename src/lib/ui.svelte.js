@@ -23,7 +23,7 @@ export const ui = $state({
   theme: saved.theme ?? (prefersDark() ? 'dark' : 'light'), // 'light' | 'dark'
   timelineView: saved.timelineView === 'gantt' ? 'gantt' : 'calendar', // 'calendar' | 'gantt'
   lang: saved.lang === 'ko' ? 'ko' : 'en', // 'ko' | 'en' (defaults to English)
-  view: ['memo', 'dump', 'remind'].includes(saved.view) ? saved.view : 'board', // 'board' | 'memo' | 'dump' | 'remind'
+  view: ['memo', 'dump', 'remind', 'diary'].includes(saved.view) ? saved.view : 'board', // 'board' | 'memo' | 'dump' | 'remind' | 'diary'
 })
 
 $effect.root(() => {

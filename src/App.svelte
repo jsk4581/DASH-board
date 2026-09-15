@@ -4,6 +4,7 @@
   import Timeline from './lib/components/Timeline.svelte'
   import MemoView from './lib/components/MemoView.svelte'
   import RemindBoard from './lib/components/RemindBoard.svelte'
+  import DiaryView from './lib/components/DiaryView.svelte'
   import DumpBoard from './lib/components/DumpBoard.svelte'
   import ShareSheet from './lib/components/ShareSheet.svelte'
   import ConflictSheet from './lib/components/ConflictSheet.svelte'
@@ -14,11 +15,11 @@
   import { undo, redo } from './lib/history.svelte.js'
   import { onBackButton } from './lib/platform.js'
 
-  // hardware back (apps): the Reminders tab returns to the board; the board,
-  // memo and Dump roots keep the default, which backgrounds the app
+  // hardware back (apps): the Reminders and Diary tabs return to the board;
+  // the board, memo and Dump roots keep the default, which backgrounds the app
   $effect(() =>
     onBackButton(() => {
-      if (ui.view !== 'remind') return false
+      if (!['remind', 'diary'].includes(ui.view)) return false
       setView('board')
       return true
     })
@@ -59,6 +60,10 @@
 {#if ui.view === 'memo'}
   <main class="memo-main">
     <MemoView />
+  </main>
+{:else if ui.view === 'diary'}
+  <main>
+    <DiaryView />
   </main>
 {:else if ui.view === 'remind'}
   <main>

@@ -4,7 +4,7 @@
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
   import { sync, conflictSnapshot, resolveConflict, keepLocal, keepRemote } from '../sync.svelte.js'
-  import { diffBoards, DUMP } from '../merge.js'
+  import { diffBoards, DUMP, diaryPage } from '../merge.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
@@ -65,7 +65,13 @@
   }
 
   // ---- display helpers ----
-  const kindLabel = (k) => t(k === 'board' ? 'kindBoard' : k === 'project' ? 'kindProject' : 'kindItem')
+  const kindLabel = (k) => t(k === 'board' ? 'kindBoard' : k === 'project' ? 'kindProject' : k === 'diary' ? 'kindDiary' : 'kindItem')
+  const PAGE_KEY = { future: 'diaryFuture', motivation: 'diaryMotivation', identity: 'diaryIdentity', gratitude: 'diaryGratitude', morning: 'diaryMorning', feedback: 'diaryFeedback' }
+  const diaryLabel = (id) => {
+    const { page, date } = diaryPage(id)
+    const name = PAGE_KEY[page] ? t(PAGE_KEY[page]) : page
+    return date ? `${name} ${formatShort(date)}` : name
+  }
   const fieldLabel = (f) => t('f' + f[0].toUpperCase() + f.slice(1))
   function val(f, v, entry) {
     if (f === 'status') return t(v === 'done' ? 'stDone' : v === 'highlight' ? 'stHighlight' : 'stDefault')
@@ -84,7 +90,7 @@
     return val(fld.field, fld[side])
   }
   // the Dump's items carry no board/project names: label them with the tab
-  const fullPath = (e) => (e.dump ? [t('dumpTab'), ...e.path] : e.path)
+  const fullPath = (e) => (e.kind === 'diary' ? [t('diaryTab'), diaryLabel(e.id)] : e.dump ? [t('dumpTab'), ...e.path] : e.path)
   const typeLabel = (c) =>
     t(
       c.type === 'edit'

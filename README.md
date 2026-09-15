@@ -28,6 +28,7 @@ exported to / imported from a JSON file.
 - **Optional cross‑device sync** — connect a private GitHub Gist to keep all boards in sync across devices, auto‑pulling other devices' changes (no backend)
 - **Responsive · mobile · dark mode** — works on any screen
 - **Dump**: one card outside every board, charcoal as its colour, for things that have no place yet; jot them down, then move one or several onto a board's project (or a new project) from there
+- **Diary**: a pinned tab with three standing pages (my future, inner motivation, identity) and three pages per day (gratitude, right after waking, today's feedback) under a date strip, with the board's calendar underneath. Part of the board document, so it saves, syncs and exports with it
 - **Memos**: a chat-style notebook beside the board. One thread per topic, notes to yourself with edit/delete, day dividers and clickable links; stored in IndexedDB, with JSON export/import
 
 ## Android app
@@ -150,7 +151,11 @@ The JSON used by export / import:
       ]
     }
   ],
-  "dump": [ /* items with the same shape, not yet on any board */ ]
+  "dump": [ /* items with the same shape, not yet on any board */ ],
+  "diary": {
+    "future": "", "motivation": "", "identity": "",
+    "days": { "2026-06-21": { "gratitude": "", "morning": "", "feedback": "" } }
+  }
 }
 ```
 

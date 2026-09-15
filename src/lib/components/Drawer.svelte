@@ -42,6 +42,10 @@
     setView('remind')
     onclose?.()
   }
+  function pickDiary() {
+    setView('diary')
+    onclose?.()
+  }
   // items picked for the reminder notification, across every board
   const remindCount = $derived(
     library.boards.reduce((n, b) => n + b.projects.reduce((m, p) => m + p.items.filter((it) => it.remind).length, 0), 0)
@@ -94,7 +98,7 @@
     onfinalize={handleReorder}
   >
     {#each library.boards as b (b.id)}
-      <li class="brow" class:active={b.id === library.activeId && !['remind', 'dump'].includes(ui.view)} animate:flip={{ duration: FLIP }}>
+      <li class="brow" class:active={b.id === library.activeId && !['remind', 'dump', 'diary'].includes(ui.view)} animate:flip={{ duration: FLIP }}>
         {#if editingId === b.id}
           <input
             class="rename"
@@ -159,10 +163,15 @@
     <Icon name="plus" size={15} /> {t('newBoard')}
   </button>
 
-  <!-- the pinned Reminders tab (items picked across every board): same row
-       geometry as a board row, the icon centred on the dot column so the
-       labels line up -->
+  <!-- the pinned tabs, Diary and Reminders: same row geometry as a board
+       row, the icon centred on the dot column so the labels line up -->
   <div class="tabs">
+    <div class="brow" class:active={ui.view === 'diary'}>
+      <button class="bname" onclick={pickDiary}>
+        <span class="slot"><Icon name="book" size={14} strokeWidth={2.4} /></span>
+        <span class="btext">{t('diaryTab')}</span>
+      </button>
+    </div>
     <div class="brow" class:active={ui.view === 'remind'}>
       <button class="bname" onclick={pickRemind}>
         <span class="slot"><Icon name="bell" size={14} strokeWidth={2.5} /></span>

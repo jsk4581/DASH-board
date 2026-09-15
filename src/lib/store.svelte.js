@@ -74,7 +74,7 @@ function seedProjects() {
 function seed() {
   // through normalizeBoards so the seed carries every field a saved board has
   const boards = normalizeBoards([{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }])
-  return { activeId: boards[0].id, boards, dump: normalizeDump(null) }
+  return { activeId: boards[0].id, boards, dump: normalizeDump(null), diary: normalizeDiary(null) }
 }
 
 // ---- normalization -----------------------------------------------------
@@ -111,6 +111,27 @@ function normalizeBoard(b) {
   }
 }
 
+// ---- diary -------------------------------------------------------------
+// Three standing pages and three pages per day, all free text. A day is kept
+// only while one of its pages has text.
+export const DIARY_STANDING = ['future', 'motivation', 'identity']
+export const DIARY_DAILY = ['gratitude', 'morning', 'feedback']
+const str = (v) => (typeof v === 'string' ? v : '')
+
+/** The diary of a document: `{diary: {future, motivation, identity, days: {date: {gratitude, morning, feedback}}}}`. */
+export function normalizeDiary(raw) {
+  const d = raw?.diary ?? {}
+  const out = { days: {} }
+  for (const k of DIARY_STANDING) out[k] = str(d[k])
+  for (const [date, page] of Object.entries(d.days ?? {})) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !page) continue
+    const day = {}
+    for (const k of DIARY_DAILY) day[k] = str(page[k])
+    if (DIARY_DAILY.some((k) => day[k])) out.days[date] = day
+  }
+  return out
+}
+
 /**
  * The Dump list of a document: `{dump: [items]}` in a file or sync document,
  * `{dump: {id, items}}` in the autosaved library snapshot; absent in older
@@ -141,7 +162,7 @@ function load() {
       const parsed = JSON.parse(raw)
       const boards = normalizeBoards(parsed)
       const activeId = boards.some((b) => b.id === parsed?.activeId) ? parsed.activeId : boards[0].id
-      return { activeId, boards, dump: normalizeDump(parsed) }
+      return { activeId, boards, dump: normalizeDump(parsed), diary: normalizeDiary(parsed) }
     }
   } catch (e) {
     console.warn('[DASH] failed to load saved board:', e)
@@ -377,6 +398,24 @@ export function moveDumpItems(ids, pid) {
   return moving.length
 }
 
+// ---- diary mutations ---------------------------------------------------
+export function setDiaryText(key, text) {
+  if (DIARY_STANDING.includes(key)) library.diary[key] = text
+}
+export function setDiaryDay(date, key, text) {
+  if (!DIARY_DAILY.includes(key)) return
+  const days = library.diary.days
+  if (!days[date]) {
+    if (!text) return
+    days[date] = Object.fromEntries(DIARY_DAILY.map((k) => [k, '']))
+  }
+  days[date][key] = text
+  if (!DIARY_DAILY.some((k) => days[date][k])) delete days[date]
+}
+export function diaryDay(date) {
+  return library.diary.days[date] ?? null
+}
+
 export function setItemDates(pid, iid, { start = undefined, due = undefined }) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return
@@ -392,7 +431,12 @@ export function clearItemDates(pid, iid) {
 /** All boards as a versioned JSON document (the unit of sync, undo, export). */
 export function serializeBoards() {
   return JSON.stringify(
-    { version: SCHEMA_VERSION, boards: $state.snapshot(library.boards), dump: $state.snapshot(library.dump.items) },
+    {
+      version: SCHEMA_VERSION,
+      boards: $state.snapshot(library.boards),
+      dump: $state.snapshot(library.dump.items),
+      diary: $state.snapshot(library.diary),
+    },
     null,
     2
   )
@@ -404,6 +448,7 @@ export function replaceBoards(raw) {
   const boards = normalizeBoards(raw)
   library.boards = boards
   library.dump = normalizeDump(raw)
+  library.diary = normalizeDiary(raw)
   if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id
 }
 

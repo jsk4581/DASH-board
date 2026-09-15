@@ -1,10 +1,11 @@
 <script>
-  // The Diary: one sheet per day (gratitude, right
-  // after waking, today's feedback), today first and the earlier days lined
-  // up beside it on a wide screen, one at a time on a phone. The three
+  // The Diary: one sheet per day (today's feedback, gratitude, right after
+  // waking), today at the right end and the earlier days lined up to its
+  // left on a wide screen, one at a time on a phone. The three
   // standing pages (my future, inner motivation, identity) sit above in
   // three columns. Every sheet has the project card's chrome. The board's
   // calendar follows underneath.
+  import { tick } from 'svelte'
   import Icon from './Icon.svelte'
   import Timeline from './Timeline.svelte'
   import { library, setDiaryText, setDiaryDay, DIARY_STANDING, DIARY_DAILY } from '../store.svelte.js'
@@ -14,20 +15,23 @@
   const LABEL = { future: 'diaryFuture', motivation: 'diaryMotivation', identity: 'diaryIdentity', gratitude: 'diaryGratitude', morning: 'diaryMorning', feedback: 'diaryFeedback' }
   const PH = { future: 'diaryPhFuture', motivation: 'diaryPhMotivation', identity: 'diaryPhIdentity', gratitude: 'diaryPhGratitude', morning: 'diaryPhMorning', feedback: 'diaryPhFeedback' }
 
+  // the order the pages appear in on a sheet
+  const PAGES = ['feedback', 'gratitude', 'morning']
+
   const SPAN = 14 // days per "further back" step
   let span = $state(SPAN)
   const today = $derived(todayISO())
-  // today and the days before it, then any older day that has writing
+  // oldest first, today last: any older day that has writing, then the
+  // last `span` days up to today
   const dates = $derived.by(() => {
-    const out = []
+    const recent = []
     const t0 = fromISODate(today)
-    for (let i = 0; i < span; i++) out.push(toISODate(addDays(t0, -i)))
-    const seen = new Set(out)
+    for (let i = span - 1; i >= 0; i--) recent.push(toISODate(addDays(t0, -i)))
+    const seen = new Set(recent)
     const older = Object.keys(library.diary.days)
       .filter((d) => !seen.has(d) && d < today)
       .sort()
-      .reverse()
-    return [...out, ...older]
+    return [...older, ...recent]
   })
   const dayText = (date, k) => library.diary.days[date]?.[k] ?? ''
   const hasText = (date) => DIARY_DAILY.some((k) => dayText(date, k))
@@ -46,14 +50,30 @@
   const weekday = (date) => weekdayLabel(fromISODate(date).getDay())
 
 
-  // the row of sheets: a "today" button once it is scrolled away
+  // the row of sheets opens on today (its right end); a "today" button
+  // appears once it is scrolled away
   let row = $state(null)
   let away = $state(false)
+  let pinned = $state(true) // stay on today while the sheets are still arriving
   function onScroll() {
-    away = row ? row.scrollLeft > 24 : false
+    away = row ? row.scrollWidth - row.clientWidth - row.scrollLeft > 24 : false
+    if (away) pinned = false
   }
-  function toToday() {
-    row?.scrollTo({ left: 0, behavior: 'smooth' })
+  function toToday(smooth = true) {
+    pinned = true
+    row?.scrollTo({ left: row.scrollWidth, behavior: smooth ? 'smooth' : 'instant' })
+  }
+  $effect(() => {
+    dates.length // sheets added (sync, a new day) re-pin while still pinned
+    if (row && pinned) tick().then(() => pinned && toToday(false))
+  })
+  // more days on the left: keep the sheets in view where they were
+  async function more() {
+    const before = row?.scrollWidth ?? 0
+    const left = row?.scrollLeft ?? 0
+    span += SPAN
+    await tick()
+    if (row) row.scrollLeft = left + (row.scrollWidth - before)
   }
 
   // a textarea that grows with its text
@@ -95,10 +115,14 @@
   <div class="row-head">
     <h2 class="row-title">{t('diaryDays')}</h2>
     {#if away}
-      <button class="today-btn" onclick={toToday}><Icon name="chevronLeft" size={14} /> {t('diaryBackToday')}</button>
+      <button class="today-btn" onclick={() => toToday()}>{t('diaryBackToday')} <Icon name="chevron" size={14} /></button>
     {/if}
   </div>
   <div class="sheets" bind:this={row} onscroll={onScroll}>
+    <button class="sheet more" onclick={more}>
+      <Icon name="chevronLeft" size={16} />
+      <span>{t('diaryMore')}</span>
+    </button>
     {#each dates as date (date)}
       <article class="sheet" class:today={date === today} class:written={hasText(date)}>
         <header class="card-head">
@@ -106,7 +130,7 @@
           <span class="meta">{weekday(date)} · {ago(date)}</span>
         </header>
         <div class="pages">
-        {#each DIARY_DAILY as k (k)}
+        {#each PAGES as k (k)}
           <h3 class="sec">{t(LABEL[k])}</h3>
           <textarea
             class="lines"
@@ -120,10 +144,6 @@
         </div>
       </article>
     {/each}
-    <button class="sheet more" onclick={() => (span += SPAN)}>
-      <Icon name="chevronLeft" size={16} />
-      <span>{t('diaryMore')}</span>
-    </button>
   </div>
 </section>
 
@@ -219,7 +239,7 @@
     font-size: 12.5px;
     font-weight: 600;
     color: var(--accent-ink);
-    padding: 4px 9px 4px 6px;
+    padding: 4px 6px 4px 9px;
     border-radius: var(--radius-sm);
     background: var(--accent-soft);
   }
@@ -229,14 +249,13 @@
     align-items: flex-start;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
     padding: 2px 2px 14px;
     margin: 0 -2px;
   }
   .sheet {
     flex: none;
     width: 320px;
-    scroll-snap-align: start;
+    scroll-snap-align: end;
   }
   .pages {
     padding: 8px 13px 12px;

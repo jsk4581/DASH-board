@@ -1,16 +1,22 @@
 <script>
-  // Notification settings card (Reminders tab): on/off and the times of day.
-  // On the web the times are hidden: notifications only come from the app.
+  // Notification settings card (Reminders tab): the item reminders and the
+  // diary reminder, each with on/off and its times of day. On the web the
+  // times are hidden: notifications only come from the app.
   import Icon from './Icon.svelte'
-  import { remind, remindStatus, setRemindEnabled, addTime, removeTime, MAX_TIMES } from '../remind.svelte.js'
+  import { remind, remindStatus, setRemindEnabled, setDiaryRemindEnabled, addTime, removeTime, MAX_TIMES } from '../remind.svelte.js'
   import { isNative } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
-  // the switch follows the outcome (the permission prompt may refuse it)
+  // the switches follow the outcome (the permission prompt may refuse them)
   async function toggle(e) {
     const el = e.currentTarget
     await setRemindEnabled(el.checked)
     el.checked = remind.enabled
+  }
+  async function toggleDiary(e) {
+    const el = e.currentTarget
+    await setDiaryRemindEnabled(el.checked)
+    el.checked = remind.diary.enabled
   }
 </script>
 
@@ -26,9 +32,6 @@
       <span class="lbl">{t('remindOn')}</span>
       <input type="checkbox" class="switch" checked={remind.enabled} onchange={toggle} />
     </label>
-    {#if remindStatus.denied && !remind.enabled}
-      <p class="note warn">{t('remindDenied')}</p>
-    {/if}
     <div class="opts" class:off={!remind.enabled}>
       <p class="sub">{t('remindTimes')}</p>
       <ul class="times">
@@ -45,9 +48,38 @@
         <p class="note warn">{t('remindNoTimes')}</p>
       {/if}
       {#if remind.times.length < MAX_TIMES}
-        <button class="add" onclick={addTime}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
+        <button class="add" onclick={() => addTime()}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
       {/if}
     </div>
+
+    <!-- the diary reminder: its own switch and times -->
+    <label class="row diary">
+      <span class="lbl">{t('diaryRemindOn')}</span>
+      <input type="checkbox" class="switch" checked={remind.diary.enabled} onchange={toggleDiary} />
+    </label>
+    <div class="opts" class:off={!remind.diary.enabled}>
+      <p class="sub">{t('remindTimes')}</p>
+      <ul class="times">
+        {#each remind.diary.times as _, i (i)}
+          <li class="row time">
+            <input type="time" bind:value={remind.diary.times[i]} aria-label={t('remindTimes')} />
+            <button class="icon-btn" onclick={() => removeTime(i, remind.diary.times)} title={t('remindRemove')} aria-label={t('remindRemove')}>
+              <Icon name="x" size={14} />
+            </button>
+          </li>
+        {/each}
+      </ul>
+      {#if remind.diary.times.length === 0}
+        <p class="note warn">{t('remindNoTimes')}</p>
+      {/if}
+      {#if remind.diary.times.length < MAX_TIMES}
+        <button class="add" onclick={() => addTime(remind.diary.times)}><Icon name="plus" size={14} /> {t('remindAdd')}</button>
+      {/if}
+    </div>
+
+    {#if remindStatus.denied && !remind.enabled && !remind.diary.enabled}
+      <p class="note warn">{t('remindDenied')}</p>
+    {/if}
     <p class="note">{t('remindHint')}</p>
   {/if}
 </section>
@@ -85,6 +117,11 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
+  }
+  .row.diary {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
   }
   .opts {
     transition: opacity var(--fast) var(--ease);

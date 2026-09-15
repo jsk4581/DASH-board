@@ -172,7 +172,7 @@ active are stored separately and are **not** included in exports.
 - **Completed**: deleting an item that is already checked off keeps it in the card's Completed list (the circled check that appears when you hover the card head), oldest added first, where it can be restored or deleted for good
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
 - **Daily Big 3**: the pinned card's "Add item" opens a list of every item; tick up to three, and the trash on a pinned row unpins it
-- **Reminders** — a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose
+- **Reminders**: a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose; a separate diary reminder nudges you to write the day's sheet at times of your own
 - **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and the arrow in the card head selects several to move at once
 - **Drag** — grab the handle on a box header or the left of an item to move it
 - **Save** — `Ctrl/⌘ + S` exports the board to a JSON file

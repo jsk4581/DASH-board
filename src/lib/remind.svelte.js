@@ -1,7 +1,8 @@
 // Reminders (app only, see platform.scheduleReminders): the items the user
 // ticked in the Reminders tab (item.remind, part of the board document so it
 // travels with the board), sent as one notification at each time of day
-// listed here (09:00 and 20:00 by default). Each time is one daily repeating
+// listed here (09:00 and 20:00 by default); and the diary reminder, a nudge
+// to write today's sheet at its own times (21:00 by default). Each time is one daily repeating
 // notification, so reminders keep coming without the app open; the content
 // is refreshed whenever the app runs. Delivery is inexact (the OS may hold
 // one for up to an hour). The times live outside the board document, like
@@ -28,9 +29,14 @@ function load() {
 const isTime = (s) => typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s)
 const saved = load()
 
+const timesOf = (raw, fallback) => (Array.isArray(raw) && raw.some(isTime) ? raw.filter(isTime).slice(0, MAX_TIMES) : fallback)
 export const remind = $state({
   enabled: saved.enabled === true,
-  times: Array.isArray(saved.times) && saved.times.some(isTime) ? saved.times.filter(isTime).slice(0, MAX_TIMES) : ['09:00', '20:00'],
+  times: timesOf(saved.times, ['09:00', '20:00']),
+  diary: {
+    enabled: saved.diary?.enabled === true,
+    times: timesOf(saved.diary?.times, ['21:00']),
+  },
 })
 // not persisted: whether the last attempt to turn reminders on was refused
 export const remindStatus = $state({ denied: false })
@@ -55,16 +61,16 @@ export function slots(times = remind.times) {
   return [...new Set(times.filter(isTime).map(toMin))].sort((a, b) => a - b)
 }
 
-export function addTime() {
-  if (remind.times.length >= MAX_TIMES) return
+export function addTime(times = remind.times) {
+  if (times.length >= MAX_TIMES) return
   // one hour after the latest listed time, so successive adds walk forward
-  const last = slots().at(-1)
+  const last = slots(times).at(-1)
   const next = last == null ? 9 * 60 : (last + 60) % 1440
-  remind.times.push(`${String(Math.floor(next / 60)).padStart(2, '0')}:${String(next % 60).padStart(2, '0')}`)
+  times.push(`${String(Math.floor(next / 60)).padStart(2, '0')}:${String(next % 60).padStart(2, '0')}`)
 }
 
-export function removeTime(i) {
-  remind.times.splice(i, 1)
+export function removeTime(i, times = remind.times) {
+  times.splice(i, 1)
 }
 
 /** Every ticked item on every board, in board order. */
@@ -85,8 +91,20 @@ export async function setRemindEnabled(on) {
   remindStatus.denied = !ok
   remind.enabled = ok
 }
+/** The same for the diary reminder. */
+export async function setDiaryRemindEnabled(on) {
+  if (!on) {
+    remind.diary.enabled = false
+    return
+  }
+  const ok = await requestNotificationPermission()
+  remindStatus.denied = !ok
+  remind.diary.enabled = ok
+}
 
-function buildNotifications() {
+const daily = (m) => ({ on: { hour: Math.floor(m / 60), minute: m % 60 }, allowWhileIdle: true })
+
+function itemNotifications() {
   if (!remind.enabled) return []
   const items = remindItems()
   if (!items.length) return []
@@ -96,13 +114,20 @@ function buildNotifications() {
   const title = t('remindNotifTitle', { n: items.length })
   const body = items.map((it) => it.text).join(', ')
   const largeBody = shown.join('\n')
-  return slots().map((m) => ({
-    title,
-    body,
-    largeBody,
-    schedule: { on: { hour: Math.floor(m / 60), minute: m % 60 }, allowWhileIdle: true },
-    extra: { view: 'remind' },
+  return slots().map((m) => ({ title, body, largeBody, schedule: daily(m), extra: { view: 'remind' } }))
+}
+// the diary nudge: a fixed line, tapping it opens the Diary tab
+function diaryNotifications() {
+  if (!remind.diary.enabled) return []
+  return slots(remind.diary.times).map((m) => ({
+    title: t('diaryNotifTitle'),
+    body: t('diaryNotifBody'),
+    schedule: daily(m),
+    extra: { view: 'diary' },
   }))
+}
+function buildNotifications() {
+  return [...itemNotifications(), ...diaryNotifications()]
 }
 
 let wired = false
@@ -113,7 +138,7 @@ export function initRemind() {
   if (wired || !isNative) return
   wired = true
   onNotificationTap((extra) => {
-    if (extra?.view === 'remind') setView('remind')
+    if (extra?.view === 'remind' || extra?.view === 'diary') setView(extra.view)
   })
   $effect.root(() => {
     $effect(() => {

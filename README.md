@@ -116,10 +116,11 @@ Gist** as the store — still no backend of your own.
 It pulls on launch and pushes changes automatically (debounced). The token is
 stored only in that browser's `localStorage`, so **don't connect on a shared
 computer**. It's single‑user. If a device edited while offline and the cloud
-also changed, Sync shows a three‑way comparison against the last synced copy:
-changes that don't overlap merge on their own, and only the same item edited
-differently on both sides (or deleted on one, edited on the other) asks you to
-pick a side. You can still take one copy wholesale instead.
+also changed, Sync merges the two three‑way against the last synced copy:
+changes that don't overlap merge on their own, without asking. Only the same
+item edited differently on both sides (or deleted on one, edited on the other)
+opens a comparison where you pick a side, one by one or with "Newest wins"
+(the side that edited it last). You can still take one copy wholesale instead.
 
 ## Data format
 
@@ -153,6 +154,7 @@ The JSON used by export / import:
   ],
   "dump": [ /* items with the same shape, not yet on any board */ ],
   "big3": { "month": [ /* the Monthly Big 3, same shape */ ], "year": [ /* the Yearly Big 3 */ ] },
+  "stamps": { "<id>": 1726000000000 },  // when each board / project / item / diary page was last edited (ms), for "Newest wins"
   "diary": {
     "future": "", "motivation": "", "identity": "",
     "days": { "2026-06-21": { "gratitude": "", "morning": "", "feedback": "" } }

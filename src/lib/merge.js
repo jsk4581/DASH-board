@@ -471,8 +471,32 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
       diary.days[date] ??= Object.fromEntries(DIARY_DAILY.map((k) => [k, '']))
       diary.days[date][page] = e.text
     }
-    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, big3, diary, orderNotes: [...orderNote] }
+    // an entity's stamp is the later of the two sides' (metadata, never a conflict)
+    const stamps = {}
+    const ls = localDoc?.stamps ?? {}
+    const rs = remoteDoc?.stamps ?? {}
+    for (const kind of ['board', 'project', 'item', 'diary'])
+      for (const id of final[kind].keys()) {
+        if (pseudo(id)) continue
+        const v = Math.max(ls[id] ?? 0, rs[id] ?? 0)
+        if (v) stamps[id] = v
+      }
+    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, big3, diary, stamps, orderNotes: [...orderNote] }
   }
 
   return { auto, conflicts, noBase, merge }
+}
+
+/**
+ * The merged document when nothing needs a pick (a base exists and no entity
+ * was changed differently on both sides), else null: sync settles such a
+ * conflict on its own instead of asking.
+ */
+export function quietMerge(baseDoc, localDoc, remoteDoc) {
+  if (!baseDoc || !localDoc || !remoteDoc) return null
+  const d = diffBoards(baseDoc, localDoc, remoteDoc)
+  if (d.conflicts.length) return null
+  const doc = d.merge()
+  delete doc.orderNotes
+  return doc
 }

@@ -6,6 +6,7 @@
 // ============================================================
 
 import { serializeBoards, replaceBoards } from './store.svelte.js'
+import { quietMerge } from './merge.js'
 
 const CFG_KEY = 'dash-sync-v1'
 const BASE_KEY = 'dash-sync-base-v1' // the document as last synced (for three-way merges)
@@ -207,6 +208,32 @@ export async function pushNow(opts) {
   }
 }
 
+/**
+ * A conflict with nothing to pick (the three-way merge has no overlapping
+ * change) is settled here without the sheet: the merged document is applied
+ * and pushed. Returns false when the user has to look.
+ */
+let settling = false
+async function settleQuietly(remoteContent) {
+  if (settling) return false
+  let base = null
+  try {
+    const raw = localStorage.getItem(BASE_KEY)
+    if (raw) base = JSON.parse(raw)
+  } catch {
+    /* ignore */
+  }
+  const doc = quietMerge(base, JSON.parse(serializeBoards()), JSON.parse(remoteContent))
+  if (!doc) return false
+  settling = true
+  try {
+    await resolveConflict(doc)
+  } finally {
+    settling = false
+  }
+  return true
+}
+
 /** The three documents behind the current conflict (base may be null). */
 export function conflictSnapshot() {
   let base = null
@@ -323,6 +350,7 @@ async function startupSync(syncedFp) {
       return
     }
     if (localUnsynced) {
+      if (await settleQuietly(remote)) return
       conflictRemote = remote
       setStatus('conflict') // both sides changed since last sync → ask the user
       return

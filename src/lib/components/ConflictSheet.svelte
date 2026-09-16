@@ -42,6 +42,21 @@
   function pickAll(side) {
     for (const c of diff.conflicts) choices[c.key] = side
   }
+  // newest wins: the side that edited the entity last (its stamp); an entity
+  // deleted on one side is kept, since a deletion leaves no time behind. An
+  // entity without stamps on either side (edited before they existed) is
+  // left for a pick by hand.
+  function pickNewest() {
+    const ls = snap.local?.stamps ?? {}
+    const rs = snap.remote?.stamps ?? {}
+    for (const c of diff.conflicts) {
+      if (c.type === 'edit') {
+        const l = ls[c.id] ?? 0
+        const r = rs[c.id] ?? 0
+        if (l || r) choices[c.key] = l >= r ? 'local' : 'remote'
+      } else choices[c.key] = c.local ? 'local' : 'remote'
+    }
+  }
   async function apply() {
     if (left || busy) return
     busy = true
@@ -132,8 +147,9 @@
     <section>
       <div class="sec-head">
         <h3>{t('mergeConflicts')} <span class="n">{diff.conflicts.length}</span></h3>
-        {#if diff.conflicts.length > 1}
+        {#if diff.conflicts.length > 0}
           <div class="mini">
+            <button class="ghost xs newest" onclick={pickNewest} title={t('mergeAllNewestHint')}><Icon name="refresh" size={12} /> {t('mergeAllNewest')}</button>
             <button class="ghost xs" onclick={() => pickAll('local')}>{t('mergeAllThis')}</button>
             <button class="ghost xs" onclick={() => pickAll('remote')}>{t('mergeAllOther')}</button>
           </div>
@@ -370,6 +386,12 @@
   .mini {
     display: flex;
     gap: 4px;
+  }
+  .mini .newest {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent-ink);
   }
   .none {
     margin: 0;

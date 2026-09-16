@@ -79,7 +79,7 @@ function seedProjects() {
 function seed() {
   // through normalizeBoards so the seed carries every field a saved board has
   const boards = normalizeBoards([{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }])
-  return { activeId: boards[0].id, boards, dump: normalizeDump(null), big3: normalizeBig3(null), diary: normalizeDiary(null) }
+  return { activeId: boards[0].id, boards, dump: normalizeDump(null), big3: normalizeBig3(null), diary: normalizeDiary(null), stamps: {} }
 }
 
 // ---- normalization -----------------------------------------------------
@@ -158,6 +158,17 @@ export function normalizeBig3(raw) {
   return { month: list(BIG3M_ID, raw?.big3?.month), year: list(BIG3Y_ID, raw?.big3?.year) }
 }
 
+/**
+ * When each board, project, item and diary page was last edited, by id
+ * (ms since the epoch): `{stamps: {id: ms}}`. Metadata for the sync merge's
+ * "newest wins" pick; absent in older documents.
+ */
+export function normalizeStamps(raw) {
+  const s = raw?.stamps
+  if (!s || typeof s !== 'object') return {}
+  return Object.fromEntries(Object.entries(s).filter(([, v]) => typeof v === 'number' && v > 0))
+}
+
 /** Accept the new `{boards}` shape, a bare array, or a legacy single `{projects}` board. */
 export function normalizeBoards(raw) {
   let arr
@@ -177,7 +188,7 @@ function load() {
       const parsed = JSON.parse(raw)
       const boards = normalizeBoards(parsed)
       const activeId = boards.some((b) => b.id === parsed?.activeId) ? parsed.activeId : boards[0].id
-      return { activeId, boards, dump: normalizeDump(parsed), big3: normalizeBig3(parsed), diary: normalizeDiary(parsed) }
+      return { activeId, boards, dump: normalizeDump(parsed), big3: normalizeBig3(parsed), diary: normalizeDiary(parsed), stamps: normalizeStamps(parsed) }
     }
   } catch (e) {
     console.warn('[DASH] failed to load saved board:', e)
@@ -234,18 +245,27 @@ function lockSwap() {
   })
 }
 
+// note the moment an entity was edited (the sync merge's "newest wins")
+function touch(id) {
+  library.stamps[id] = Date.now()
+}
+
 // ---- board (library) mutations ----------------------------------------
 export function addBoard(name = t('newBoard'), { activate = true } = {}) {
   if (activate) lockSwap()
   const b = { id: uid(), name: name || t('newBoard'), projects: [] }
   library.boards.push(b)
+  touch(b.id)
   if (activate) library.activeId = b.id
   return b
 }
 
 export function renameBoard(id, name) {
   const b = library.boards.find((x) => x.id === id)
-  if (b) b.name = name
+  if (b) {
+    b.name = name
+    touch(id)
+  }
 }
 
 export function removeBoard(id) {
@@ -293,6 +313,7 @@ export function addProject(title = t('newProject'), boardId = null) {
   const color = PALETTE[b.projects.length % PALETTE.length]
   const project = { id: uid(), title, color, items: [], archive: [] }
   b.projects.push(project)
+  touch(project.id)
   return project
 }
 
@@ -313,6 +334,7 @@ export function moveProject(pid, boardId) {
   const i = from.projects.findIndex((p) => p.id === pid)
   const [p] = from.projects.splice(i, 1)
   target.projects.push($state.snapshot(p))
+  touch(pid)
   return target
 }
 
@@ -329,12 +351,18 @@ export function setItems(pid, items) {
 
 export function renameProject(pid, title) {
   const p = findProject(pid)
-  if (p) p.title = title
+  if (p) {
+    p.title = title
+    touch(pid)
+  }
 }
 
 export function setProjectColor(pid, color) {
   const p = findProject(pid)
-  if (p) p.color = color
+  if (p) {
+    p.color = color
+    touch(pid)
+  }
 }
 
 // ---- item mutations ----------------------------------------------------
@@ -343,6 +371,7 @@ export function addItem(pid, text = '') {
   if (!p) return null
   const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, created: todayISO() }
   p.items.push(item)
+  touch(item.id)
   return item
 }
 
@@ -370,6 +399,7 @@ export function restoreItem(pid, iid) {
   const { archivedAt, ...it } = $state.snapshot(p.archive[i])
   p.archive.splice(i, 1)
   p.items.push({ ...it, status: 'default' })
+  touch(iid)
 }
 
 /** Remove an archived item for good. */
@@ -382,7 +412,10 @@ export function purgeItem(pid, iid) {
 
 export function updateItemText(pid, iid, text) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
-  if (it) it.text = text
+  if (it) {
+    it.text = text
+    touch(iid)
+  }
 }
 
 /** Cycle / toggle one of the three states. Re-applying the same state resets to default. */
@@ -390,6 +423,7 @@ export function toggleStatus(pid, iid, status) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return
   it.status = it.status === status ? 'default' : status
+  touch(iid)
 }
 
 export const BIG3_MAX = 3
@@ -411,13 +445,17 @@ export function toggleBig3(pid, iid) {
   if (!it) return false
   if (!it.big3 && big3Items().length >= BIG3_MAX) return false
   it.big3 = !it.big3
+  touch(iid)
   return true
 }
 
 /** Include this item in (or drop it from) the reminder notification. */
 export function toggleRemind(pid, iid) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
-  if (it) it.remind = !it.remind
+  if (it) {
+    it.remind = !it.remind
+    touch(iid)
+  }
 }
 
 /**
@@ -431,13 +469,18 @@ export function moveDumpItems(ids, pid) {
   const moving = library.dump.items.filter((it) => want.has(it.id))
   if (!moving.length) return 0
   library.dump.items = library.dump.items.filter((it) => !want.has(it.id))
-  for (const it of moving) target.items.push($state.snapshot(it))
+  for (const it of moving) {
+    target.items.push($state.snapshot(it))
+    touch(it.id)
+  }
   return moving.length
 }
 
 // ---- diary mutations ---------------------------------------------------
 export function setDiaryText(key, text) {
-  if (DIARY_STANDING.includes(key)) library.diary[key] = text
+  if (!DIARY_STANDING.includes(key)) return
+  library.diary[key] = text
+  touch(key)
 }
 export function setDiaryDay(date, key, text) {
   if (!DIARY_DAILY.includes(key)) return
@@ -447,6 +490,7 @@ export function setDiaryDay(date, key, text) {
     days[date] = Object.fromEntries(DIARY_DAILY.map((k) => [k, '']))
   }
   days[date][key] = text
+  touch(`${key}@${date}`) // the merge's id for a day's page
   if (!DIARY_DAILY.some((k) => days[date][k])) delete days[date]
 }
 export function diaryDay(date) {
@@ -458,6 +502,7 @@ export function setItemDates(pid, iid, { start = undefined, due = undefined }) {
   if (!it) return
   if (start !== undefined) it.start = start
   if (due !== undefined) it.due = due
+  touch(iid)
 }
 
 export function clearItemDates(pid, iid) {
@@ -465,6 +510,25 @@ export function clearItemDates(pid, iid) {
 }
 
 // ---- serialize / replace (used by sync, undo-redo, export/import) ------
+/** The stamps of what still exists (an entity's stamp goes with it). */
+function liveStamps() {
+  const live = new Set()
+  for (const b of library.boards) {
+    live.add(b.id)
+    for (const p of b.projects) {
+      live.add(p.id)
+      for (const it of p.items) live.add(it.id)
+      for (const it of p.archive ?? []) live.add(it.id)
+    }
+  }
+  for (const l of [library.dump, library.big3.month, library.big3.year]) for (const it of l.items) live.add(it.id)
+  for (const k of DIARY_STANDING) if (library.diary[k]) live.add(k)
+  for (const [date, page] of Object.entries(library.diary.days)) for (const k of DIARY_DAILY) if (page?.[k]) live.add(`${k}@${date}`)
+  const out = {}
+  for (const [id, v] of Object.entries(library.stamps)) if (live.has(id)) out[id] = v
+  return out
+}
+
 /** All boards as a versioned JSON document (the unit of sync, undo, export). */
 export function serializeBoards() {
   return JSON.stringify(
@@ -474,6 +538,7 @@ export function serializeBoards() {
       dump: $state.snapshot(library.dump.items),
       big3: { month: $state.snapshot(library.big3.month.items), year: $state.snapshot(library.big3.year.items) },
       diary: $state.snapshot(library.diary),
+      stamps: liveStamps(),
     },
     null,
     2
@@ -488,6 +553,7 @@ export function replaceBoards(raw) {
   library.dump = normalizeDump(raw)
   library.big3 = normalizeBig3(raw)
   library.diary = normalizeDiary(raw)
+  library.stamps = normalizeStamps(raw)
   if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id
 }
 

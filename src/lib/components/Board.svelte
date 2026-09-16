@@ -219,12 +219,12 @@
     .dots {
       display: flex;
       justify-content: center;
-      gap: 7px;
-      padding-top: 10px;
+      gap: 6px;
+      padding-top: 8px;
     }
     .dot {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       padding: 0;
       border-radius: 50%;
       background: var(--border-strong);

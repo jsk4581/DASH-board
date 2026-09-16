@@ -3,14 +3,16 @@
   // at most three ticked at once.
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
-  import { library, big3Items, toggleBig3, BIG3_MAX, DUMP_ID } from '../store.svelte.js'
+  import { library, big3Items, toggleBig3, BIG3_MAX, BIG3_FIELD, DUMP_ID } from '../store.svelte.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
-  let { onclose } = $props()
+  // scope: 'day' | 'month' | 'year', the list being picked for
+  let { scope = 'day', name = '', onclose } = $props()
 
-  const count = $derived(big3Items().length)
+  const f = $derived(BIG3_FIELD[scope])
+  const count = $derived(big3Items(scope).length)
   const full = $derived(count >= BIG3_MAX)
   const groups = $derived([
     ...library.boards.flatMap((b) =>
@@ -36,10 +38,10 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="backdrop" transition:fade={{ duration: 140 }} onclick={onclose} role="presentation"></div>
-<div class="sheet" transition:fly={{ y: 24, duration: 200 }} role="dialog" aria-label={t('big3PickTitle')}>
+<div class="sheet" transition:fly={{ y: 24, duration: 200 }} role="dialog" aria-label={t('big3PickTitle', { name })}>
   <header>
     <Icon name="flag" size={16} />
-    <h2>{t('big3PickTitle')}</h2>
+    <h2>{t('big3PickTitle', { name })}</h2>
     <span class="n" class:full>{t('big3Count', { n: count })}</span>
     <button class="icon-btn" onclick={onclose} title={t('close')} aria-label={t('close')}><Icon name="x" size={16} /></button>
   </header>
@@ -58,13 +60,13 @@
             <li>
               <button
                 class="row"
-                class:on={it.big3}
+                class:on={it[f]}
                 class:done={it.status === 'done'}
-                disabled={!it.big3 && full}
-                onclick={() => toggleBig3(g.pid, it.id)}
-                aria-pressed={it.big3}
+                disabled={!it[f] && full}
+                onclick={() => toggleBig3(g.pid, it.id, scope)}
+                aria-pressed={it[f]}
               >
-                <span class="tick">{#if it.big3}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
+                <span class="tick">{#if it[f]}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
                 <span class="text">{it.text}</span>
                 {#if it.due}<span class="due">{formatShort(it.due)}</span>{/if}
               </button>

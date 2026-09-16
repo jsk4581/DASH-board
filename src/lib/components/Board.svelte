@@ -4,7 +4,7 @@
   import ProjectCard from './ProjectCard.svelte'
   import Big3Card from './Big3Card.svelte'
   import Icon from './Icon.svelte'
-  import { board, addProject, setProjects, swapping } from '../store.svelte.js'
+  import { board, addProject, setProjects, swapping, BIG3_SCOPES } from '../store.svelte.js'
   import { pop, liftOut } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
@@ -39,8 +39,13 @@
 </script>
 
 <section class="board">
-  <!-- the Daily Big 3: a card-sized cell pinned above every board -->
-  <Big3Card {editing} />
+  <!-- the Big 3 (daily, monthly, yearly): card-sized cells pinned above
+       every board, in a row on a wide screen and swiped one at a time on a phone -->
+  <div class="pinned">
+    {#each BIG3_SCOPES as scope (scope)}
+      <Big3Card {editing} {scope} />
+    {/each}
+  </div>
   <div
     class="grid"
     use:dragHandleZone={{
@@ -98,6 +103,17 @@
     min-width: 0;
   }
 
+  /* the same column template as the grid, so each Big 3 card is card-sized;
+     a faint rule under the row sets it apart from the board's own cards */
+  .pinned {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
   .add-project {
     display: flex;
     align-items: center;
@@ -149,6 +165,27 @@
   @media (max-width: 560px) {
     .grid {
       grid-template-columns: 1fr;
+    }
+    /* one Big 3 card at a time, the next one peeking in at the right */
+    .pinned {
+      display: flex;
+      align-items: stretch; /* the cards share the row's height */
+      gap: 10px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      margin: 0 calc(-1 * clamp(14px, 3vw, 32px)) 14px;
+      padding: 0 clamp(14px, 3vw, 32px) 14px;
+      scroll-padding-inline: clamp(14px, 3vw, 32px);
+    }
+    .pinned::-webkit-scrollbar {
+      display: none;
+    }
+    .pinned > :global(.card) {
+      flex: none;
+      width: calc(100% - 24px);
+      scroll-snap-align: start;
     }
   }
 </style>

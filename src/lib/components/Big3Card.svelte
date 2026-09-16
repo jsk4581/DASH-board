@@ -1,68 +1,59 @@
 <script>
-  // Daily Big 3: a project card pinned above the board, holding up to three
-  // items picked from any board (or the Dump). Same chrome as a project
-  // card; "add" opens the picker instead of a blank row, and the item's
-  // trash unpins instead of deleting. Items stay where they live.
+  // A Big 3 card (daily, monthly or yearly): a project card pinned above
+  // the board, holding up to three items picked from any board (or the
+  // Dump). Same chrome as a project card; "add" opens the picker instead of
+  // a blank row, and the item's trash unpins instead of deleting. Items stay
+  // where they live. The board lays the three cards out.
   import Icon from './Icon.svelte'
   import TodoItem from './TodoItem.svelte'
   import Big3Picker from './Big3Picker.svelte'
   import { big3Items, toggleBig3, BIG3_MAX } from '../store.svelte.js'
   import { t } from '../i18n.svelte.js'
 
-  let { editing = true } = $props()
+  let { editing = true, scope = 'day' } = $props()
 
-  const picked = $derived(big3Items())
+  const NAME = { day: 'big3', month: 'big3Month', year: 'big3Year' }
+  const name = $derived(t(NAME[scope]))
+  const picked = $derived(big3Items(scope))
   const done = $derived(picked.filter((e) => e.item.status === 'done').length)
   const room = $derived(picked.length < BIG3_MAX)
   let showPicker = $state(false)
 </script>
 
 {#if editing || picked.length > 0}
-  <div class="pinned">
-    <article class="card" style="--card-accent: var(--highlight);">
-      <header class="card-head">
-        <span class="mark"><Icon name="flag" size={14} strokeWidth={2.4} /></span>
-        <h2 class="title">{t('big3')}</h2>
-        <span class="count" title={t('doneTotal')}>{done}/{picked.length}</span>
-      </header>
+  <article class="card" style="--card-accent: var(--highlight);">
+    <header class="card-head">
+      <span class="mark"><Icon name="flag" size={14} strokeWidth={2.4} /></span>
+      <h2 class="title">{name}</h2>
+      <span class="count" title={t('doneTotal')}>{done}/{picked.length}</span>
+    </header>
 
-      <div class="list" class:empty={picked.length === 0}>
-        {#each picked as e (e.item.id)}
-          <div class="item-wrap">
-            <TodoItem pid={e.pid} item={e.item} {editing} underline onremove={editing ? () => toggleBig3(e.pid, e.item.id) : undefined} removeLabel={t('big3Unpin')} />
-          </div>
-        {/each}
-        {#if picked.length === 0 && editing}
-          <button class="empty-hint" onclick={() => (showPicker = true)}>{t('addFirstItem')}</button>
-        {/if}
-      </div>
-
-      {#if editing && picked.length > 0 && room}
-        <footer class="card-foot">
-          <button class="add-row" onclick={() => (showPicker = true)}>
-            <Icon name="plus" size={15} /> {t('addItem')}
-          </button>
-        </footer>
+    <div class="list" class:empty={picked.length === 0}>
+      {#each picked as e (e.item.id)}
+        <div class="item-wrap">
+          <TodoItem pid={e.pid} item={e.item} {editing} underline onremove={editing ? () => toggleBig3(e.pid, e.item.id, scope) : undefined} removeLabel={t('big3Unpin', { name })} />
+        </div>
+      {/each}
+      {#if picked.length === 0 && editing}
+        <button class="empty-hint" onclick={() => (showPicker = true)}>{t('addFirstItem')}</button>
       {/if}
-    </article>
-  </div>
+    </div>
+
+    {#if editing && picked.length > 0 && room}
+      <footer class="card-foot">
+        <button class="add-row" onclick={() => (showPicker = true)}>
+          <Icon name="plus" size={15} /> {t('addItem')}
+        </button>
+      </footer>
+    {/if}
+  </article>
 {/if}
 
 {#if showPicker}
-  <Big3Picker onclose={() => (showPicker = false)} />
+  <Big3Picker {scope} {name} onclose={() => (showPicker = false)} />
 {/if}
 
 <style>
-  /* the same column template as the board grid, so the card is card-sized;
-     a faint rule under it sets it apart from the board's own cards */
-  .pinned {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
-    margin-bottom: 14px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-  }
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -173,11 +164,5 @@
   .add-row:hover {
     background: var(--surface-hover);
     color: var(--accent);
-  }
-
-  @media (max-width: 560px) {
-    .pinned {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

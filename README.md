@@ -17,7 +17,7 @@ exported to / imported from a JSON file.
 - **Three item states** — default · done (strikethrough) · highlight (bold + a hand‑drawn red "grading" circle)
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
-- **Daily Big 3**: a card pinned above every board holding up to three items you pick from any board (or the Dump); the items stay where they live and are edited in place
+- **Big 3, daily / monthly / yearly**: three cards pinned above every board, each holding up to three items you pick from any board (or the Dump), in a row on a wide screen and swiped one at a time on a phone; the items stay where they live and are edited in place
 - **Multiple boards** — keep separate boards (work, home, side‑project…) and switch from the left drawer
 - **Timeline** — a monthly calendar (page with the arrows) or a 2‑week Gantt chart (drag the slider to move through the dates). On phones the calendar shows only colour marks and lists the tapped day's items underneath
 - **Due dates & ranges** — a mini calendar where a click sets a single day and a drag sets a span; ranged items show on every day they cover
@@ -172,7 +172,7 @@ active are stored separately and are **not** included in exports.
 - **Move a card**: the arrow beside the circled check in the card head moves the whole project, its items and Completed list with it, to another board or to a new one
 - **Completed**: deleting an item that is already checked off keeps it in the card's Completed list (the circled check that appears when you hover the card head), oldest added first, where it can be restored or deleted for good
 - **Share to memos** (Android app) — "Share" a page or video from a browser or YouTube to DASH and pick the memo thread it goes into
-- **Daily Big 3**: the pinned card's "Add item" opens a list of every item; tick up to three, and the trash on a pinned row unpins it
+- **Big 3**: a pinned card's "Add item" opens a list of every item; tick up to three for that card (an item may sit on more than one card), and the trash on a pinned row unpins it
 - **Reminders**: a pinned tab where you tick the items to be reminded of; the Android app then sends a daily notification listing them at the times of day you choose; a separate diary reminder nudges you to write the day's sheet at times of your own
 - **Dump**: the left option of the Dump / Board / Memos switch; items work like board items, an arrow on the item's hover pill moves one, and the arrow in the card head selects several to move at once
 - **Drag** — grab the handle on a box header or the left of an item to move it

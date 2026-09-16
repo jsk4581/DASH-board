@@ -86,7 +86,9 @@ function normalizeItem(it) {
     start: it.start ?? null,
     due: it.due ?? null,
     remind: it.remind === true, // picked for the app's reminder notification
-    big3: it.big3 === true, // one of the Big 3 pinned above the board
+    big3: it.big3 === true, // one of the Daily Big 3 pinned above the board
+    big3m: it.big3m === true, // Monthly Big 3
+    big3y: it.big3y === true, // Yearly Big 3
     created: it.created ?? null, // the day the item was added (ISO date); older items have none
   }
 }
@@ -324,7 +326,7 @@ export function setProjectColor(pid, color) {
 export function addItem(pid, text = '') {
   const p = findProject(pid)
   if (!p) return null
-  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, created: todayISO() }
+  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, big3m: false, big3y: false, created: todayISO() }
   p.items.push(item)
   return item
 }
@@ -376,19 +378,25 @@ export function toggleStatus(pid, iid, status) {
 }
 
 export const BIG3_MAX = 3
-/** Every Big 3 item, boards first (board order) then the Dump. */
-export function big3Items() {
+// the three Big 3 lists and the item flag each one reads; an item may be
+// on more than one (a yearly goal can also be today's)
+export const BIG3_SCOPES = ['day', 'month', 'year']
+export const BIG3_FIELD = { day: 'big3', month: 'big3m', year: 'big3y' }
+/** Every Big 3 item of a scope, boards first (board order) then the Dump. */
+export function big3Items(scope = 'day') {
+  const f = BIG3_FIELD[scope]
   const out = []
-  for (const b of library.boards) for (const p of b.projects) for (const it of p.items) if (it.big3) out.push({ pid: p.id, item: it, project: p, board: b })
-  for (const it of library.dump.items) if (it.big3) out.push({ pid: DUMP_ID, item: it, project: null, board: null })
+  for (const b of library.boards) for (const p of b.projects) for (const it of p.items) if (it[f]) out.push({ pid: p.id, item: it, project: p, board: b })
+  for (const it of library.dump.items) if (it[f]) out.push({ pid: DUMP_ID, item: it, project: null, board: null })
   return out
 }
 /** Pin or unpin a Big 3 item; a pin past the cap is refused (returns false). */
-export function toggleBig3(pid, iid) {
+export function toggleBig3(pid, iid, scope = 'day') {
+  const f = BIG3_FIELD[scope]
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return false
-  if (!it.big3 && big3Items().length >= BIG3_MAX) return false
-  it.big3 = !it.big3
+  if (!it[f] && big3Items(scope).length >= BIG3_MAX) return false
+  it[f] = !it[f]
   return true
 }
 

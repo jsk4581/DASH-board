@@ -5,6 +5,24 @@
   import Big3Card from './Big3Card.svelte'
   import Icon from './Icon.svelte'
   import { board, addProject, setProjects, swapping, BIG3_SCOPES } from '../store.svelte.js'
+
+  // the Big 3 row on a phone: one card per page, flicked, with dots under it
+  const BIG3_NAME = { day: 'big3', month: 'big3Month', year: 'big3Year' }
+  let row = $state(null)
+  let page = $state(0)
+  function onRowScroll() {
+    if (!row) return
+    const kids = [...row.children]
+    let best = 0
+    kids.forEach((k, i) => {
+      if (Math.abs(k.offsetLeft - row.scrollLeft) < Math.abs(kids[best].offsetLeft - row.scrollLeft)) best = i
+    })
+    page = best
+  }
+  function goPage(i) {
+    const k = row?.children[i]
+    if (k) row.scrollTo({ left: k.offsetLeft, behavior: 'smooth' })
+  }
   import { pop, liftOut } from '../pop.js'
   import { t } from '../i18n.svelte.js'
 
@@ -40,11 +58,19 @@
 
 <section class="board">
   <!-- the Big 3 (daily, monthly, yearly): card-sized cells pinned above
-       every board, in a row on a wide screen and swiped one at a time on a phone -->
+       every board, in a row on a wide screen and flicked one page at a time
+       on a phone, with a dot per card underneath -->
   <div class="pinned">
-    {#each BIG3_SCOPES as scope (scope)}
-      <Big3Card {editing} {scope} />
-    {/each}
+    <div class="pinned-row" bind:this={row} onscroll={onRowScroll}>
+      {#each BIG3_SCOPES as scope (scope)}
+        <Big3Card {editing} {scope} />
+      {/each}
+    </div>
+    <div class="dots" role="tablist">
+      {#each BIG3_SCOPES as scope, i (scope)}
+        <button class="dot" class:on={page === i} role="tab" aria-selected={page === i} aria-label={t(BIG3_NAME[scope])} onclick={() => goPage(i)}></button>
+      {/each}
+    </div>
   </div>
   <div
     class="grid"
@@ -106,12 +132,17 @@
   /* the same column template as the grid, so each Big 3 card is card-sized;
      a faint rule under the row sets it apart from the board's own cards */
   .pinned {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
     margin-bottom: 14px;
     padding-bottom: 14px;
     border-bottom: 1px solid var(--border);
+  }
+  .pinned-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .dots {
+    display: none;
   }
 
   .add-project {
@@ -166,26 +197,42 @@
     .grid {
       grid-template-columns: 1fr;
     }
-    /* one Big 3 card at a time, the next one peeking in at the right */
-    .pinned {
+    /* one Big 3 card per page, a flick turns exactly one page */
+    .pinned-row {
       display: flex;
       align-items: stretch; /* the cards share the row's height */
-      gap: 10px;
+      gap: 14px;
       overflow-x: auto;
       overscroll-behavior-x: contain;
       scroll-snap-type: x mandatory;
       scrollbar-width: none;
-      margin: 0 calc(-1 * clamp(14px, 3vw, 32px)) 14px;
-      padding: 0 clamp(14px, 3vw, 32px) 14px;
-      scroll-padding-inline: clamp(14px, 3vw, 32px);
     }
-    .pinned::-webkit-scrollbar {
+    .pinned-row::-webkit-scrollbar {
       display: none;
     }
-    .pinned > :global(.card) {
+    .pinned-row > :global(.card) {
       flex: none;
-      width: calc(100% - 24px);
+      width: 100%;
       scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding-top: 12px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--border-strong);
+      transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
+    }
+    .dot.on {
+      background: var(--text-muted);
+      transform: scale(1.3);
     }
   }
 </style>

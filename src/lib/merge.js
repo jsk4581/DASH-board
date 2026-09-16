@@ -12,7 +12,7 @@
 // Everything here is plain data: no store, no UI.
 // ============================================================
 
-const ITEM_FIELDS = ['text', 'status', 'start', 'due', 'remind', 'big3', 'big3m', 'big3y', 'created', 'parent', 'where']
+const ITEM_FIELDS = ['text', 'status', 'start', 'due', 'remind', 'big3', 'created', 'parent', 'where']
 const PROJECT_FIELDS = ['title', 'color', 'parent']
 const BOARD_FIELDS = ['name']
 const DIARY_FIELDS = ['text']
@@ -28,12 +28,17 @@ export const diaryPage = (id) => {
   return at < 0 ? { page: id, date: null } : { page: id.slice(0, at), date: id.slice(at + 1) }
 }
 
-// The Dump list (`doc.dump`, items outside every board) is indexed as the
-// one project of a pseudo board, so its items merge like any other item.
-// Both pseudo entities are fixed and never compared themselves.
+// The lists outside every board (the Dump `doc.dump`, the Monthly and
+// Yearly Big 3 `doc.big3.month` / `doc.big3.year`) are indexed as projects
+// of one pseudo board, so their items merge like any other item. The pseudo
+// entities are fixed and never compared themselves.
 export const DUMP = 'dump'
+export const BIG3M = 'big3m'
+export const BIG3Y = 'big3y'
+export const LISTS = [DUMP, BIG3M, BIG3Y]
 const DUMP_BOARD = '__dump__'
-const pseudo = (id) => id === DUMP || id === DUMP_BOARD
+const pseudo = (id) => LISTS.includes(id) || id === DUMP_BOARD
+const listItems = (doc, id) => (id === DUMP ? doc?.dump : id === BIG3M ? doc?.big3?.month : doc?.big3?.year) ?? []
 
 /** Flatten a document into id-keyed maps plus the child orders. */
 function index(doc) {
@@ -51,14 +56,16 @@ function index(doc) {
     }
   }
   boards.set(DUMP_BOARD, { id: DUMP_BOARD, name: '' })
-  projects.set(DUMP, { id: DUMP, parent: DUMP_BOARD, title: '', color: '' })
-  order.projects[DUMP_BOARD] = [DUMP]
-  order.items[DUMP] = []
-  order.archive[DUMP] = []
-  for (const it of doc?.dump ?? []) {
-    if (!it?.id) continue
-    items.set(it.id, itemEntity(it, DUMP, 'items'))
-    order.items[DUMP].push(it.id)
+  order.projects[DUMP_BOARD] = [...LISTS]
+  for (const lid of LISTS) {
+    projects.set(lid, { id: lid, parent: DUMP_BOARD, title: '', color: '' })
+    order.items[lid] = []
+    order.archive[lid] = []
+    for (const it of listItems(doc, lid)) {
+      if (!it?.id) continue
+      items.set(it.id, itemEntity(it, lid, 'items'))
+      order.items[lid].push(it.id)
+    }
   }
   for (const b of doc?.boards ?? []) {
     if (!b?.id) continue
@@ -94,8 +101,6 @@ function itemEntity(it, parent, where) {
     due: it.due ?? null,
     remind: it.remind === true,
     big3: it.big3 === true,
-    big3m: it.big3m === true,
-    big3y: it.big3y === true,
     created: it.created ?? null,
     parent,
     where,
@@ -328,13 +333,15 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     if (kind === 'board') return [nameOf('board', id)]
     if (kind === 'project') return [nameOf('board', parentOf('project', id)), nameOf('project', id)]
     const pid = parentOf('item', id)
-    if (pid === DUMP) return [nameOf('item', id)] // the entry is flagged `dump` instead
+    if (LISTS.includes(pid)) return [nameOf('item', id)] // the entry names its list instead
     return [nameOf('board', parentOf('project', pid)), nameOf('project', pid), nameOf('item', id)]
   }
   const name = { board: (id) => nameOf('board', id), project: (id) => nameOf('project', id) }
   for (const e of [...auto, ...conflicts]) {
     e.path = pathOf(e.kind, e.id)
-    if (e.kind === 'item' && parentOf('item', e.id) === DUMP) e.dump = true
+    const lid = e.kind === 'item' ? parentOf('item', e.id) : null
+    if (LISTS.includes(lid)) e.list = lid
+    if (lid === DUMP) e.dump = true
   }
   for (const c of conflicts) {
     if (c.children) {
@@ -423,13 +430,17 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
     const boardsPresent = new Set(final.board.keys())
     const bo = mergeOrder(noBase ? null : B.order.boards, L.order.boards, R.order.boards, boardsPresent)
     if (bo.both) orderNote.push({ kind: 'boards', id: null, path: [] })
-    const dumpPresent = new Set([...final.item.values()].filter((it) => it.parent === DUMP).map((it) => it.id))
-    const dOrder = mergeOrder(noBase ? null : B.order.items[DUMP], L.order.items[DUMP], R.order.items[DUMP], dumpPresent)
-    if (dOrder.both) orderNote.push({ kind: 'dump', id: null, path: [] })
-    const dump = dOrder.order.map((iid) => {
-      const it = final.item.get(iid)
-      return { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, big3m: it.big3m, big3y: it.big3y, created: it.created }
-    })
+    const list = (lid) => {
+      const present = new Set([...final.item.values()].filter((it) => it.parent === lid).map((it) => it.id))
+      const lo = mergeOrder(noBase ? null : B.order.items[lid], L.order.items[lid], R.order.items[lid], present)
+      if (lo.both) orderNote.push({ kind: 'list', id: lid, path: [] })
+      return lo.order.map((iid) => {
+        const it = final.item.get(iid)
+        return { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, created: it.created }
+      })
+    }
+    const dump = list(DUMP)
+    const big3 = { month: list(BIG3M), year: list(BIG3Y) }
     const boards = bo.order.filter((bid) => !pseudo(bid)).map((bid) => {
       const present = new Set([...final.project.values()].filter((p) => p.parent === bid).map((p) => p.id))
       const po = mergeOrder(noBase ? null : B.order.projects[bid] ?? [], L.order.projects[bid] ?? [], R.order.projects[bid] ?? [], present)
@@ -442,7 +453,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
           if (io.both && where === 'items') orderNote.push({ kind: 'project', id: pid, path: [nameOf('board', bid), nameOf('project', pid)] })
           return io.order.map((iid) => {
             const it = final.item.get(iid)
-            const out = { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, big3m: it.big3m, big3y: it.big3y, created: it.created }
+            const out = { id: it.id, text: it.text, status: it.status, start: it.start, due: it.due, remind: it.remind, big3: it.big3, created: it.created }
             if (where === 'archive') out.archivedAt = it.archivedAt
             return out
           })
@@ -460,7 +471,7 @@ export function diffBoards(baseDoc, localDoc, remoteDoc) {
       diary.days[date] ??= Object.fromEntries(DIARY_DAILY.map((k) => [k, '']))
       diary.days[date][page] = e.text
     }
-    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, diary, orderNotes: [...orderNote] }
+    return { version: localDoc?.version ?? remoteDoc?.version ?? 1, boards, dump, big3, diary, orderNotes: [...orderNote] }
   }
 
   return { auto, conflicts, noBase, merge }

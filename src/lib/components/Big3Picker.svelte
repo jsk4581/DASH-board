@@ -3,22 +3,24 @@
   // at most three ticked at once.
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
-  import { library, big3Items, toggleBig3, BIG3_MAX, BIG3_FIELD, DUMP_ID } from '../store.svelte.js'
+  import { library, big3Items, toggleBig3, BIG3_MAX, DUMP_ID } from '../store.svelte.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
-  // scope: 'day' | 'month' | 'year', the list being picked for
-  let { scope = 'day', name = '', onclose } = $props()
+  let { onclose } = $props()
 
-  const f = $derived(BIG3_FIELD[scope])
-  const count = $derived(big3Items(scope).length)
+  const count = $derived(big3Items().length)
   const full = $derived(count >= BIG3_MAX)
   const groups = $derived([
     ...library.boards.flatMap((b) =>
       b.projects.filter((p) => p.items.length > 0).map((p) => ({ pid: p.id, title: p.title, color: p.color, board: library.boards.length > 1 ? b.name : '', items: p.items }))
     ),
     ...(library.dump.items.length ? [{ pid: DUMP_ID, title: t('dumpTab'), color: 'oklch(0.36 0.008 286)', board: '', items: library.dump.items }] : []),
+    // the Monthly and Yearly Big 3 have items of their own: a goal of the month can be today's too
+    ...[['month', 'big3Month'], ['year', 'big3Year']]
+      .filter(([k]) => library.big3[k].items.length)
+      .map(([k, name]) => ({ pid: library.big3[k].id, title: t(name), color: 'var(--highlight)', board: '', items: library.big3[k].items })),
   ])
 
   $effect(() =>
@@ -38,10 +40,10 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="backdrop" transition:fade={{ duration: 140 }} onclick={onclose} role="presentation"></div>
-<div class="sheet" transition:fly={{ y: 24, duration: 200 }} role="dialog" aria-label={t('big3PickTitle', { name })}>
+<div class="sheet" transition:fly={{ y: 24, duration: 200 }} role="dialog" aria-label={t('big3PickTitle')}>
   <header>
     <Icon name="flag" size={16} />
-    <h2>{t('big3PickTitle', { name })}</h2>
+    <h2>{t('big3PickTitle')}</h2>
     <span class="n" class:full>{t('big3Count', { n: count })}</span>
     <button class="icon-btn" onclick={onclose} title={t('close')} aria-label={t('close')}><Icon name="x" size={16} /></button>
   </header>
@@ -60,13 +62,13 @@
             <li>
               <button
                 class="row"
-                class:on={it[f]}
+                class:on={it.big3}
                 class:done={it.status === 'done'}
-                disabled={!it[f] && full}
-                onclick={() => toggleBig3(g.pid, it.id, scope)}
-                aria-pressed={it[f]}
+                disabled={!it.big3 && full}
+                onclick={() => toggleBig3(g.pid, it.id)}
+                aria-pressed={it.big3}
               >
-                <span class="tick">{#if it[f]}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
+                <span class="tick">{#if it.big3}<Icon name="check" size={12} strokeWidth={3} />{/if}</span>
                 <span class="text">{it.text}</span>
                 {#if it.due}<span class="due">{formatShort(it.due)}</span>{/if}
               </button>

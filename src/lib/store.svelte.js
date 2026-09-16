@@ -15,6 +15,11 @@ const FIRST_BOARD_NAME = 'DASH' // the board a fresh install starts with; extra 
 // the Dump: one loose list of items outside every board, moved onto a board
 // later. A fixed id, so the item helpers can address it like a project.
 export const DUMP_ID = 'dump'
+// the Monthly and Yearly Big 3: lists of their own outside every board,
+// like the Dump; the Daily Big 3 instead pins items from anywhere
+export const BIG3M_ID = 'big3m'
+export const BIG3Y_ID = 'big3y'
+export const BIG3_LIST = { month: BIG3M_ID, year: BIG3Y_ID }
 
 // Accent palette assigned to project cards (cycled on creation).
 export const PALETTE = [
@@ -74,7 +79,7 @@ function seedProjects() {
 function seed() {
   // through normalizeBoards so the seed carries every field a saved board has
   const boards = normalizeBoards([{ id: uid(), name: FIRST_BOARD_NAME, projects: seedProjects() }])
-  return { activeId: boards[0].id, boards, dump: normalizeDump(null), diary: normalizeDiary(null) }
+  return { activeId: boards[0].id, boards, dump: normalizeDump(null), big3: normalizeBig3(null), diary: normalizeDiary(null) }
 }
 
 // ---- normalization -----------------------------------------------------
@@ -87,8 +92,6 @@ function normalizeItem(it) {
     due: it.due ?? null,
     remind: it.remind === true, // picked for the app's reminder notification
     big3: it.big3 === true, // one of the Daily Big 3 pinned above the board
-    big3m: it.big3m === true, // Monthly Big 3
-    big3y: it.big3y === true, // Yearly Big 3
     created: it.created ?? null, // the day the item was added (ISO date); older items have none
   }
 }
@@ -145,6 +148,16 @@ export function normalizeDump(raw) {
   return { id: DUMP_ID, items: items.map(normalizeItem) }
 }
 
+/**
+ * The Monthly and Yearly Big 3 lists: `{big3: {month: [items], year: [items]}}`
+ * in a file or sync document, `{big3: {month: {id, items}, ...}}` in the
+ * autosaved snapshot; absent in older documents.
+ */
+export function normalizeBig3(raw) {
+  const list = (id, d) => ({ id, items: (Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : []).map(normalizeItem) })
+  return { month: list(BIG3M_ID, raw?.big3?.month), year: list(BIG3Y_ID, raw?.big3?.year) }
+}
+
 /** Accept the new `{boards}` shape, a bare array, or a legacy single `{projects}` board. */
 export function normalizeBoards(raw) {
   let arr
@@ -164,7 +177,7 @@ function load() {
       const parsed = JSON.parse(raw)
       const boards = normalizeBoards(parsed)
       const activeId = boards.some((b) => b.id === parsed?.activeId) ? parsed.activeId : boards[0].id
-      return { activeId, boards, dump: normalizeDump(parsed), diary: normalizeDiary(parsed) }
+      return { activeId, boards, dump: normalizeDump(parsed), big3: normalizeBig3(parsed), diary: normalizeDiary(parsed) }
     }
   } catch (e) {
     console.warn('[DASH] failed to load saved board:', e)
@@ -263,6 +276,8 @@ export function setBoards(boards) {
 // ---- lookups -----------------------------------------------------------
 export function findProject(pid) {
   if (pid === DUMP_ID) return library.dump
+  if (pid === BIG3M_ID) return library.big3.month
+  if (pid === BIG3Y_ID) return library.big3.year
   // project ids are unique across the library, and the Highlights view edits
   // items that live on boards other than the active one
   for (const b of library.boards) {
@@ -326,7 +341,7 @@ export function setProjectColor(pid, color) {
 export function addItem(pid, text = '') {
   const p = findProject(pid)
   if (!p) return null
-  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, big3m: false, big3y: false, created: todayISO() }
+  const item = { id: uid(), text, status: 'default', start: null, due: null, remind: false, big3: false, created: todayISO() }
   p.items.push(item)
   return item
 }
@@ -378,25 +393,24 @@ export function toggleStatus(pid, iid, status) {
 }
 
 export const BIG3_MAX = 3
-// the three Big 3 lists and the item flag each one reads; an item may be
-// on more than one (a yearly goal can also be today's)
 export const BIG3_SCOPES = ['day', 'month', 'year']
-export const BIG3_FIELD = { day: 'big3', month: 'big3m', year: 'big3y' }
-/** Every Big 3 item of a scope, boards first (board order) then the Dump. */
-export function big3Items(scope = 'day') {
-  const f = BIG3_FIELD[scope]
+/**
+ * Every Daily Big 3 item: boards first (board order), then the Dump, then
+ * the Monthly and Yearly lists (a goal of the month can be today's too).
+ */
+export function big3Items() {
   const out = []
-  for (const b of library.boards) for (const p of b.projects) for (const it of p.items) if (it[f]) out.push({ pid: p.id, item: it, project: p, board: b })
-  for (const it of library.dump.items) if (it[f]) out.push({ pid: DUMP_ID, item: it, project: null, board: null })
+  for (const b of library.boards) for (const p of b.projects) for (const it of p.items) if (it.big3) out.push({ pid: p.id, item: it, project: p, board: b })
+  for (const it of library.dump.items) if (it.big3) out.push({ pid: DUMP_ID, item: it, project: null, board: null })
+  for (const l of [library.big3.month, library.big3.year]) for (const it of l.items) if (it.big3) out.push({ pid: l.id, item: it, project: null, board: null })
   return out
 }
-/** Pin or unpin a Big 3 item; a pin past the cap is refused (returns false). */
-export function toggleBig3(pid, iid, scope = 'day') {
-  const f = BIG3_FIELD[scope]
+/** Pin or unpin a Daily Big 3 item; a pin past the cap is refused (returns false). */
+export function toggleBig3(pid, iid) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return false
-  if (!it[f] && big3Items(scope).length >= BIG3_MAX) return false
-  it[f] = !it[f]
+  if (!it.big3 && big3Items().length >= BIG3_MAX) return false
+  it.big3 = !it.big3
   return true
 }
 
@@ -458,6 +472,7 @@ export function serializeBoards() {
       version: SCHEMA_VERSION,
       boards: $state.snapshot(library.boards),
       dump: $state.snapshot(library.dump.items),
+      big3: { month: $state.snapshot(library.big3.month.items), year: $state.snapshot(library.big3.year.items) },
       diary: $state.snapshot(library.diary),
     },
     null,
@@ -471,6 +486,7 @@ export function replaceBoards(raw) {
   const boards = normalizeBoards(raw)
   library.boards = boards
   library.dump = normalizeDump(raw)
+  library.big3 = normalizeBig3(raw)
   library.diary = normalizeDiary(raw)
   if (!boards.some((b) => b.id === library.activeId)) library.activeId = boards[0].id
 }

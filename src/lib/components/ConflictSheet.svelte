@@ -4,7 +4,7 @@
   import { fade, fly } from 'svelte/transition'
   import Icon from './Icon.svelte'
   import { sync, conflictSnapshot, resolveConflict, keepLocal, keepRemote } from '../sync.svelte.js'
-  import { diffBoards, DUMP, diaryPage } from '../merge.js'
+  import { diffBoards, DUMP, BIG3M, BIG3Y, LISTS, diaryPage } from '../merge.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
@@ -76,7 +76,7 @@
   function val(f, v, entry) {
     if (f === 'status') return t(v === 'done' ? 'stDone' : v === 'highlight' ? 'stHighlight' : 'stDefault')
     if (f === 'start' || f === 'due' || f === 'created') return v ? formatShort(v) : t('vNone')
-    if (f === 'remind' || f === 'big3' || f === 'big3m' || f === 'big3y') return t(v ? 'vOn' : 'vOff')
+    if (f === 'remind' || f === 'big3') return t(v ? 'vOn' : 'vOff')
     if (f === 'where') return t(v === 'archive' ? 'vArchive' : 'vItems')
     if (f === 'parent') return entry?.[`${entry._side}Name`] ?? ''
     if (f === 'color') return ''
@@ -84,13 +84,15 @@
   }
   const sideVal = (fld, side) => {
     if (fld.field === 'parent') {
-      if (fld[side] === DUMP) return t('dumpTab')
+      if (LISTS.includes(fld[side])) return listLabel(fld[side])
       return side === 'local' ? fld.localName : side === 'remote' ? fld.remoteName : fld.baseName
     }
     return val(fld.field, fld[side])
   }
-  // the Dump's items carry no board/project names: label them with the tab
-  const fullPath = (e) => (e.kind === 'diary' ? [t('diaryTab'), diaryLabel(e.id)] : e.dump ? [t('dumpTab'), ...e.path] : e.path)
+  // items of the lists outside every board (Dump, Monthly / Yearly Big 3)
+  // carry no board/project names: label them with the list
+  const listLabel = (lid) => t(lid === DUMP ? 'dumpTab' : lid === BIG3M ? 'big3Month' : 'big3Year')
+  const fullPath = (e) => (e.kind === 'diary' ? [t('diaryTab'), diaryLabel(e.id)] : e.list ? [listLabel(e.list), ...e.path] : e.path)
   const typeLabel = (c) =>
     t(
       c.type === 'edit'
@@ -215,7 +217,7 @@
             <li>
               <span class="chip local">{t('mergeThis')}</span>
               <span class="verb">{t('mergeOrderBoth')}</span>
-              <span class="apath">{o.kind === 'boards' ? t('mergeOrderBoards') : o.kind === 'dump' ? t('dumpTab') : o.path.filter(Boolean).join(' › ')}</span>
+              <span class="apath">{o.kind === 'boards' ? t('mergeOrderBoards') : o.kind === 'list' ? listLabel(o.id) : o.path.filter(Boolean).join(' › ')}</span>
             </li>
           {/each}
         </ul>

@@ -220,11 +220,11 @@ function lockSwap() {
 }
 
 // ---- board (library) mutations ----------------------------------------
-export function addBoard(name = t('newBoard')) {
-  lockSwap()
+export function addBoard(name = t('newBoard'), { activate = true } = {}) {
+  if (activate) lockSwap()
   const b = { id: uid(), name: name || t('newBoard'), projects: [] }
   library.boards.push(b)
-  library.activeId = b.id
+  if (activate) library.activeId = b.id
   return b
 }
 
@@ -282,6 +282,21 @@ export function addProject(title = t('newProject'), boardId = null) {
 export function removeProject(pid) {
   const i = board.projects.findIndex((p) => p.id === pid)
   if (i !== -1) board.projects.splice(i, 1)
+}
+
+/**
+ * Move a project to the end of another board, its items and Completed list
+ * with it. Big 3 pins and reminders follow, since they live on the items.
+ * Returns the target board, or null when nothing moved.
+ */
+export function moveProject(pid, boardId) {
+  const target = library.boards.find((b) => b.id === boardId)
+  const from = library.boards.find((b) => b.projects.some((p) => p.id === pid))
+  if (!target || !from || from === target) return null
+  const i = from.projects.findIndex((p) => p.id === pid)
+  const [p] = from.projects.splice(i, 1)
+  target.projects.push($state.snapshot(p))
+  return target
 }
 
 // Reorder helpers for drag-and-drop (mutating through the store keeps the board

@@ -19,6 +19,15 @@
   // suppress the pop while dragging (reorder adds/removes nodes too)
   let dragging = $state(false)
 
+  // a card moved to another board: the card is gone, so the board says where
+  let toast = $state('')
+  let toastTimer
+  function flash(msg) {
+    toast = msg
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => (toast = ''), 2400)
+  }
+
   function handleConsider(e) {
     dragging = true
     setProjects(e.detail.items)
@@ -51,7 +60,7 @@
         in:pop={{ disabled: dragging || swapping.on }}
         out:liftOut={{ disabled: dragging || swapping.on }}
       >
-        <ProjectCard {project} {editing} {focus} />
+        <ProjectCard {project} {editing} {focus} onmoved={flash} />
       </div>
     {/each}
   </div>
@@ -69,6 +78,10 @@
     </button>
   {/if}
 </section>
+
+{#if toast}
+  <div class="toast">{toast}</div>
+{/if}
 
 <style>
   .board {
@@ -112,6 +125,25 @@
     text-align: center;
     color: var(--text-faint);
     padding: 40px 0;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: calc(20px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 99px;
+    box-shadow: var(--shadow-pop);
+    z-index: 2000;
+    max-width: calc(100vw - 32px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   @media (max-width: 560px) {

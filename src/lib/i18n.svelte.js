@@ -55,6 +55,10 @@ const dict = {
     doneTotal: '완료 / 전체',
     addItem: '항목 추가',
     deleteProject: '프로젝트 삭제',
+    moveProject: '다른 보드로 이동',
+    moveProjectTitle: '어느 보드로 옮길까요?',
+    moveProjectNewBoard: '새 보드로',
+    projectMoved: '{title}을(를) {name}(으)로 옮겼습니다',
     addFirstItem: '+ 첫 항목 추가',
     colorNamed: '색상 {c}',
 
@@ -330,6 +334,10 @@ const dict = {
     doneTotal: 'Done / Total',
     addItem: 'Add item',
     deleteProject: 'Delete project',
+    moveProject: 'Move to another board',
+    moveProjectTitle: 'Move to which board?',
+    moveProjectNewBoard: 'New board',
+    projectMoved: 'Moved {title} to {name}',
     addFirstItem: '+ Add first item',
     colorNamed: 'Color {c}',
 

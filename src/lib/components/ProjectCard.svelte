@@ -5,10 +5,14 @@
   import TodoItem from './TodoItem.svelte'
   import Popover from './Popover.svelte'
   import {
+    library,
+    board,
     addItem,
     restoreItem,
     purgeItem,
     removeProject,
+    moveProject,
+    addBoard,
     renameProject,
     setProjectColor,
     setItems,
@@ -20,14 +24,20 @@
   import { t } from '../i18n.svelte.js'
 
   // focus: only the starred items, no adding or reordering
-  let { project, editing = true, focus = false } = $props()
+  // onmoved(message): the card left for another board (the board shows the toast)
+  let { project, editing = true, focus = false, onmoved } = $props()
   const shown = $derived(focus ? project.items.filter((it) => it.status === 'highlight') : project.items)
   const canAdd = $derived(editing && !focus)
 
   const FLIP = 180
   let autofocusId = $state(null)
+  let card = $state(null)
   let colorBtn = $state(null)
   let showColor = $state(false)
+  // move: the other boards, as a menu under the card head's arrow
+  let moveBtn = $state(null)
+  let showMove = $state(false)
+  const otherBoards = $derived(library.boards.filter((b) => b.id !== board.id))
   // suppress the pop while dragging (reorder adds/removes nodes too)
   let dragging = $state(false)
 
@@ -58,8 +68,8 @@
   // Stamp the card's grid-relative box onto the .cell wrapper BEFORE removal, so
   // the liftOut out-transition can pin the leaving card where it actually sat
   // (Svelte detaches it before the outro, where offset* would read 0 → top-left flash).
-  function delProject(e) {
-    const cell = e.currentTarget.closest('.cell')
+  function stampCell() {
+    const cell = card?.closest('.cell')
     const grid = cell?.parentElement
     if (cell && grid) {
       const r = cell.getBoundingClientRect()
@@ -73,11 +83,24 @@
       grid.style.minHeight = g.height + 'px'
       setTimeout(() => (grid.style.minHeight = ''), 220)
     }
+  }
+  function delProject() {
+    stampCell()
     removeProject(project.id)
+  }
+  // to a board picked from the menu, or to a new board (which stays in the
+  // background; the view does not switch)
+  function moveTo(boardId) {
+    showMove = false
+    const target = boardId ? library.boards.find((b) => b.id === boardId) : addBoard(t('newBoard'), { activate: false })
+    if (!target) return
+    const msg = t('projectMoved', { title: project.title || t('untitled'), name: target.name })
+    stampCell()
+    if (moveProject(project.id, target.id)) onmoved?.(msg)
   }
 </script>
 
-<article class="card" style="--card-accent: {project.color};">
+<article class="card" style="--card-accent: {project.color};" bind:this={card}>
   <header class="card-head">
     {#if canAdd}
       <span class="card-grip" use:dragHandle title={t('dragMove')} aria-label={t('projectGrip')}>
@@ -120,6 +143,17 @@
           <Icon name="checkCircle" size={16} />
         </button>
         {#if canAdd}
+          <button
+            class="icon-btn"
+            class:on={showMove}
+            bind:this={moveBtn}
+            title={t('moveProject')}
+            aria-label={t('moveProject')}
+            aria-expanded={showMove}
+            onclick={() => (showMove = !showMove)}
+          >
+            <Icon name="moveTo" size={15} />
+          </button>
           <button
             class="icon-btn danger"
             title={t('deleteProject')}
@@ -216,6 +250,25 @@
           }}
         ></button>
       {/each}
+    </div>
+  </Popover>
+{/if}
+
+{#if showMove}
+  <Popover anchor={moveBtn} onclose={() => (showMove = false)} placement="bottom-end">
+    <div class="move-menu" role="menu" aria-label={t('moveProjectTitle')}>
+      <p class="move-title">{t('moveProjectTitle')}</p>
+      {#each otherBoards as b (b.id)}
+        <button class="move-row" role="menuitem" onclick={() => moveTo(b.id)}>
+          <span class="bdot"></span>
+          <span class="name">{b.name || t('untitled')}</span>
+          <span class="cnt">{b.projects.length}</span>
+        </button>
+      {/each}
+      <button class="move-row new" role="menuitem" onclick={() => moveTo(null)}>
+        <Icon name="plus" size={13} />
+        <span class="name">{t('moveProjectNewBoard')}</span>
+      </button>
     </div>
   </Popover>
 {/if}
@@ -342,6 +395,69 @@
     transform: none;
   }
   .head-actions .icon-btn.on {
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+  }
+
+  /* the move menu: the other boards, then a new one */
+  .move-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: min(240px, calc(100vw - 36px));
+    margin: -2px;
+  }
+  .move-title {
+    margin: 0;
+    padding: 4px 8px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .move-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 7px 10px;
+    min-height: 34px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    border-radius: var(--radius-xs);
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .move-row:hover {
+    background: var(--surface-hover);
+  }
+  .bdot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex: none;
+  }
+  .move-row .name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cnt {
+    flex: none;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .move-row.new {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .move-row.new:hover {
     color: var(--accent-ink);
     background: var(--accent-soft);
   }

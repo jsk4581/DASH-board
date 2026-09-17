@@ -14,7 +14,7 @@ exported to / imported from a JSON file.
 ## Features
 
 - **Project boxes + to‑do lists** — a simple "box holds a list" structure (not a kanban board)
-- **Four item states** — default · done (strikethrough) · important (bold + a hand‑drawn red "grading" circle) · urgent (the circle plus a highlighter stroke behind the words). The star cycles important, urgent, off
+- **Four item states**: default · done (strikethrough) · important (bold + a hand‑drawn red "grading" circle) · urgent (the circle plus a highlighter stroke behind the words). The star cycles important, urgent, off
 - **Minimal‑click interactions** — hover an item and the complete / highlight / due‑date / delete buttons pop up right over it
 - **Drag to reorder** — grab the handle to move boxes and items, including between lists
 - **Big 3, daily / monthly / yearly**: three cards pinned above every board, in a row on a wide screen and flicked a page at a time on a phone, with a dot per card underneath. The Daily card holds up to three items you pick from any board (or the Dump, or the other two cards); they stay where they live and are edited in place. The Monthly and Yearly cards are lists of their own: up to three goals written right there

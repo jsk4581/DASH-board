@@ -3,7 +3,7 @@
   // diary reminder, each with on/off and its times of day. On the web the
   // times are hidden: notifications only come from the app.
   import Icon from './Icon.svelte'
-  import { remind, remindStatus, setRemindEnabled, setDiaryRemindEnabled, addTime, removeTime, MAX_TIMES } from '../remind.svelte.js'
+  import { remind, remindStatus, setRemindEnabled, setDiaryRemindEnabled, addTime, removeTime, MAX_TIMES, fixExactAlarms } from '../remind.svelte.js'
   import { isNative } from '../platform.js'
   import { t } from '../i18n.svelte.js'
 
@@ -79,6 +79,9 @@
 
     {#if remindStatus.denied && !remind.enabled && !remind.diary.enabled}
       <p class="note warn">{t('remindDenied')}</p>
+    {/if}
+    {#if remindStatus.inexact && (remind.enabled || remind.diary.enabled)}
+      <p class="note warn">{t('remindInexact')} <button class="link" onclick={fixExactAlarms}>{t('remindInexactFix')}</button></p>
     {/if}
     <p class="note">{t('remindHint')}</p>
   {/if}
@@ -179,6 +182,13 @@
     font-size: 12.5px;
     line-height: 1.45;
     color: var(--text-faint);
+  }
+  .note .link {
+    color: var(--accent-ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0;
   }
   .note.warn {
     margin-top: 0;

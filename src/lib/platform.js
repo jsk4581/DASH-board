@@ -138,8 +138,10 @@ export function onBackButton(handler) {
 // Highlight reminders (app only): the store's Highlights view, repeated as a
 // notification on a daily grid of times. Each entry in `list` is one time of
 // day; the plugin repeats it every day until we cancel it, so reminders keep
-// coming even when the app is never opened. Inexact alarms are enough here
-// (a reminder a few minutes late is fine) and need no special permission.
+// coming even when the app is never opened. They are exact alarms: an inexact
+// one is batched by the system and can land hours off. Android 12+ asks the
+// user once (the "Alarms & reminders" screen opens on the first schedule) and
+// falls back to inexact if they decline; exactAlarmSetting() says which.
 let lnMod = null
 async function ln() {
   return (lnMod ??= await import('@capacitor/local-notifications'))
@@ -169,11 +171,33 @@ export async function scheduleReminders(list, channel) {
       id: REMIND_BASE + i,
       channelId: channel.id,
       smallIcon: 'ic_stat_dash',
-      isExactNotification: false,
+      isExactNotification: true,
       autoCancel: true,
       ...n,
     })),
   })
+}
+
+/** 'granted' when reminders may use exact alarms (always, before Android 12), else 'denied'. */
+export async function exactAlarmSetting() {
+  if (!isNative) return 'granted'
+  const { LocalNotifications } = await ln()
+  try {
+    return (await LocalNotifications.checkExactNotificationSetting()).exact_alarm
+  } catch {
+    return 'granted'
+  }
+}
+
+/** Open the system's "Alarms & reminders" screen for the app; resolves to the setting afterwards. */
+export async function openExactAlarmSettings() {
+  if (!isNative) return 'granted'
+  const { LocalNotifications } = await ln()
+  try {
+    return (await LocalNotifications.changeExactNotificationSetting()).exact_alarm
+  } catch {
+    return exactAlarmSetting()
+  }
 }
 
 /** A tapped reminder: the handler gets the notification's `extra`. */

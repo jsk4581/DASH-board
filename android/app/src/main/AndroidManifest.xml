@@ -39,7 +39,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Highlight reminders use inexact alarms only; drop the exact-alarm
-         permission the notifications plugin declares by default -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <!-- Reminders ring at the minute they are set for: exact alarms (Android 12+
+         asks the user once, on the "Alarms & reminders" screen) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 </manifest>

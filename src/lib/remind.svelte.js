@@ -11,7 +11,7 @@ import { library } from './store.svelte.js'
 import { setView } from './ui.svelte.js'
 import { t } from './i18n.svelte.js'
 import { formatShort } from './date.js'
-import { isNative, requestNotificationPermission, scheduleReminders, onNotificationTap } from './platform.js'
+import { isNative, requestNotificationPermission, scheduleReminders, onNotificationTap, exactAlarmSetting, openExactAlarmSettings } from './platform.js'
 
 const KEY = 'dash-remind-v1'
 const MAX_LINES = 8
@@ -39,7 +39,17 @@ export const remind = $state({
   },
 })
 // not persisted: whether the last attempt to turn reminders on was refused
-export const remindStatus = $state({ denied: false })
+// denied: the notification permission; inexact: exact alarms not allowed, so
+// reminders may land late (Android 12+ setting)
+export const remindStatus = $state({ denied: false, inexact: false })
+
+async function checkExact() {
+  remindStatus.inexact = (await exactAlarmSetting()) !== 'granted'
+}
+/** Take the user to the "Alarms & reminders" setting and note the outcome. */
+export async function fixExactAlarms() {
+  remindStatus.inexact = (await openExactAlarmSettings()) !== 'granted'
+}
 
 $effect.root(() => {
   $effect(() => {
@@ -150,7 +160,9 @@ export function initRemind() {
       clearTimeout(timer)
       timer = setTimeout(() => {
         lastKey = key
-        scheduleReminders(list, channel).catch((e) => console.warn('[DASH] reminders:', e))
+        scheduleReminders(list, channel)
+          .then(() => (list.length ? checkExact() : null))
+          .catch((e) => console.warn('[DASH] reminders:', e))
       }, 800)
     })
   })

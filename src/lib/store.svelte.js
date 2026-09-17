@@ -87,7 +87,7 @@ function normalizeItem(it) {
   return {
     id: it.id ?? uid(),
     text: it.text ?? '',
-    status: ['default', 'done', 'highlight'].includes(it.status) ? it.status : 'default',
+    status: ['default', 'done', 'highlight', 'urgent'].includes(it.status) ? it.status : 'default',
     start: it.start ?? null,
     due: it.due ?? null,
     remind: it.remind === true, // picked for the app's reminder notification
@@ -418,7 +418,18 @@ export function updateItemText(pid, iid, text) {
   }
 }
 
-/** Cycle / toggle one of the three states. Re-applying the same state resets to default. */
+/** Starred: highlighted (important) or urgent (important and pressing). */
+export const isStarred = (it) => it.status === 'highlight' || it.status === 'urgent'
+
+/** The star: plain → highlight → urgent → plain (a done item goes to highlight). */
+export function cycleStar(pid, iid) {
+  const it = findProject(pid)?.items.find((x) => x.id === iid)
+  if (!it) return
+  it.status = it.status === 'highlight' ? 'urgent' : it.status === 'urgent' ? 'default' : 'highlight'
+  touch(iid)
+}
+
+/** Cycle / toggle one of the states. Re-applying the same state resets to default. */
 export function toggleStatus(pid, iid, status) {
   const it = findProject(pid)?.items.find((x) => x.id === iid)
   if (!it) return

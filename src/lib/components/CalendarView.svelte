@@ -63,7 +63,7 @@
             <span
               class="dot"
               class:done={it.status === 'done'}
-              class:highlight={it.status === 'highlight'}
+              class:highlight={it.status === 'highlight' || it.status === 'urgent'} class:urgent={it.status === 'urgent'}
               style="--c: {it.projectColor};"
             ></span>
           {/each}
@@ -75,7 +75,7 @@
             <div
               class="chip"
               class:done={it.status === 'done'}
-              class:highlight={it.status === 'highlight'}
+              class:highlight={it.status === 'highlight' || it.status === 'urgent'} class:urgent={it.status === 'urgent'}
               style="--c: {it.projectColor};"
               title="{it.projectTitle} · {it.text}"
             >
@@ -204,6 +204,10 @@
   }
   .chip.highlight .chip-text {
     font-weight: 700;
+  }
+  .chip.urgent .chip-text {
+    background: var(--marker);
+    border-radius: 2px;
   }
 
   /* phones: a cell is too narrow for any text, so it only carries marks (the

@@ -20,7 +20,7 @@
   {:else}
     <ul>
       {#each list as it (it.id)}
-        <li class:done={it.status === 'done'} class:highlight={it.status === 'highlight'} style="--c: {it.projectColor};">
+        <li class:done={it.status === 'done'} class:highlight={it.status === 'highlight' || it.status === 'urgent'} class:urgent={it.status === 'urgent'} style="--c: {it.projectColor};">
           <span class="dot"></span>
           <span class="project">{it.projectTitle}</span>
           <span class="text">{it.text}</span>
@@ -101,5 +101,10 @@
   }
   li.highlight .text {
     font-weight: 700;
+  }
+  li.urgent .text {
+    background: var(--marker);
+    box-shadow: 2px 0 0 var(--marker), -2px 0 0 var(--marker);
+    border-radius: 2px;
   }
 </style>

@@ -4,7 +4,7 @@
   import ProjectCard from './ProjectCard.svelte'
   import Big3Card from './Big3Card.svelte'
   import Icon from './Icon.svelte'
-  import { board, addProject, setProjects, swapping, BIG3_SCOPES } from '../store.svelte.js'
+  import { board, addProject, setProjects, swapping, BIG3_SCOPES, isStarred } from '../store.svelte.js'
 
   // the Big 3 row on a phone: one card per page, flicked, with dots under it
   const BIG3_NAME = { day: 'big3', month: 'big3Month', year: 'big3Year' }
@@ -30,7 +30,7 @@
   // one are left out; nothing is added or reordered while it is on
   let { editing = true, focus = false } = $props()
 
-  const starred = (p) => p.items.filter((it) => it.status === 'highlight')
+  const starred = (p) => p.items.filter(isStarred)
   const shown = $derived(focus ? board.projects.filter((p) => starred(p).length > 0) : board.projects)
 
   const FLIP = 200

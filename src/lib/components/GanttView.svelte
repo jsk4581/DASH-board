@@ -91,7 +91,7 @@
           <div
             class="bar"
             class:done={r.item.status === 'done'}
-            class:highlight={r.item.status === 'highlight'}
+            class:highlight={r.item.status === 'highlight' || r.item.status === 'urgent'} class:urgent={r.item.status === 'urgent'}
             class:clip-left={r.geom.clipLeft}
             class:clip-right={r.geom.clipRight}
             style="--c: {g.project.color}; grid-column: {r.geom.startIdx + 1} / {r.geom.dueIdx + 2};"
@@ -249,6 +249,9 @@
   }
   .bar.highlight {
     box-shadow: 0 0 0 1.5px var(--pencil);
+  }
+  .bar.urgent {
+    box-shadow: 0 0 0 1.5px var(--pencil), 0 0 0 4px var(--marker);
   }
   .bar.clip-left {
     border-top-left-radius: 3px;

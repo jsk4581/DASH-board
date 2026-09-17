@@ -18,6 +18,7 @@
     setItems,
     PALETTE,
     swapping,
+    isStarred,
   } from '../store.svelte.js'
   import { pop, collapse } from '../pop.js'
   import { formatShort } from '../date.js'
@@ -26,7 +27,7 @@
   // focus: only the starred items, no adding or reordering
   // onmoved(message): the card left for another board (the board shows the toast)
   let { project, editing = true, focus = false, onmoved } = $props()
-  const shown = $derived(focus ? project.items.filter((it) => it.status === 'highlight') : project.items)
+  const shown = $derived(focus ? project.items.filter(isStarred) : project.items)
   const canAdd = $derived(editing && !focus)
 
   const FLIP = 180
@@ -206,7 +207,7 @@
   {#if showDone}
     <ul class="done-list">
       {#each completed as it (it.id)}
-        <li class="done-row" class:highlight={it.status === 'highlight'}>
+        <li class="done-row" class:highlight={isStarred(it)} class:urgent={it.status === 'urgent'}>
           <span class="grip-slot"></span>
           <span class="dot"><span class="checkbox"><Icon name="check" size={13} strokeWidth={3} /></span></span>
           <span class="done-text">{it.text}</span>
@@ -521,6 +522,11 @@
   }
   .done-row.highlight .done-text {
     font-weight: 700;
+  }
+  .done-row.urgent .done-text {
+    background: var(--marker);
+    box-shadow: 2px 0 0 var(--marker), -2px 0 0 var(--marker);
+    border-radius: 2px;
   }
   .when {
     margin-top: 4px;

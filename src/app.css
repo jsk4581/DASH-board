@@ -28,6 +28,7 @@
   --highlight-soft: oklch(0.95 0.045 80);
   --pencil: oklch(0.577 0.245 27.325);     /* 강조: red grading circle — stays vivid */
   --pencil-soft: oklch(0.95 0.05 27.325);
+  --marker: oklch(0.93 0.16 100);          /* 긴급: highlighter behind the words */
   --done: oklch(0.72 0.014 286.067);
 
   /* shape */
@@ -75,6 +76,7 @@
   --highlight-soft: oklch(0.3 0.05 80);
   --pencil: oklch(0.704 0.191 22.216);
   --pencil-soft: oklch(0.3 0.08 22.216);
+  --marker: oklch(0.48 0.11 100);
   --done: oklch(0.552 0.016 285.938);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);

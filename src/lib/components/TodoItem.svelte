@@ -2,7 +2,7 @@
   import { dragHandle } from 'svelte-dnd-action'
   import Icon from './Icon.svelte'
   import DatePopover from './DatePopover.svelte'
-  import { updateItemText, toggleStatus, removeItem } from '../store.svelte.js'
+  import { updateItemText, toggleStatus, cycleStar, removeItem, isStarred } from '../store.svelte.js'
   import { touchItem } from '../ui.svelte.js'
   import { relativeTag, formatLabel, formatShort } from '../date.js'
   import { t } from '../i18n.svelte.js'
@@ -10,8 +10,10 @@
   // onmove (Dump only): adds a "move to a board" action to the item's pill.
   // onremove (Daily Big 3): the pill's trash calls it instead of deleting,
   // labelled removeLabel.
-  // underline: a highlighted item is underlined instead of circled, and the
+  // underline: a starred item is underlined instead of circled, and the
   // pill has no star (the Daily Big 3 card)
+  // the star cycles: important (bold + red circle) → urgent (the circle plus a
+  // highlighter behind the words) → off
   let { pid, item, editing = true, autofocus = false, onenter, onmove, onremove, removeLabel, underline = false } = $props()
 
   let inputEl = $state(null)
@@ -60,12 +62,16 @@
   }
 
   const overdue = $derived(item.due && relativeTag(item.due).startsWith('D+'))
+  const starred = $derived(isStarred(item))
+  const urgent = $derived(item.status === 'urgent')
+  const starTitle = $derived(t(urgent ? 'unstar' : starred ? 'urgent' : 'highlight'))
 </script>
 
 <div
   class="item"
   class:done={item.status === 'done'}
-  class:highlight={item.status === 'highlight'}
+  class:highlight={starred}
+  class:urgent
   class:underline
   class:revealed={touchItem.id === item.id}
   data-item-id={item.id}
@@ -109,7 +115,7 @@
         <span class="text">{item.text || ' '}</span>
       {/if}
 
-      {#if item.status === 'highlight' && !underline && item.text.trim() && textW > 0}
+      {#if starred && !underline && item.text.trim() && textW > 0}
         {@const g = grade(textW, textH)}
         <svg
           class="grade"
@@ -147,13 +153,14 @@
       {#if !underline}
         <button
           class="icon-btn"
-          class:active={item.status === 'highlight'}
+          class:active={starred}
+          class:urgent
           data-act="highlight"
-          title={t('highlight')}
+          title={starTitle}
           aria-label={t('toggleHighlight')}
-          onclick={() => toggleStatus(pid, item.id, 'highlight')}
+          onclick={() => cycleStar(pid, item.id)}
         >
-          <Icon name="star" size={13} fill={item.status === 'highlight'} />
+          <Icon name="star" size={13} fill={starred} />
         </button>
       {/if}
       <button
@@ -333,6 +340,12 @@
     font-weight: 700;
     /* 강조는 글자색을 바꾸지 않고 볼드 + 빨간 동그라미로만 표시 */
   }
+  /* urgent: a highlighter stroke behind the words, under the red circle */
+  .item.urgent .text-wrap {
+    background: linear-gradient(transparent 6%, var(--marker) 6%, var(--marker) 94%, transparent 94%);
+    box-shadow: 3px 0 0 var(--marker), -3px 0 0 var(--marker);
+    border-radius: 2px;
+  }
   /* underlined instead of circled (the Daily Big 3 card) */
   .item.highlight.underline .text,
   .item.highlight.underline .text-input {
@@ -411,6 +424,9 @@
   }
   .actions .icon-btn.active[data-act='highlight'] {
     color: var(--pencil);
+  }
+  .actions .icon-btn.active.urgent[data-act='highlight'] {
+    background: var(--marker);
   }
   .actions .icon-btn.active[data-act='due'] {
     color: var(--accent);

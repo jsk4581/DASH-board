@@ -5,7 +5,7 @@
   import CalendarView from './CalendarView.svelte'
   import DayAgenda from './DayAgenda.svelte'
   import GanttView from './GanttView.svelte'
-  import { board } from '../store.svelte.js'
+  import { board, isStarred } from '../store.svelte.js'
   import { ui, setTimelineView } from '../ui.svelte.js'
   import { t } from '../i18n.svelte.js'
   import { viewport } from '../media.svelte.js'
@@ -15,7 +15,7 @@
   let { editing = true, projects = null, focus = false } = $props()
   const source = $derived.by(() => {
     const src = projects ?? board.projects
-    return focus ? src.map((p) => ({ ...p, items: p.items.filter((it) => it.status === 'highlight') })) : src
+    return focus ? src.map((p) => ({ ...p, items: p.items.filter(isStarred) })) : src
   })
 
   // flattened dated items (for the calendar)

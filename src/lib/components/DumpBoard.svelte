@@ -8,7 +8,7 @@
   import Icon from './Icon.svelte'
   import TodoItem from './TodoItem.svelte'
   import MoveSheet from './MoveSheet.svelte'
-  import { library, addItem, setItems, moveDumpItems, addProject, findProject, DUMP_ID } from '../store.svelte.js'
+  import { library, addItem, setItems, moveDumpItems, addProject, findProject, DUMP_ID, isStarred } from '../store.svelte.js'
   import { formatShort } from '../date.js'
   import { onBackButton } from '../platform.js'
   import { t } from '../i18n.svelte.js'
@@ -18,7 +18,7 @@
 
   const FLIP = 180
   const all = $derived(library.dump.items)
-  const items = $derived(focus ? all.filter((it) => it.status === 'highlight') : all)
+  const items = $derived(focus ? all.filter(isStarred) : all)
   const canAdd = $derived(editing && !focus)
   const done = $derived(all.filter((it) => it.status === 'done').length)
 

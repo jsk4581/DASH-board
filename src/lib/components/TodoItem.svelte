@@ -425,8 +425,9 @@
   .actions .icon-btn.active[data-act='highlight'] {
     color: var(--pencil);
   }
+  /* urgent: the star itself turns yellow, no fill behind the button */
   .actions .icon-btn.active.urgent[data-act='highlight'] {
-    background: var(--marker);
+    color: var(--marker-ink);
   }
   .actions .icon-btn.active[data-act='due'] {
     color: var(--accent);

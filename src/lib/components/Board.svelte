@@ -46,6 +46,21 @@
     toastTimer = setTimeout(() => (toast = ''), 2400)
   }
 
+  // masonry: the grid's rows are 1px tall and each cell spans as many as its
+  // card is high (plus the gap), so auto-placement drops every card into the
+  // first free spot: a short card slides up under another short one instead
+  // of leaving a hole beside a tall one. DOM order (and so drag order) stays.
+  const GAP = 14
+  function brick(node) {
+    const fit = () => {
+      node.style.gridRowEnd = `span ${Math.ceil(node.offsetHeight) + GAP}`
+    }
+    const ro = new ResizeObserver(fit)
+    ro.observe(node)
+    fit()
+    return { destroy: () => ro.disconnect() }
+  }
+
   function handleConsider(e) {
     dragging = true
     setProjects(e.detail.items)
@@ -74,6 +89,7 @@
   </div>
   <div
     class="grid"
+    class:filled={shown.length > 0}
     use:dragHandleZone={{
       items: shown,
       type: 'projects',
@@ -87,6 +103,7 @@
     {#each shown as project (project.id)}
       <div
         class="cell"
+        use:brick
         animate:flip={{ duration: FLIP }}
         in:pop={{ disabled: dragging || swapping.on }}
         out:liftOut={{ disabled: dragging || swapping.on }}
@@ -121,9 +138,15 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
+    grid-auto-rows: 1px; /* each cell spans its own height, see brick() */
+    column-gap: 14px;
+    row-gap: 0;
     align-items: start;
     position: relative; /* offsetParent for a leaving card pinned by liftOut */
+  }
+  /* every column ends with one spanned gap; pull the next thing back up */
+  .grid.filled {
+    margin-bottom: -14px;
   }
   .cell {
     min-width: 0;

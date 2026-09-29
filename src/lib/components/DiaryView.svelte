@@ -5,6 +5,10 @@
   // standing pages (my future, inner motivation, identity) sit above in
   // three columns. Every sheet has the project card's chrome. The board's
   // calendar follows underneath.
+  // Length: on a wide screen every sheet has the same height and a longer
+  // one scrolls inside, with a button that unfolds just that sheet; on a
+  // phone the row takes the height of the sheet in view, so a long day
+  // elsewhere never leaves a gap above the calendar.
   import { tick } from 'svelte'
   import Icon from './Icon.svelte'
   import Timeline from './Timeline.svelte'
@@ -58,6 +62,7 @@
   function onScroll() {
     away = row ? row.scrollWidth - row.clientWidth - row.scrollLeft > 24 : false
     if (away) pinned = false
+    if (narrow) fitSoon(true)
   }
   function toToday(smooth = true) {
     pinned = true
@@ -75,6 +80,85 @@
     await tick()
     if (row) row.scrollLeft = left + (row.scrollWidth - before)
   }
+
+  // ---- length ----
+  // unfolded sheets (wide screen) and sheets whose writing runs past the
+  // fixed height, by date
+  let open = $state({})
+  let clipped = $state({})
+  const toggle = (date) => (open[date] = !open[date])
+  // on `.pages`: watch the writing inside it, note whether it runs past the
+  // box, and fade the bottom edge while there is more below
+  function fold(node, date) {
+    const inner = node.firstElementChild
+    const check = () => {
+      const over = inner.offsetHeight > node.clientHeight + 1
+      if (!!clipped[date] !== over) clipped[date] = over
+      node.classList.toggle('more-below', over && node.scrollTop + node.clientHeight < node.scrollHeight - 2)
+    }
+    const ro = new ResizeObserver(check)
+    ro.observe(inner)
+    ro.observe(node)
+    node.addEventListener('scroll', check, { passive: true })
+    check()
+    return {
+      update(d) {
+        date = d
+        check()
+      },
+      destroy() {
+        ro.disconnect()
+        node.removeEventListener('scroll', check)
+      },
+    }
+  }
+
+  // a phone shows one sheet at a time: the row is as tall as the sheets in
+  // view (both of them mid-swipe), not the tallest sheet of all
+  const narrowQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 720px)') : null
+  let narrow = $state(narrowQuery?.matches ?? false)
+  $effect(() => {
+    if (!narrowQuery) return
+    const on = () => (narrow = narrowQuery.matches)
+    narrowQuery.addEventListener('change', on)
+    return () => narrowQuery.removeEventListener('change', on)
+  })
+  let fitFrame = 0
+  function fitRow(animate) {
+    if (!row) return
+    if (!narrow) {
+      row.style.height = ''
+      return
+    }
+    const box = row.getBoundingClientRect()
+    let tall = 0
+    for (const k of row.children) {
+      const r = k.getBoundingClientRect()
+      const seen = Math.min(r.right, box.right) - Math.max(r.left, box.left) // a sliver at the edge does not count
+      if (seen > 24 && !k.classList.contains('more')) tall = Math.max(tall, k.offsetHeight)
+    }
+    if (!tall) return
+    const pad = parseFloat(getComputedStyle(row).paddingTop) + parseFloat(getComputedStyle(row).paddingBottom)
+    row.style.transition = animate ? '' : 'none'
+    row.style.height = tall + pad + 'px'
+  }
+  const fitSoon = (animate) => {
+    cancelAnimationFrame(fitFrame)
+    fitFrame = requestAnimationFrame(() => fitRow(animate))
+  }
+  // a sheet grows while typing (no animation, the caret must stay in view)
+  $effect(() => {
+    if (!row) return
+    narrow
+    const ro = new ResizeObserver(() => fitRow(false))
+    for (const k of row.children) ro.observe(k)
+    fitRow(false)
+    return () => ro.disconnect()
+  })
+  $effect(() => {
+    dates.length
+    tick().then(() => fitSoon(false))
+  })
 
   // a textarea that grows with its text
   function autogrow(el) {
@@ -124,12 +208,24 @@
       <span>{t('diaryMore')}</span>
     </button>
     {#each dates as date (date)}
-      <article class="sheet" class:today={date === today} class:written={hasText(date)}>
+      <article class="sheet" class:today={date === today} class:written={hasText(date)} class:open={open[date]}>
         <header class="card-head">
           <h2 class="title">{heading(date)}</h2>
           <span class="meta">{weekday(date)} · {ago(date)}</span>
+          {#if clipped[date] || open[date]}
+            <button
+              class="icon-btn fold-btn"
+              title={t(open[date] ? 'diaryCollapse' : 'diaryExpand')}
+              aria-label={t(open[date] ? 'diaryCollapse' : 'diaryExpand')}
+              aria-expanded={!!open[date]}
+              onclick={() => toggle(date)}
+            >
+              <Icon name={open[date] ? 'collapse' : 'expand'} size={14} />
+            </button>
+          {/if}
         </header>
-        <div class="pages">
+        <div class="pages" use:fold={date}>
+        <div class="pages-in">
         {#each PAGES as k (k)}
           <h3 class="sec">{t(LABEL[k])}</h3>
           <textarea
@@ -141,6 +237,7 @@
             use:autogrow={dayText(date, k)}
           ></textarea>
         {/each}
+        </div>
         </div>
       </article>
     {/each}
@@ -257,8 +354,28 @@
     width: 320px;
     scroll-snap-align: end;
   }
+  /* a wide screen: every sheet the same height, a longer one scrolls inside
+     until it is unfolded */
   .pages {
+    height: 360px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+  }
+  .pages.more-below {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  }
+  .sheet.open .pages {
+    height: auto;
+    overflow: visible;
+    mask-image: none;
+  }
+  .pages-in {
     padding: 8px 13px 12px;
+  }
+  .fold-btn {
+    flex: none;
+    margin: -4px -5px -4px 0;
   }
 
   /* a page: its label, then the text */
@@ -339,10 +456,21 @@
     .creed-page {
       padding: 5px 13px 6px;
     }
-    /* one sheet at a time, swiped */
+    /* one sheet at a time, swiped; the row's height follows the sheet in
+       view (fitRow), and every sheet shows all of its writing */
     .sheets {
       scroll-snap-type: x mandatory;
       gap: 10px;
+      overflow-y: hidden;
+      transition: height var(--med) var(--ease);
+    }
+    .pages {
+      height: auto;
+      overflow: visible;
+      mask-image: none !important;
+    }
+    .fold-btn {
+      display: none;
     }
     .sheet {
       width: calc(100% - 4px);

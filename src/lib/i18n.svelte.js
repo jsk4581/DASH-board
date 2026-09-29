@@ -220,6 +220,8 @@ const dict = {
     diaryDays: '하루 한 장',
     diaryBackToday: '오늘로',
     diaryMore: '더 지난 날',
+    diaryExpand: '펼쳐 보기',
+    diaryCollapse: '접기',
     kindDiary: '다이어리',
 
     // reminders tab (notifications come from the Android app)
@@ -506,6 +508,8 @@ const dict = {
     diaryDays: 'A sheet a day',
     diaryBackToday: 'Today',
     diaryMore: 'Further back',
+    diaryExpand: 'Show all',
+    diaryCollapse: 'Fold',
     kindDiary: 'Diary',
 
     // reminders tab (notifications come from the Android app)
